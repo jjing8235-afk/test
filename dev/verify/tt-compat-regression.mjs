@@ -7,8 +7,8 @@ const cap = source.slice(source.indexOf('const ua = navigator.userAgent;'),sourc
 const passed=[];
 const android='Mozilla/5.0 (Linux; Android 17; Fixture Build/TEST; wv) AppleWebKit/537.36 Version/4.0 Chrome/155.0.8059.43 Mobile Safari/537.36';
 function env(o={}) {
- const S={enabled:true,refract:true,androidWebViewRefract:false,refractMes:true,engine:'physical',tone:'dark',...o.settings};
- const sandbox={S,navigator:{userAgent:o.ua||android,platform:o.platform||'Linux armv8l',maxTouchPoints:o.touch??5},window:o.chrome?{chrome:{}}:{},CSS:{supports:(_p,value)=>{if(o.throws)throw Error('unsupported');return value.startsWith('url')?o.url!==false:o.blur!==false}}};
+ const S={enabled:true,refract:true,androidWebViewRefract:false,iosSvgTrial:false,refractMes:true,engine:'physical',tone:'dark',...o.settings};
+ const sandbox={S,navigator:{userAgent:o.ua||android,platform:o.platform||'Linux armv8l',maxTouchPoints:o.touch??5},window:o.chrome?{chrome:{}}:{},CSS:{supports:(p,value)=>{if(o.throws)throw Error('unsupported');if(p==='-webkit-backdrop-filter')return o.prefixed===true;return value.startsWith('url')?o.url!==false:o.blur!==false}}};
  return {S,sandbox,...vm.runInNewContext(cap+';({canRefract,compatibilityHint,canFull,androidWebViewEligible})',sandbox)};
 }
 const cases=[
@@ -25,16 +25,23 @@ const cases=[
  ['Desktop with chrome keeps original path',{ua:'Windows NT Chrome/155.0',platform:'Win32',touch:0,chrome:true},true,false],
  ['Desktop without chrome is not force enabled',{ua:'Windows NT Chrome/155.0',platform:'Win32',touch:0,settings:{androidWebViewRefract:true}},false,false],
  ['Original chrome path is not disabled by compatibility-off',{chrome:true},true,true],
+ ['iPhone explicit iOS trial',{ua:'iPhone AppleWebKit/605.1.15',settings:{iosSvgTrial:true}},true,false],
+ ['iPad desktop explicit iOS trial',{ua:'Macintosh AppleWebKit',platform:'MacIntel',settings:{iosSvgTrial:true}},true,false],
+ ['iOS prefixed-only syntax trial',{ua:'iPhone AppleWebKit',blur:false,url:false,prefixed:true,settings:{iosSvgTrial:true}},true,false],
+ ['iOS rejects saved string opt-in',{ua:'iPhone AppleWebKit',settings:{iosSvgTrial:'true'}},false,false],
+ ['iOS missing URL syntax stays fallback',{ua:'iPhone AppleWebKit',url:false,settings:{iosSvgTrial:true}},false,false],
+ ['Android cannot use iOS opt-in',{settings:{iosSvgTrial:true}},false,true],
+ ['Desktop cannot use iOS opt-in',{ua:'Windows NT AppleWebKit',platform:'Win32',touch:0,settings:{iosSvgTrial:true}},false,false],
 ];
 for(const[name,input,allowed,eligible]of cases){const e=env(input);assert.equal(e.canRefract(),allowed,name);assert.equal(e.androidWebViewEligible,eligible,name);passed.push(name)}
 const defaults=vm.runInNewContext('('+source.match(/const DEFAULTS = (\{[\s\S]*?\n\});/)[1]+')',{PRESETS:{depth:['',{}],natural:['',{}]}});
-assert.equal(defaults.androidWebViewRefract,false);
+assert.equal(defaults.androidWebViewRefract,false);assert.equal(defaults.iosSvgTrial,false);
 for(const saved of [{},{androidWebViewRefract:true},{androidWebViewRefract:false}]){const merged=Object.assign({},defaults,{...saved,unknown:'preserve',cssBackup:'backup'});assert.equal(merged.androidWebViewRefract,saved.androidWebViewRefract??false);assert.equal(merged.unknown,'preserve');assert.equal(merged.cssBackup,'backup')}
 passed.push('Default and saved opt-in preserve unrelated settings and backups');
 const reset=source.match(/const reset = \(\) => \{([\s\S]*?)\n    \};/)[1];
 const settings={androidWebViewRefract:true,unknown:'preserve',v:9,cssBackup:'backup'};
 vm.runInNewContext(reset,{S:settings,DEFAULTS:defaults,clearAll(){},applyRoot(){},sync(){},ctx:{saveSettingsDebounced(){}}});
-assert.equal(settings.androidWebViewRefract,false);assert.equal(settings.cssBackup,'backup');assert.equal(settings.unknown,'preserve');
+assert.equal(settings.androidWebViewRefract,false);assert.equal(settings.iosSvgTrial,false);assert.equal(settings.cssBackup,'backup');assert.equal(settings.unknown,'preserve');
 passed.push('Reset returns compatibility to off while preserving unknown values and backups');
 const refract=source.match(/function refractAllowed\(it\) \{([\s\S]*?)\n\}/)[1];
 for(const[changes,kind,visible,noBlur,allowed]of [[{},'bar',true,false,true],[{enabled:false},'bar',true,false,false],[{refract:false},'bar',true,false,false],[{},'bar',true,true,false],[{refractMes:false},'mes',true,false,false],[{},'mes',false,false,false],[{},'mes',true,false,true]]){
@@ -48,5 +55,7 @@ passed.push('Status distinguishes requested compatibility from claimed rendering
 const toggle=source.match(/TOGGLES\.forEach\(\(\[k\]\) => document.getElementById\(`ilg-opt-\$\{k\}`\).addEventListener\('change', e => \{([\s\S]*?)\n    \}\)\);/)[1];
 for(const eligible of [false,true]){const S={androidWebViewRefract:false,enabled:true};const calls={clear:0,apply:0,sync:0,save:0};const e={target:{checked:true}};vm.runInNewContext('(function(){'+toggle+'})()',{S,k:'androidWebViewRefract',e,androidWebViewEligible:eligible,clearAll(){calls.clear++},applyRoot(){calls.apply++},sync(){calls.sync++},ctx:{saveSettingsDebounced(){calls.save++}}});assert.equal(S.androidWebViewRefract,eligible);assert.equal(calls.clear,eligible?1:0);assert.equal(calls.save,eligible?1:0)}
 passed.push('Unsupported synthetic toggle is rejected; supported toggle clears and saves exactly once');
+for(const eligible of [false,true]){const S={iosSvgTrial:false,enabled:true};const calls={clear:0,save:0};const e={target:{checked:true}};vm.runInNewContext('(function(){'+toggle+'})()',{S,k:'iosSvgTrial',e,androidWebViewEligible:false,iosSvgEligible:eligible,clearAll(){calls.clear++},applyRoot(){},sync(){},ctx:{saveSettingsDebounced(){calls.save++}}});assert.equal(S.iosSvgTrial,eligible);assert.equal(calls.clear,eligible?1:0);assert.equal(calls.save,eligible?1:0)}
+passed.push('iOS control rejects unsupported environments and saves supported opt-in exactly once');
 const result={kind:'source-isolated',passed:passed.length,tests:passed,limitations:['Synthetic capability matrix is not installed-device rendering evidence']};
 console.log(JSON.stringify(result,null,2));

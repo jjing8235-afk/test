@@ -29,7 +29,7 @@ const PRESETS = {
 };
 
 const DEFAULTS = {
-    firstLineIndent: false, androidWebViewRefract: false,
+    firstLineIndent: false, androidWebViewRefract: false, iosSvgTrial: false,
     enabled: true, float: true, islands: true, fold: true, qrFold: true, home: true, toneBtn: true, homeName: 'NVWA 用户', icons: true, refract: true, refractMes: true, font: true, tone: 'time', dayStart: 7, dayEnd: 19, avatar: 'line', orb: true,
     engine: 'physical', follow: true, pLight: 135,
     // 自然弧度没写的参数（厚度、折射率等，只给物理折射截面用）沿用清透立体的
@@ -80,6 +80,7 @@ const TOGGLES = [
     ['icons', 'iOS 风格图标'],
     ['refract', '边缘折射（取决于当前渲染环境）'],
     ['androidWebViewRefract', '安卓 TT / WebView 兼容折射（仅在本设备验证成功后开启）'],
+    ['iosSvgTrial', 'iOS WebKit SVG 折射实验（可能无效；关闭可回退）'],
     ['refractMes', '消息卡片也折射（长聊天卡顿时关掉）'],
     ['font', '统一字体：思源黑体（苹果设备用苹方）'],
     ['firstLineIndent', '普通正文首行缩进两个汉字（不影响列表、代码和自带样式面板）'],
@@ -139,8 +140,13 @@ const supportsFilter = value => { try { return CSS.supports('backdrop-filter', v
 const canFull = !isIOS && !!window.chrome && !/Firefox\//.test(ua) && supportsFilter('blur(1px)');
 const androidWebView = !isIOS && /Android/i.test(ua) && /\bwv\b/.test(ua) && /Chrome\//.test(ua) && !/Firefox\//.test(ua);
 const androidWebViewEligible = androidWebView && supportsFilter('blur(1px)') && supportsFilter('url(#ilg-capability-probe)');
+const supportsPrefixedFilter = value => { try { return CSS.supports('-webkit-backdrop-filter', value); } catch { return false; } };
+const iosSvgEligible = isIOS
+    && (supportsFilter('blur(1px)') || supportsPrefixedFilter('blur(1px)'))
+    && (supportsFilter('url(#ilg-capability-probe)') || supportsPrefixedFilter('url(#ilg-capability-probe)'));
+function iosTrialRequested() { return iosSvgEligible && S.iosSvgTrial === true; }
 // Syntax acceptance only gates the user-confirmed opt-in; it is not a rendering test.
-function canRefract() { return canFull || (S.androidWebViewRefract === true && androidWebViewEligible); }
+function canRefract() { return canFull || (S.androidWebViewRefract === true && androidWebViewEligible) || iosTrialRequested(); }
 function compatibilityHint() {
     if (!androidWebView) return '本开关只适用于安卓 Chromium WebView（包括 TT），不会给 iOS、Firefox 或其他环境强开。';
     if (!androidWebViewEligible) return '当前 WebView 的标准模糊或 SVG URL 语法检测未通过，兼容折射不可用；保留模糊回退。';
@@ -185,7 +191,10 @@ const MES_SEL = '.mes:not(.smallSysMes)';
 const root = document.documentElement;
 const svg = document.createElementNS(NS, 'svg');
 svg.setAttribute('aria-hidden', 'true');
-svg.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden;pointer-events:none';
+// Nonzero SVG resource bounds are an iOS compatibility experiment.
+svg.style.cssText = isIOS
+    ? 'position:absolute;left:-10000px;top:0;width:1px;height:1px;overflow:visible;pointer-events:none'
+    : 'position:absolute;width:0;height:0;overflow:hidden;pointer-events:none';
 svg.innerHTML = '<defs></defs>';
 document.body.appendChild(svg);
 const defs = svg.firstChild;
@@ -335,16 +344,18 @@ function paint(el) {
     if (!w || !h) return;
     const phys = refractAllowed(it) && w > 0 && h > 0 && S.engine === 'physical';
     setPhys(el, it, phys);
-    if (canRefract()) el.style.webkitBackdropFilter = '';
+    if (canRefract() && !isIOS) el.style.webkitBackdropFilter = '';
     if (phys) {
         buildPhysical(it, el, w, h, radiusOf(el, w, h));
         el.style.backdropFilter = `url(#${it.id})`;
+        if (isIOS) el.style.webkitBackdropFilter = `url(#${it.id})`;
     } else if (refractAllowed(it) && w > 0 && h > 0) {
         buildFilter(it, w, h, radiusOf(el, w, h));
         el.style.backdropFilter = `url(#${it.id}) ${tail}`;
+        if (isIOS) el.style.webkitBackdropFilter = `url(#${it.id}) ${tail}`;
     } else {
         el.style.backdropFilter = tail;
-        if (!canRefract()) el.style.webkitBackdropFilter = tail;
+        if (isIOS || !canRefract()) el.style.webkitBackdropFilter = tail;
     }
 }
 // .ilg-phys：高光已经在滤镜里画了，CSS 那套亮边/内阴影要让开（见 style.css 的新版引擎部分）
@@ -951,6 +962,7 @@ sysDark.addEventListener('change', followTone);
 
 function applyRoot() {
     root.classList.toggle('ilg', S.enabled);
+    root.classList.toggle('ilg-ios-experiment', S.enabled && isIOS);
     root.classList.toggle('ilg-indent', S.enabled && !!S.firstLineIndent);
     root.classList.toggle('ilg-float', S.enabled && S.float);
     root.classList.toggle('ilg-icons', S.enabled && S.icons);
@@ -1082,8 +1094,10 @@ function statusText() {
     if (!S.enabled) return '美化已关闭。';
     if (document.body.classList.contains('no-blur')) return '你开了酒馆的“关闭模糊”，所以玻璃和折射都暂停了。';
     if (!S.refract) return '边缘折射已关闭，现在只有模糊。';
+    if (isIOS && iosTrialRequested()) return 'iOS SVG 折射实验已请求；不代表背景位移已显示，请对比画面确认。关闭实验开关即可恢复模糊。';
     if (!canRefract()) {
-        if (isIOS) return '当前识别为 iOS，本版本保留模糊回退，不强开折射。';
+        if (isIOS && S.iosSvgTrial === true) return 'iOS 模糊或 SVG URL 语法门槛未通过，保留模糊回退。';
+        if (isIOS) return 'iOS 清透降级样式；可手动开启独立的 SVG 折射实验，实际效果待设备确认。';
         if (androidWebViewEligible) return '当前安卓 WebView 未启用兼容折射。若本设备的诊断试开有效，请开启下方兼容选项；window.chrome 缺失不等于没有折射能力。';
         if (androidWebView) return '当前 WebView 的模糊或 SVG URL 语法检测未通过，保留模糊回退。';
         return '当前环境未通过自动折射门槛，保留模糊回退；不凭浏览器名称保证渲染能力。';
@@ -1094,6 +1108,29 @@ function statusText() {
     return `已请求折射（${route}，${tone}），实际画面以当前设备为准。${document.body.classList.contains('bubblechat') ? '' : '消息卡片玻璃只在“气泡”样式下生效。'}`;
 }
 
+function iosTrialReport() {
+    const rows = [
+        'NVWA TT 兼容测试 1.4.2-tt.2',
+        'UA: ' + navigator.userAgent,
+        '平台 / 触摸点: ' + navigator.platform + ' / ' + navigator.maxTouchPoints,
+        '视口 / DPR: ' + innerWidth + ' × ' + innerHeight + ' / ' + devicePixelRatio,
+        'iOS 识别: ' + isIOS,
+        '标准 / WebKit SVG URL 语法: ' + CSS.supports('backdrop-filter', 'url(#ilg-ios-probe)') + ' / ' + CSS.supports('-webkit-backdrop-filter', 'url(#ilg-ios-probe)'),
+        '美化 / 折射 / iOS 实验: ' + !!S.enabled + ' / ' + !!S.refract + ' / ' + !!S.iosSvgTrial,
+        '关闭模糊 / 气泡 / 浅色: ' + document.body.classList.contains('no-blur') + ' / ' + document.body.classList.contains('bubblechat') + ' / ' + root.classList.contains('ilg-light'),
+        '引擎: ' + S.engine,
+        '状态: ' + statusText(),
+    ];
+    for (const id of ['nonQRFormItems', 'ilg-floor']) {
+        const el = document.getElementById(id);
+        rows.push(id + ': ' + (el ? el.offsetWidth + ' × ' + el.offsetHeight
+            + '; 标准=' + getComputedStyle(el).getPropertyValue('backdrop-filter')
+            + '; WebKit=' + getComputedStyle(el).getPropertyValue('-webkit-backdrop-filter') : '未找到'));
+    }
+    rows.push('真实背景折射: 待人工确认；请补充 iOS 版本、TT 版本、浅深色画面及开关前后对比。');
+    return rows.join('\n');
+}
+
 function buildPanel() {
     const host = document.getElementById('extensions_settings2') || document.getElementById('extensions_settings');
     if (!host) return;
@@ -1102,13 +1139,17 @@ function buildPanel() {
     wrap.innerHTML = `
 <div class="inline-drawer">
   <div class="inline-drawer-toggle inline-drawer-header">
-    <b>NVWA 液态玻璃</b>
+    <b>NVWA 液态玻璃 · TT 测试</b>
     <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
   </div>
   <div class="inline-drawer-content">
     <div class="ilg-status" id="ilg-status" role="status"></div>
     <p class="ilg-status" id="ilg-opt-themeStatus" role="status"></p>
     <p class="ilg-hint" id="ilg-compat-hint"></p>
+    <div id="ilg-opt-iosReportWrap" hidden>
+      <button type="button" class="menu_button" id="ilg-opt-iosReportCopy">复制 iOS 测试记录</button>
+      <textarea id="ilg-opt-iosReport" readonly hidden aria-label="iOS 测试记录"></textarea>
+    </div>
     ${TOGGLES.map(([k, label]) => `<label class="checkbox_label" for="ilg-opt-${k}"><input type="checkbox" id="ilg-opt-${k}"><span>${label}</span></label>`).join('')}
     <div class="ilg-row"><label for="ilg-opt-homeName"><span>首页问候里的称呼</span></label>
       <input type="text" id="ilg-opt-homeName" class="text_pole" maxlength="20" placeholder="留空就只显示“晚上好”"></div>
@@ -1154,6 +1195,21 @@ function buildPanel() {
 </div>`;
     host.appendChild(wrap);
 
+    document.getElementById('ilg-opt-iosReportCopy').addEventListener('click', async event => {
+        const button = event.currentTarget;
+        const output = document.getElementById('ilg-opt-iosReport');
+        output.value = iosTrialReport();
+        output.hidden = false;
+        try {
+            await navigator.clipboard.writeText(output.value);
+            button.textContent = '已复制测试记录';
+        } catch {
+            output.focus();
+            output.select();
+            button.textContent = '请长按下方记录复制';
+        }
+    });
+
     // 当前数值正好等于某一档预设时，那个按钮显示为按下
     const markPresets = () => wrap.querySelectorAll('[data-preset]').forEach(b => {
         const p = PRESETS[b.dataset.preset][1];
@@ -1180,6 +1236,10 @@ function buildPanel() {
             if (n.dataset.profile !== (S.profile === 'lens' ? 'lens' : 'snell')) n.hidden = true;
         });
         markPresets();
+        const iosControl = document.getElementById('ilg-opt-iosSvgTrial');
+        iosControl.closest('label').hidden = !isIOS;
+        iosControl.disabled = !iosSvgEligible;
+        document.getElementById('ilg-opt-iosReportWrap').hidden = !isIOS;
         const compat = document.getElementById('ilg-opt-androidWebViewRefract');
         compat.disabled = !androidWebViewEligible;
         compat.setAttribute('aria-describedby', 'ilg-compat-hint');
@@ -1232,13 +1292,14 @@ function buildPanel() {
     }));
     TOGGLES.forEach(([k]) => document.getElementById(`ilg-opt-${k}`).addEventListener('change', e => {
         if (k === 'androidWebViewRefract' && !androidWebViewEligible) { e.target.checked = !!S[k]; return; }
+        if (k === 'iosSvgTrial' && !iosSvgEligible) { e.target.checked = !!S[k]; return; }
         S[k] = e.target.checked;
         if (k === 'firstLineIndent') {
             root.classList.toggle('ilg-indent', S.enabled && !!S.firstLineIndent);
             ctx.saveSettingsDebounced();
             return;
         }
-        if (!S.enabled || k === 'androidWebViewRefract' || k === 'enabled' || k === 'refract' || k === 'refractMes' || k === 'islands' || k === 'fold') clearAll();
+        if (!S.enabled || k === 'androidWebViewRefract' || k === 'iosSvgTrial' || k === 'enabled' || k === 'refract' || k === 'refractMes' || k === 'islands' || k === 'fold') clearAll();
         applyRoot(); sync(); ctx.saveSettingsDebounced();
     }));
     SLIDERS.forEach(([k, , , , step, unit]) => document.getElementById(`ilg-opt-${k}`).addEventListener('input', e => {

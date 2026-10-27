@@ -3240,3 +3240,30 @@ html.ilg body > .select2-container:has(#select2-world_info-results, #select2-wor
     background-color: rgba(10, 132, 255, 0.18);
     color: var(--SmartThemeBodyColor);
 }
+
+/* iOS experiment: suppress only legacy decorations on tracked NVWA glass. */
+html.ilg.ilg-ios-experiment body .ilg-glass:not(.mes.ilg-phys)::before {
+    content: none;
+    opacity: 0;
+}
+html.ilg.ilg-ios-experiment body .ilg-glass.ilg-sheen::after {
+    content: none;
+}
+html.ilg.ilg-ios-experiment body .ilg-glass {
+    box-shadow: 0 3px 14px rgba(0, 0, 0, 0.12);
+}
+html.ilg.ilg-ios-experiment body.noShadows .ilg-glass {
+    box-shadow: none;
+}
+
+html.ilg body .ilg-settings #ilg-opt-iosReport {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 180px;
+    margin-block: 8px;
+    padding: 10px;
+    font: inherit;
+    overflow-wrap: anywhere;
+}
+html.ilg body .ilg-settings #ilg-opt-iosReport[hidden] { display: none; }
