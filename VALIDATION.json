@@ -1,0 +1,60 @@
+{
+  "version": "1.4.2-tt.1",
+  "date": "2026-10-27",
+  "unit": {
+    "kind": "source-isolated",
+    "passed": 18,
+    "tests": [
+      "User WebView remains fallback by default",
+      "User WebView enables only after opt-in",
+      "String value is not treated as opt-in",
+      "Missing standard blur blocks opt-in",
+      "Missing SVG URL syntax blocks opt-in",
+      "CSS exceptions fail closed",
+      "iPhone remains fallback",
+      "iPad desktop identity remains fallback",
+      "Firefox remains fallback",
+      "Ordinary Android browser is not opted in",
+      "Desktop with chrome keeps original path",
+      "Desktop without chrome is not force enabled",
+      "Original chrome path is not disabled by compatibility-off",
+      "Default and saved opt-in preserve unrelated settings and backups",
+      "Reset returns compatibility to off while preserving unknown values and backups",
+      "Enabled, no-blur, message preference and message visibility still gate refraction",
+      "Status distinguishes requested compatibility from claimed rendering success",
+      "Unsupported synthetic toggle is rejected; supported toggle clears and saves exactly once"
+    ],
+    "limitations": [
+      "Synthetic capability matrix is not installed-device rendering evidence"
+    ]
+  },
+  "browser": {
+    "environment": "Desktop Edge executing full candidate with Android UA and synthetic ST DOM/context; no actual TT installation",
+    "passed": 14,
+    "tests": [
+      "Full candidate entry loads with all relative assets and compatibility defaults off",
+      "Opt-in uses original engine for top/input and floor with valid distinct SVG references",
+      "Physical top/input/floor remove fallback rims and bright inset shadows; unrelated border retained",
+      "Day and night preserve physical floor/input with old rims suppressed",
+      "noShadows and no-blur host toggles remain respected",
+      "Message-only toggle does not remove floor or input refraction",
+      "Compatibility off restores fallback styling and removes all owned physical markers",
+      "Main refraction off and back on rebuilds correct floor state",
+      "Reload restores saved opt-in using fixture persistence and preserves unknown settings/backups",
+      "Disabling beautification clears filter styles and physical markers",
+      "Reset defaults disables compatibility without deleting backups",
+      "Desktop Chromium automatic path remains active with compatibility off",
+      "iOS remains fallback and compatibility control disabled in browser integration",
+      "Isolated candidate run made no host API calls and produced no uncaught browser exceptions"
+    ],
+    "logs": [],
+    "requests": 68,
+    "limitations": [
+      "Host fixture is not Android WebView",
+      "Session persistence here is fixture-backed, not TT save API",
+      "Real-device full candidate acceptance still pending"
+    ]
+  },
+  "deviceAcceptance": "Previous diagnostics user-confirmed; full candidate installation/rendering/performance pending",
+  "originalRepositoryModified": false
+}

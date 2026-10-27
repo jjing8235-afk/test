@@ -1,0 +1,9 @@
+{
+    "display_name": "NVWA 液态玻璃",
+    "loading_order": 120,
+    "js": "index.js",
+    "css": "style.css",
+    "author": "zytteell8698",
+    "version": "1.4.2-tt.1",
+    "homePage": "https://github.com/jjing8235-afk/test"
+}
