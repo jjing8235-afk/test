@@ -1,4 +1,4 @@
-# NVWA iOS TT 实验包 1.4.2-tt.2
+# NVWA iOS TT 实验包 1.4.2-tt.3
 
 本包以已测试的安卓 TT 1.4.2-tt.1 为基础，面向 iOS TT 的 WebKit/WKWebView 做可回退尝试。真实 iOS TT 尚未验收；这不是承诺成功的正式兼容版。
 

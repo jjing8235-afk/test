@@ -1,8 +1,8 @@
 {
-  "version": "1.4.2-tt.2",
-  "date": "2026-10-27",
-  "sourceBase": "Android TT compatibility 1.4.2-tt.1",
-  "scope": "Android opt-in and floor-rim behavior retained; independent iOS experiment merged",
+  "version": "1.4.2-tt.3",
+  "date": "2026-10-28",
+  "sourceBase": "Android/iOS TT compatibility 1.4.2-tt.2",
+  "scope": "Native extension-manager checkbox state contrast; Android compatibility and independent opt-in iOS experiment retained",
   "unit": {
     "kind": "source-isolated",
     "passed": 26,
@@ -171,14 +171,94 @@
     ]
   },
   "regressions": {
-    "settings": 7,
     "filterReuse": 4,
     "popupBoundary": 5,
-    "firstLineIndent": 3
+    "firstLineIndent": 3,
+    "priorSettings": 7,
+    "priorSettingsNote": "7 checks retained as historical tt.2 evidence; unchanged settings implementation",
+    "rerunForVersion": "1.4.2-tt.3"
   },
   "iOSDeviceAcceptance": "pending",
-  "androidDeviceAcceptance": "Previous version user-accepted; merged version automation passed; new-device and performance testing still needed",
+  "androidDeviceAcceptance": "Earlier Android version user-accepted; tt.3 checkbox fix passes desktop automation only; device confirmation pending",
   "originalEngineUnchanged": true,
   "originalRepositoryModified": false,
-  "publishTarget": "jjing8235-afk/test"
+  "publishTarget": "jjing8235-afk/test",
+  "checkbox": {
+    "cases": [
+      {
+        "engine": "edge",
+        "width": 390,
+        "tone": "dark",
+        "statePixelDifference": 90.93,
+        "checks": "checked/unchecked/disabled/mixed, pointer and keyboard, focus, foreign dialog, extension-off, overflow, no errors"
+      },
+      {
+        "engine": "edge",
+        "width": 390,
+        "tone": "light",
+        "statePixelDifference": 81.86,
+        "checks": "checked/unchecked/disabled/mixed, pointer and keyboard, focus, foreign dialog, extension-off, overflow, no errors"
+      },
+      {
+        "engine": "edge",
+        "width": 1280,
+        "tone": "dark",
+        "statePixelDifference": 90.93,
+        "checks": "checked/unchecked/disabled/mixed, pointer and keyboard, focus, foreign dialog, extension-off, overflow, no errors"
+      },
+      {
+        "engine": "edge",
+        "width": 1280,
+        "tone": "light",
+        "statePixelDifference": 81.86,
+        "checks": "checked/unchecked/disabled/mixed, pointer and keyboard, focus, foreign dialog, extension-off, overflow, no errors"
+      },
+      {
+        "engine": "webkit",
+        "width": 390,
+        "tone": "dark",
+        "statePixelDifference": 90.48,
+        "checks": "checked/unchecked/disabled/mixed, pointer and keyboard, focus, foreign dialog, extension-off, overflow, no errors"
+      },
+      {
+        "engine": "webkit",
+        "width": 390,
+        "tone": "light",
+        "statePixelDifference": 80.5,
+        "checks": "checked/unchecked/disabled/mixed, pointer and keyboard, focus, foreign dialog, extension-off, overflow, no errors"
+      },
+      {
+        "engine": "webkit",
+        "width": 1280,
+        "tone": "dark",
+        "statePixelDifference": 90.48,
+        "checks": "checked/unchecked/disabled/mixed, pointer and keyboard, focus, foreign dialog, extension-off, overflow, no errors"
+      },
+      {
+        "engine": "webkit",
+        "width": 1280,
+        "tone": "light",
+        "statePixelDifference": 80.5,
+        "checks": "checked/unchecked/disabled/mixed, pointer and keyboard, focus, foreign dialog, extension-off, overflow, no errors"
+      }
+    ],
+    "caseCount": 8,
+    "realDeviceAcceptance": "pending; full extension in synthetic host, real ST checkbox stylesheet",
+    "surface": "Complete extension with synthetic registered native Popup and exact host checkbox CSS",
+    "visualInspection": "Edge mobile dark and Windows WebKit mobile light screenshots reviewed; checked, unchecked and disabled states distinguishable",
+    "errors": [],
+    "limitations": [
+      "Desktop engines and synthetic host only; real Android/iOS TT display pending"
+    ]
+  },
+  "staticChecks": {
+    "entrySyntax": "pass",
+    "manifest": {
+      "pass": true,
+      "warnings": [],
+      "errors": []
+    },
+    "existingJavaScriptBehaviorUnchanged": true,
+    "existingStylesRetained": true
+  }
 }
