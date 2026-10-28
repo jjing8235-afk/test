@@ -1122,7 +1122,7 @@ function statusText() {
 
 function iosTrialReport() {
     const rows = [
-        'NVWA ST / TT 通用测试 1.4.2-tt.5',
+        'NVWA ST / TT 通用测试 1.4.2-tt.6',
         'UA: ' + navigator.userAgent,
         '平台 / 触摸点: ' + navigator.platform + ' / ' + navigator.maxTouchPoints,
         '视口 / DPR: ' + innerWidth + ' × ' + innerHeight + ' / ' + devicePixelRatio,

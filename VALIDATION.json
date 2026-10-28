@@ -1,22 +1,17 @@
 {
-  "version": "1.4.2-tt.5",
+  "version": "1.4.2-tt.6",
   "date": "2026-10-28",
   "sourceBase": {
-    "version": "1.4.2-tt.4",
-    "commit": "3481cbff1f167a7e947f955ce53416596ef81e11"
+    "version": "1.4.2-tt.5",
+    "commit": "a97a9b1b4acf874d50b570ece3328c7571dcd945"
   },
-  "scope": "Automatic card-panel and accessible message-iframe text clarity; bypass message SVG compositing for self-rendered card panels while retaining ordinary-message glass",
-  "userControl": "No independent clarity switch or saved setting. Follows beautification master switch.",
+  "scope": "Generic external floating-window text clarity based on fixed positioning and popup semantics; no card-specific identifiers",
+  "userControl": "Automatic; no extra checkbox or saved field. Master disable removes markers, iframe styles and observers.",
   "staticChecks": {
     "entrySyntax": "pass",
-    "clarityModuleSyntax": "pass",
+    "claritySyntax": "pass",
     "manifest": {
       "pass": true,
-      "files": [
-        "index.js",
-        "manifest.json",
-        "style.css"
-      ],
       "warnings": [],
       "errors": []
     }
@@ -642,41 +637,143 @@
       }
     ]
   },
-  "visualInspection": {
-    "rounds": 2,
-    "inspected": [
-      "tt.4 baseline card renderer with shadows and blurred message compositing",
-      "Edge mobile light automatic clarity",
-      "Edge desktop dark automatic clarity",
-      "Windows WebKit mobile light/dark automatic clarity"
+  "floatingWindows": {
+    "caseCount": 8,
+    "cases": [
+      {
+        "engine": "edge",
+        "width": 390,
+        "tone": "dark",
+        "checks": [
+          "Arbitrary fixed dialog under a body mount automatically cleared",
+          "Fixed window without roles and absolute semantic menu covered",
+          "Accessible floating iframe covered; unrelated hidden iframe and host/prose excluded",
+          "Close/reopen, master disable/restore and detached mount cleanup pass",
+          "No card-specific selectors; font, palette, border and box shadow preserved"
+        ],
+        "errors": []
+      },
+      {
+        "engine": "edge",
+        "width": 390,
+        "tone": "light",
+        "checks": [
+          "Arbitrary fixed dialog under a body mount automatically cleared",
+          "Fixed window without roles and absolute semantic menu covered",
+          "Accessible floating iframe covered; unrelated hidden iframe and host/prose excluded",
+          "Close/reopen, master disable/restore and detached mount cleanup pass",
+          "No card-specific selectors; font, palette, border and box shadow preserved"
+        ],
+        "errors": []
+      },
+      {
+        "engine": "edge",
+        "width": 1280,
+        "tone": "dark",
+        "checks": [
+          "Arbitrary fixed dialog under a body mount automatically cleared",
+          "Fixed window without roles and absolute semantic menu covered",
+          "Accessible floating iframe covered; unrelated hidden iframe and host/prose excluded",
+          "Close/reopen, master disable/restore and detached mount cleanup pass",
+          "No card-specific selectors; font, palette, border and box shadow preserved"
+        ],
+        "errors": []
+      },
+      {
+        "engine": "edge",
+        "width": 1280,
+        "tone": "light",
+        "checks": [
+          "Arbitrary fixed dialog under a body mount automatically cleared",
+          "Fixed window without roles and absolute semantic menu covered",
+          "Accessible floating iframe covered; unrelated hidden iframe and host/prose excluded",
+          "Close/reopen, master disable/restore and detached mount cleanup pass",
+          "No card-specific selectors; font, palette, border and box shadow preserved"
+        ],
+        "errors": []
+      },
+      {
+        "engine": "webkit",
+        "width": 390,
+        "tone": "dark",
+        "checks": [
+          "Arbitrary fixed dialog under a body mount automatically cleared",
+          "Fixed window without roles and absolute semantic menu covered",
+          "Accessible floating iframe covered; unrelated hidden iframe and host/prose excluded",
+          "Close/reopen, master disable/restore and detached mount cleanup pass",
+          "No card-specific selectors; font, palette, border and box shadow preserved"
+        ],
+        "errors": []
+      },
+      {
+        "engine": "webkit",
+        "width": 390,
+        "tone": "light",
+        "checks": [
+          "Arbitrary fixed dialog under a body mount automatically cleared",
+          "Fixed window without roles and absolute semantic menu covered",
+          "Accessible floating iframe covered; unrelated hidden iframe and host/prose excluded",
+          "Close/reopen, master disable/restore and detached mount cleanup pass",
+          "No card-specific selectors; font, palette, border and box shadow preserved"
+        ],
+        "errors": []
+      },
+      {
+        "engine": "webkit",
+        "width": 1280,
+        "tone": "dark",
+        "checks": [
+          "Arbitrary fixed dialog under a body mount automatically cleared",
+          "Fixed window without roles and absolute semantic menu covered",
+          "Accessible floating iframe covered; unrelated hidden iframe and host/prose excluded",
+          "Close/reopen, master disable/restore and detached mount cleanup pass",
+          "No card-specific selectors; font, palette, border and box shadow preserved"
+        ],
+        "errors": []
+      },
+      {
+        "engine": "webkit",
+        "width": 1280,
+        "tone": "light",
+        "checks": [
+          "Arbitrary fixed dialog under a body mount automatically cleared",
+          "Fixed window without roles and absolute semantic menu covered",
+          "Accessible floating iframe covered; unrelated hidden iframe and host/prose excluded",
+          "Close/reopen, master disable/restore and detached mount cleanup pass",
+          "No card-specific selectors; font, palette, border and box shadow preserved"
+        ],
+        "errors": []
+      }
     ],
-    "note": "First inspection exposed residual whole-panel blur after text-shadow removal alone; card-only outer-glass bypass added and confirmed clear in second inspection. Synthetic panels, not supplied original card."
-  },
-  "preservation": {
-    "ordinaryProseShadow": true,
-    "ordinaryMessageGlass": true,
-    "topBarAndInputGlass": true,
-    "paletteFontBorderBoxShadow": true,
-    "iframeSourceUnmodified": true,
-    "originalEngineUnchanged": true
-  },
-  "runtimeBoundaries": {
-    "cardOwnership": "Same-document message card panels and controls detected by background/position; visible message iframes bypass message glass",
-    "frameOwnership": "Accessible message iframes and accessible nested frames only; no unrelated frames",
-    "isolatedFrames": "Known cross-origin URLs and opaque sandbox frames skipped before document probing",
-    "lifecycle": "Load/reload, nested/dynamic insertion, removal, stylesheet replacement, master disable and destroy tested"
+    "hostApiRequests": [],
+    "realDeviceAcceptance": "pending"
   },
   "realHostEvidence": {
-    "reportedCards": "Images only; original card source unavailable; actual devices pending",
-    "androidTT": "Prior compatibility accepted by user; new text fix pending device acceptance",
-    "iOSTT": "No iOS device rendering acceptance; real refraction remains unconfirmed"
+    "mode": "Read-only real SillyTavern browser DOM and computed-style inspection",
+    "installedManifestVersion": "1.4.1",
+    "ownership": "Reported panel is a fixed role=dialog mounted directly outside message content and iframes",
+    "observed": {
+      "textShadow": "rgba(0, 0, 0, 0.5) 0px 0px 2px",
+      "filter": "none",
+      "backdropFilter": "none",
+      "sourceSelector": "*",
+      "sourceDeclaration": "0px 0px calc(var(--shadowWidth) * 1px) var(--SmartThemeShadowColor)"
+    },
+    "genericReadOnlyTraversalHitsCurrentWindow": true,
+    "hostShellExcluded": true,
+    "patchedComponentAppliedToRealInstance": false,
+    "originalInstallationModified": false,
+    "acceptance": "Updated original-card visual and reload acceptance pending; source-built fixture evidence is separate"
   },
-  "limits": [
-    "No claim that all possible reported ghosting has a single cause",
-    "Inline important text shadows, text stroke, drop-shadow filters or duplicated card text may require original-source work",
-    "Cross-origin/sandbox iframe contents remain inaccessible; restrictive frame style policy may prevent runtime CSS application",
-    "Mobile long-chat performance, keyboard/safe area and actual host installation remain device checks"
-  ],
+  "originalEngineUnchanged": true,
   "originalRepositoryModified": false,
+  "originalInstallationModified": false,
+  "limits": [
+    "Real-host evidence is read-only; updated source was not installed into the current original 1.4.1 host",
+    "Generic external scanning skips core host trees and hidden mounts; absolute unlabelled arbitrary containers are not guaranteed",
+    "Cross-origin and opaque sandbox iframe contents remain unchanged",
+    "Inline important text shadows, strokes, drop-shadow filters or duplicate text may need different diagnosis",
+    "Actual Android/iOS TT display and long-chat performance remain device acceptance"
+  ],
   "publishTarget": "jjing8235-afk/test"
 }

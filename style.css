@@ -3373,3 +3373,13 @@ html.ilg body #chat .mes_text :is(.ilg-card-surface, .ilg-card-surface *)::befor
 html.ilg body #chat .mes_text :is(.ilg-card-surface, .ilg-card-surface *)::after {
     text-shadow: none !important;
 }
+
+/* External fixed/semantic floating mounts are discovered at runtime, without card-specific selectors. */
+html.ilg body .ilg-floating-clarity,
+html.ilg body .ilg-floating-clarity *,
+html.ilg body .ilg-floating-clarity::before,
+html.ilg body .ilg-floating-clarity::after,
+html.ilg body .ilg-floating-clarity *::before,
+html.ilg body .ilg-floating-clarity *::after {
+    text-shadow: none !important;
+}
