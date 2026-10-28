@@ -1,9 +1,9 @@
 {
-    "display_name": "NVWA 液态玻璃 · TT 测试",
+    "display_name": "NVWA 液态玻璃 · ST / TT 通用测试",
     "loading_order": 120,
     "js": "index.js",
     "css": "style.css",
     "author": "zytteell8698",
-    "version": "1.4.2-tt.3",
+    "version": "1.4.2-tt.4",
     "homePage": "https://github.com/jjing8235-afk/test"
 }

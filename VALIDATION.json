@@ -1,45 +1,93 @@
 {
-  "version": "1.4.2-tt.3",
+  "version": "1.4.2-tt.4",
   "date": "2026-10-28",
-  "sourceBase": "Android/iOS TT compatibility 1.4.2-tt.2",
-  "scope": "Native extension-manager checkbox state contrast; Android compatibility and independent opt-in iOS experiment retained",
+  "sourceBase": {
+    "version": "1.4.2-tt.3",
+    "commit": "93ae27b139492f24225240fa00c6b20da4b0931a"
+  },
+  "scope": "Unified ST/TT capability routing, collapsible fine tuning, native confirmation checkbox visibility, same-document fixed overlay and foreground clarity guards",
+  "defaults": {
+    "compatibilityMode": "auto",
+    "iosSvgTrial": false,
+    "fineTuningExpanded": false
+  },
+  "migration": "Legacy Android checkbox field retained but no longer gates refraction; absent new mode selects auto. Explicit blur override persists and gates all platforms, including an enabled iOS trial.",
+  "staticChecks": {
+    "entrySyntax": "pass",
+    "manifest": {
+      "pass": true,
+      "files": [
+        "index.js",
+        "manifest.json",
+        "style.css"
+      ],
+      "warnings": [],
+      "errors": []
+    }
+  },
   "unit": {
     "kind": "source-isolated",
     "passed": 26,
     "tests": [
-      "User WebView remains fallback by default",
-      "User WebView enables only after opt-in",
-      "String value is not treated as opt-in",
-      "Missing standard blur blocks opt-in",
-      "Missing SVG URL syntax blocks opt-in",
+      "Android WebView automatically selects compatible path",
+      "Legacy Android opt-in true remains compatible",
+      "Legacy Android string cannot override explicit blur mode",
+      "Missing standard blur blocks WebView auto path",
+      "Missing SVG URL syntax blocks WebView auto path",
       "CSS exceptions fail closed",
       "iPhone remains fallback",
       "iPad desktop identity remains fallback",
       "Firefox remains fallback",
-      "Ordinary Android browser is not opted in",
+      "Android UA without WebView or chrome marker stays fallback",
       "Desktop with chrome keeps original path",
       "Desktop without chrome is not force enabled",
-      "Original chrome path is not disabled by compatibility-off",
+      "Explicit blur mode disables Chromium refraction",
       "iPhone explicit iOS trial",
       "iPad desktop explicit iOS trial",
       "iOS prefixed-only syntax trial",
       "iOS rejects saved string opt-in",
       "iOS missing URL syntax stays fallback",
-      "Android cannot use iOS opt-in",
+      "Android auto path ignores iOS trial flag",
       "Desktop cannot use iOS opt-in",
-      "Default and saved opt-in preserve unrelated settings and backups",
-      "Reset returns compatibility to off while preserving unknown values and backups",
+      "Unified auto default preserves legacy fields, unrelated settings and backups",
+      "Reset restores auto adaptation and keeps iOS trial off while preserving unknown values and backups",
       "Enabled, no-blur, message preference and message visibility still gate refraction",
       "Status distinguishes requested compatibility from claimed rendering success",
-      "Unsupported synthetic toggle is rejected; supported toggle clears and saves exactly once",
+      "Auto/blur selector validates values, repaints and persists exactly once",
       "iOS control rejects unsupported environments and saves supported opt-in exactly once"
     ],
     "limitations": [
       "Synthetic capability matrix is not installed-device rendering evidence"
     ]
   },
+  "regressions": {
+    "popupBoundary": {
+      "passed": [
+        "Only registered non-transparent host Popup instances qualify; look-alikes and absent API fail closed",
+        "Host confirmation is trackable; custom dialogs and worldbook double-glass are not",
+        "No preserve markers or injected close button; content boundary and shared-control scopes are explicit",
+        "Only explicitly compatible preset and memory roots in registered Popup instances are adapted; foreign look-alikes and unrelated content remain untouched",
+        "Floor shares input bar material, not toast blur"
+      ]
+    },
+    "filterReuse": {
+      "passed": [
+        "Full and nine-slice geometry matches fresh filters across resize and back; nodes and image sources retained",
+        "Unchanged material reuses nodes; resize only patches bounds; parameter, map and engine changes rebuild; lighting survives reuse",
+        "Zero-size hidden surfaces keep their valid filter untouched; legacy path invalidates physical cache",
+        "Drawer internal changes do not regroup navbar; direct icon/panel additions and open-state changes still update"
+      ]
+    },
+    "firstLineIndent": {
+      "passed": [
+        "New settings default off; old saved true/false and unrelated fields preserved",
+        "Preference toggle updates root and saves once without rebuilding glass",
+        "Enabled/disabled root gate and conservative paragraph-only CSS boundary present"
+      ]
+    }
+  },
   "browser": {
-    "date": "2026-10-27",
+    "date": "2026-10-28",
     "surface": "Complete experiment module with original engine and CSS, synthetic ST context/DOM",
     "cases": [
       {
@@ -52,7 +100,7 @@
           "Default iOS fallback contains no SVG URL",
           "User-triggered diagnostic report contains runtime state and keeps visible refraction unconfirmed",
           "Explicit trial builds physical filter nodes; status never claims visible refraction",
-          "Android control cannot enable on iOS",
+          "Global blur override gates explicit iOS trial; auto restores it",
           "WebKit resource SVG has nonzero bounds and nonempty primitives",
           "Light/dark floor and input suppress legacy rim; full-page captures saved",
           "Host noShadows respected",
@@ -77,7 +125,7 @@
           "Default iOS fallback contains no SVG URL",
           "User-triggered diagnostic report contains runtime state and keeps visible refraction unconfirmed",
           "Explicit trial builds physical filter nodes; status never claims visible refraction",
-          "Android control cannot enable on iOS",
+          "Global blur override gates explicit iOS trial; auto restores it",
           "WebKit resource SVG has nonzero bounds and nonempty primitives",
           "Light/dark floor and input suppress legacy rim; full-page captures saved",
           "Host noShadows respected",
@@ -99,7 +147,7 @@
         "platform": "Win32",
         "tests": [
           "Full ES-module entry loads; opt-in false; iOS-only control and root marker correct",
-          "Desktop Chromium automatic path / Android missing-marker fallback unchanged",
+          "ST Chromium and eligible Android WebView select automatic paths",
           "Third-party border intact; no horizontal overflow or uncaught errors"
         ],
         "errors": []
@@ -114,7 +162,7 @@
           "Default iOS fallback contains no SVG URL",
           "User-triggered diagnostic report contains runtime state and keeps visible refraction unconfirmed",
           "Explicit trial builds physical filter nodes; status never claims visible refraction",
-          "Android control cannot enable on iOS",
+          "Global blur override gates explicit iOS trial; auto restores it",
           "WebKit resource SVG has nonzero bounds and nonempty primitives",
           "Light/dark floor and input suppress legacy rim; full-page captures saved",
           "Host noShadows respected",
@@ -136,7 +184,7 @@
         "platform": "Win32",
         "tests": [
           "Full ES-module entry loads; opt-in false; iOS-only control and root marker correct",
-          "Desktop Chromium automatic path / Android missing-marker fallback unchanged",
+          "ST Chromium and eligible Android WebView select automatic paths",
           "Third-party border intact; no horizontal overflow or uncaught errors"
         ],
         "errors": []
@@ -148,15 +196,15 @@
         "platform": "Win32",
         "tests": [
           "Full ES-module entry loads; opt-in false; iOS-only control and root marker correct",
-          "Desktop Chromium automatic path / Android missing-marker fallback unchanged",
-          "Android opt-in preserves physical input/floor and old-rim fix with no iOS marker",
-          "Synthetic iOS toggle rejected on Android; Android opt-in remains enabled",
-          "Saved Android opt-in survives reload/merge with iOS default false",
+          "ST Chromium and eligible Android WebView select automatic paths",
+          "Android automatic path preserves physical input/floor and old-rim fix without a TT checkbox",
+          "Synthetic iOS toggle rejected on Android; automatic path remains enabled",
+          "Android auto selection survives reload/merge with iOS default false",
           "Android light/dark preserve top/input/floor refraction styling",
           "Android host noShadows/no-blur behavior retained",
           "Android message opt-out preserves floor/input",
-          "Android compatibility off restores original fallback",
-          "Reset turns both opt-ins off and preserves theme backups",
+          "Android explicit blur fallback removes SVG URL",
+          "Saved blur override survives reload; reset restores auto with iOS trial off and theme backups intact",
           "Third-party border intact; no horizontal overflow or uncaught errors"
         ],
         "errors": []
@@ -170,19 +218,6 @@
       "TT installation and native settings persistence require device testing"
     ]
   },
-  "regressions": {
-    "filterReuse": 4,
-    "popupBoundary": 5,
-    "firstLineIndent": 3,
-    "priorSettings": 7,
-    "priorSettingsNote": "7 checks retained as historical tt.2 evidence; unchanged settings implementation",
-    "rerunForVersion": "1.4.2-tt.3"
-  },
-  "iOSDeviceAcceptance": "pending",
-  "androidDeviceAcceptance": "Earlier Android version user-accepted; tt.3 checkbox fix passes desktop automation only; device confirmation pending",
-  "originalEngineUnchanged": true,
-  "originalRepositoryModified": false,
-  "publishTarget": "jjing8235-afk/test",
   "checkbox": {
     "cases": [
       {
@@ -243,22 +278,228 @@
       }
     ],
     "caseCount": 8,
-    "realDeviceAcceptance": "pending; full extension in synthetic host, real ST checkbox stylesheet",
-    "surface": "Complete extension with synthetic registered native Popup and exact host checkbox CSS",
-    "visualInspection": "Edge mobile dark and Windows WebKit mobile light screenshots reviewed; checked, unchecked and disabled states distinguishable",
-    "errors": [],
+    "realDeviceAcceptance": "pending; full extension in synthetic host, real ST checkbox stylesheet"
+  },
+  "ui": {
+    "caseCount": 8,
+    "cases": [
+      {
+        "engine": "edge",
+        "width": 390,
+        "tone": "dark",
+        "baselineOverlayBounds": {
+          "left": 27,
+          "right": 393,
+          "width": 366
+        },
+        "protectedOverlayBounds": {
+          "left": 12,
+          "right": 378
+        },
+        "checks": [
+          "Details collapsed by default; sliders hidden; click and keyboard toggle preserve values",
+          "Fixed-overlay displacement reproduced on tt.3; viewport alignment restored; authored shadow retained",
+          "Dynamic overlay closing restores message glass",
+          "Native delete/current-chat/custom checkboxes show state and preserve click/Space semantics",
+          "Unrelated content and unregistered popup excluded; off restores host styles without changing checked state",
+          "Native popup inherited shadow suppressed; no page errors"
+        ],
+        "errors": []
+      },
+      {
+        "engine": "edge",
+        "width": 390,
+        "tone": "light",
+        "baselineOverlayBounds": {
+          "left": 27,
+          "right": 393,
+          "width": 366
+        },
+        "protectedOverlayBounds": {
+          "left": 12,
+          "right": 378
+        },
+        "checks": [
+          "Details collapsed by default; sliders hidden; click and keyboard toggle preserve values",
+          "Fixed-overlay displacement reproduced on tt.3; viewport alignment restored; authored shadow retained",
+          "Dynamic overlay closing restores message glass",
+          "Native delete/current-chat/custom checkboxes show state and preserve click/Space semantics",
+          "Unrelated content and unregistered popup excluded; off restores host styles without changing checked state",
+          "Native popup inherited shadow suppressed; no page errors"
+        ],
+        "errors": []
+      },
+      {
+        "engine": "edge",
+        "width": 1280,
+        "tone": "dark",
+        "baselineOverlayBounds": {
+          "left": 27,
+          "right": 393,
+          "width": 366
+        },
+        "protectedOverlayBounds": {
+          "left": 12,
+          "right": 1268
+        },
+        "checks": [
+          "Details collapsed by default; sliders hidden; click and keyboard toggle preserve values",
+          "Fixed-overlay displacement reproduced on tt.3; viewport alignment restored; authored shadow retained",
+          "Dynamic overlay closing restores message glass",
+          "Native delete/current-chat/custom checkboxes show state and preserve click/Space semantics",
+          "Unrelated content and unregistered popup excluded; off restores host styles without changing checked state",
+          "Native popup inherited shadow suppressed; no page errors"
+        ],
+        "errors": []
+      },
+      {
+        "engine": "edge",
+        "width": 1280,
+        "tone": "light",
+        "baselineOverlayBounds": {
+          "left": 27,
+          "right": 393,
+          "width": 366
+        },
+        "protectedOverlayBounds": {
+          "left": 12,
+          "right": 1268
+        },
+        "checks": [
+          "Details collapsed by default; sliders hidden; click and keyboard toggle preserve values",
+          "Fixed-overlay displacement reproduced on tt.3; viewport alignment restored; authored shadow retained",
+          "Dynamic overlay closing restores message glass",
+          "Native delete/current-chat/custom checkboxes show state and preserve click/Space semantics",
+          "Unrelated content and unregistered popup excluded; off restores host styles without changing checked state",
+          "Native popup inherited shadow suppressed; no page errors"
+        ],
+        "errors": []
+      },
+      {
+        "engine": "webkit",
+        "width": 390,
+        "tone": "dark",
+        "baselineOverlayBounds": {
+          "left": 27,
+          "right": 393,
+          "width": 366
+        },
+        "protectedOverlayBounds": {
+          "left": 12,
+          "right": 378
+        },
+        "checks": [
+          "Details collapsed by default; sliders hidden; click and keyboard toggle preserve values",
+          "Fixed-overlay displacement reproduced on tt.3; viewport alignment restored; authored shadow retained",
+          "Dynamic overlay closing restores message glass",
+          "Native delete/current-chat/custom checkboxes show state and preserve click/Space semantics",
+          "Unrelated content and unregistered popup excluded; off restores host styles without changing checked state",
+          "Native popup inherited shadow suppressed; no page errors"
+        ],
+        "errors": []
+      },
+      {
+        "engine": "webkit",
+        "width": 390,
+        "tone": "light",
+        "baselineOverlayBounds": {
+          "left": 27,
+          "right": 393,
+          "width": 366
+        },
+        "protectedOverlayBounds": {
+          "left": 12,
+          "right": 378
+        },
+        "checks": [
+          "Details collapsed by default; sliders hidden; click and keyboard toggle preserve values",
+          "Fixed-overlay displacement reproduced on tt.3; viewport alignment restored; authored shadow retained",
+          "Dynamic overlay closing restores message glass",
+          "Native delete/current-chat/custom checkboxes show state and preserve click/Space semantics",
+          "Unrelated content and unregistered popup excluded; off restores host styles without changing checked state",
+          "Native popup inherited shadow suppressed; no page errors"
+        ],
+        "errors": []
+      },
+      {
+        "engine": "webkit",
+        "width": 1280,
+        "tone": "dark",
+        "baselineOverlayBounds": {
+          "left": 27,
+          "right": 393,
+          "width": 366
+        },
+        "protectedOverlayBounds": {
+          "left": 12,
+          "right": 1268
+        },
+        "checks": [
+          "Details collapsed by default; sliders hidden; click and keyboard toggle preserve values",
+          "Fixed-overlay displacement reproduced on tt.3; viewport alignment restored; authored shadow retained",
+          "Dynamic overlay closing restores message glass",
+          "Native delete/current-chat/custom checkboxes show state and preserve click/Space semantics",
+          "Unrelated content and unregistered popup excluded; off restores host styles without changing checked state",
+          "Native popup inherited shadow suppressed; no page errors"
+        ],
+        "errors": []
+      },
+      {
+        "engine": "webkit",
+        "width": 1280,
+        "tone": "light",
+        "baselineOverlayBounds": {
+          "left": 27,
+          "right": 393,
+          "width": 366
+        },
+        "protectedOverlayBounds": {
+          "left": 12,
+          "right": 1268
+        },
+        "checks": [
+          "Details collapsed by default; sliders hidden; click and keyboard toggle preserve values",
+          "Fixed-overlay displacement reproduced on tt.3; viewport alignment restored; authored shadow retained",
+          "Dynamic overlay closing restores message glass",
+          "Native delete/current-chat/custom checkboxes show state and preserve click/Space semantics",
+          "Unrelated content and unregistered popup excluded; off restores host styles without changing checked state",
+          "Native popup inherited shadow suppressed; no page errors"
+        ],
+        "errors": []
+      }
+    ],
+    "hostApiRequests": [],
+    "realDeviceAcceptance": "pending",
     "limitations": [
-      "Desktop engines and synthetic host only; real Android/iOS TT display pending"
+      "Minimal overlay fixture is not the supplied rolecard; original card source and affected device remain untested",
+      "Cross-origin iframe content and card-owned fixed widths require original-source diagnosis"
     ]
   },
-  "staticChecks": {
-    "entrySyntax": "pass",
-    "manifest": {
-      "pass": true,
-      "warnings": [],
-      "errors": []
-    },
-    "existingJavaScriptBehaviorUnchanged": true,
-    "existingStylesRetained": true
-  }
+  "visualInspection": {
+    "rounds": 2,
+    "inspected": [
+      "Edge mobile light confirmation",
+      "Windows WebKit mobile dark confirmation",
+      "Edge desktop light confirmation",
+      "Edge mobile settings collapsed",
+      "Edge baseline/new fixed overlay",
+      "Windows WebKit mobile protected overlay"
+    ],
+    "note": "Desktop synthetic fixture screenshots only; not actual user card or mobile acceptance"
+  },
+  "realHostEvidence": {
+    "androidTT": "Prior user-accepted version and new reported defects only; this version pending",
+    "iOSTT": "No iOS device test; true background refraction unconfirmed",
+    "reportedRolecard": "Original source unavailable; minimal same-document overlay reproducer passed, screenshot card still pending",
+    "sillyTavern": "Synthetic context/DOM and local installed-version native CSS/templates; no live user instance modified"
+  },
+  "originalEngineUnchanged": true,
+  "originalRepositoryModified": false,
+  "publishTarget": "jjing8235-afk/test",
+  "limits": [
+    "Capability/UA routing does not uniquely identify all TT clients or prove visible refraction",
+    "Card-owned fixed widths, wrapping/overflow and iframe internal layouts need original source and real-host diagnosis",
+    "No real chat deletion, host API request or actual enable/disable state mutation performed",
+    "Mobile keyboard, safe area, long-chat performance and installation remain device checks"
+  ]
 }

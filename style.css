@@ -3268,8 +3268,8 @@ html.ilg body .ilg-settings #ilg-opt-iosReport {
 }
 html.ilg body .ilg-settings #ilg-opt-iosReport[hidden] { display: none; }
 
-/* Native extension manager only: keep checkbox state independent of theme text/tick colors. */
-html.ilg body dialog.popup.ilg-glass > .popup-body > .popup-content > .extensions_info .extension_block > .extension_toggle > input[type="checkbox"] {
+/* Registered native manager/confirmation controls: keep state independent of theme text/tick colors. */
+html.ilg body dialog.popup.ilg-glass > .popup-body :is(.popup-content > .extensions_info .extension_block > .extension_toggle > input[type="checkbox"], .popup-content label.checkbox_label > input:is(#del_char_checkbox, #del_chat_checkbox), .popup-inputs > label.checkbox_label > input[type="checkbox"]) {
     -webkit-appearance: none;
     appearance: none;
     display: grid;
@@ -3283,7 +3283,7 @@ html.ilg body dialog.popup.ilg-glass > .popup-body > .popup-content > .extension
     box-shadow: none;
     filter: none;
 }
-html.ilg body dialog.popup.ilg-glass > .popup-body > .popup-content > .extensions_info .extension_block > .extension_toggle > input[type="checkbox"]::before {
+html.ilg body dialog.popup.ilg-glass > .popup-body :is(.popup-content > .extensions_info .extension_block > .extension_toggle > input[type="checkbox"], .popup-content label.checkbox_label > input:is(#del_char_checkbox, #del_chat_checkbox), .popup-inputs > label.checkbox_label > input[type="checkbox"])::before {
     content: "";
     width: 12px;
     height: 12px;
@@ -3292,29 +3292,77 @@ html.ilg body dialog.popup.ilg-glass > .popup-body > .popup-content > .extension
     clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
     transform: scale(0);
 }
-html.ilg body dialog.popup.ilg-glass > .popup-body > .popup-content > .extensions_info .extension_block > .extension_toggle > input[type="checkbox"]:checked {
+html.ilg body dialog.popup.ilg-glass > .popup-body :is(.popup-content > .extensions_info .extension_block > .extension_toggle > input[type="checkbox"], .popup-content label.checkbox_label > input:is(#del_char_checkbox, #del_chat_checkbox), .popup-inputs > label.checkbox_label > input[type="checkbox"]):checked {
     background-color: #0a66d9;
     border-color: #0a66d9;
 }
-html.ilg body dialog.popup.ilg-glass > .popup-body > .popup-content > .extensions_info .extension_block > .extension_toggle > input[type="checkbox"]:checked::before { transform: scale(1); }
-html.ilg body dialog.popup.ilg-glass > .popup-body > .popup-content > .extensions_info .extension_block > .extension_toggle > input[type="checkbox"]:indeterminate {
+html.ilg body dialog.popup.ilg-glass > .popup-body :is(.popup-content > .extensions_info .extension_block > .extension_toggle > input[type="checkbox"], .popup-content label.checkbox_label > input:is(#del_char_checkbox, #del_chat_checkbox), .popup-inputs > label.checkbox_label > input[type="checkbox"]):checked::before { transform: scale(1); }
+html.ilg body dialog.popup.ilg-glass > .popup-body :is(.popup-content > .extensions_info .extension_block > .extension_toggle > input[type="checkbox"], .popup-content label.checkbox_label > input:is(#del_char_checkbox, #del_chat_checkbox), .popup-inputs > label.checkbox_label > input[type="checkbox"]):indeterminate {
     background-color: #0a66d9;
     border-color: #0a66d9;
 }
-html.ilg body dialog.popup.ilg-glass > .popup-body > .popup-content > .extensions_info .extension_block > .extension_toggle > input[type="checkbox"]:indeterminate::before {
+html.ilg body dialog.popup.ilg-glass > .popup-body :is(.popup-content > .extensions_info .extension_block > .extension_toggle > input[type="checkbox"], .popup-content label.checkbox_label > input:is(#del_char_checkbox, #del_chat_checkbox), .popup-inputs > label.checkbox_label > input[type="checkbox"]):indeterminate::before {
     clip-path: polygon(0 40%, 100% 40%, 100% 60%, 0 60%);
     transform: scale(1);
 }
-html.ilg body dialog.popup.ilg-glass > .popup-body > .popup-content > .extensions_info .extension_block > .extension_toggle > input[type="checkbox"]:focus-visible {
+html.ilg body dialog.popup.ilg-glass > .popup-body :is(.popup-content > .extensions_info .extension_block > .extension_toggle > input[type="checkbox"], .popup-content label.checkbox_label > input:is(#del_char_checkbox, #del_chat_checkbox), .popup-inputs > label.checkbox_label > input[type="checkbox"]):focus-visible {
     outline: 2px solid #78b6ff;
     outline-offset: 3px;
 }
-html.ilg body dialog.popup.ilg-glass > .popup-body > .popup-content > .extensions_info .extension_block > .extension_toggle > input[type="checkbox"]:disabled {
+html.ilg body dialog.popup.ilg-glass > .popup-body :is(.popup-content > .extensions_info .extension_block > .extension_toggle > input[type="checkbox"], .popup-content label.checkbox_label > input:is(#del_char_checkbox, #del_chat_checkbox), .popup-inputs > label.checkbox_label > input[type="checkbox"]):disabled {
     opacity: 0.55;
     cursor: not-allowed;
     border-style: dashed;
 }
-html.ilg.ilg-light body dialog.popup.ilg-glass > .popup-body > .popup-content > .extensions_info .extension_block > .extension_toggle > input[type="checkbox"]:not(:checked):not(:indeterminate) {
+html.ilg.ilg-light body dialog.popup.ilg-glass > .popup-body :is(.popup-content > .extensions_info .extension_block > .extension_toggle > input[type="checkbox"], .popup-content label.checkbox_label > input:is(#del_char_checkbox, #del_chat_checkbox), .popup-inputs > label.checkbox_label > input[type="checkbox"]):not(:checked):not(:indeterminate) {
     background-color: #fff;
     border-color: #667085;
+}
+
+/* Keep the common settings page scrollable without exposing every fine-tuning slider. */
+html.ilg body .ilg-settings .ilg-fine-tuning {
+    margin-block: 14px;
+    border-block: 1px solid var(--SmartThemeBorderColor);
+}
+html.ilg body .ilg-settings .ilg-fine-tuning > summary {
+    min-height: 48px;
+    padding: 12px 4px;
+    cursor: pointer;
+    font-weight: 650;
+    overflow-wrap: anywhere;
+}
+html.ilg body .ilg-settings .ilg-fine-tuning > summary .ilg-hint {
+    display: block;
+    margin: 4px 0 0 18px;
+    font-size: 0.85em;
+    font-weight: 400;
+}
+html.ilg body .ilg-settings .ilg-fine-tuning > summary:focus-visible {
+    outline: 2px solid #78b6ff;
+    outline-offset: 2px;
+}
+/* Remove inherited host text halos from native floating surfaces; authored content keeps explicit shadows. */
+html.ilg body :is(dialog.popup.ilg-glass > .popup-body, .drawer-content.ilg-glass, #extensionsMenu.ilg-glass, #options .options-content.ilg-glass, #ilg-fold-menu) {
+    --shadowWidth: 0;
+    text-shadow: none;
+}
+/* A same-document fixed card overlay must not be contained or clipped by NVWA message glass. */
+html.ilg body #chat .mes.ilg-content-overlay {
+    animation: none;
+    transform: none;
+    --shadowWidth: 0;
+}
+html.ilg body #chat .mes.ilg-content-overlay .mes_block {
+    overflow: visible;
+}
+html.ilg body #chat .mes.ilg-content-overlay .mes_text {
+    text-shadow: none;
+}
+
+/* Native dialog text needs a stable backing even when a desktop WebKit cannot render SVG refraction. */
+html.ilg body dialog.popup.ilg-glass:not(.ilg-adapted) {
+    background-color: rgba(18, 20, 30, 0.90);
+}
+html.ilg.ilg-light body dialog.popup.ilg-glass:not(.ilg-adapted) {
+    background-color: rgba(248, 249, 252, 0.94);
 }
