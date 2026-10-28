@@ -3,6 +3,7 @@
    折射引擎有两套：新版物理折射（glass2.js，实验台 v2 移植）和旧版（本文件里的 makeMap / buildFilter） */
 import { getMaps, clearMaps, physicalFilter, resizePhysicalFilter, lightRow } from './glass2.js';
 import { makeOrb } from './orb.js';
+import { createCardTextClarity } from './card-clarity.js';
 
 // 同一个酒馆里装了两份（比如手动拷的一份 + 从 GitHub 装的一份）时只跑先加载的那份，不然顶栏、面板会出两套
 if (window.__ilgLoaded) throw new Error('[NVWA 液态玻璃] 已经有一份在运行，这份跳过');
@@ -340,8 +341,8 @@ function paint(el) {
         el.style.webkitBackdropFilter = 'none';
         return;
     }
-    // Fixed-position card overlays need the viewport, not a filtered message, as their containing block.
-    if (it.kind === 'mes' && el.classList.contains('ilg-content-overlay')) {
+    // Fixed overlays need viewport coordinates; self-rendered panels/frames must not pass through message SVG compositing.
+    if (it.kind === 'mes' && (el.classList.contains('ilg-content-overlay') || el.classList.contains('ilg-card-renderer'))) {
         setPhys(el, it, false);
         el.style.backdropFilter = 'none';
         el.style.webkitBackdropFilter = 'none';
@@ -976,6 +977,7 @@ function applyRoot() {
     root.classList.toggle('ilg-float', S.enabled && S.float);
     root.classList.toggle('ilg-icons', S.enabled && S.icons);
     root.classList.toggle('ilg-font', S.enabled && S.font);
+    cardClarity.setEnabled(S.enabled);
     root.classList.toggle('ilg-islands', S.enabled && S.islands);
     root.classList.toggle('ilg-avline', S.enabled && S.avatar === 'line');
     root.classList.toggle('ilg-orb-on', S.enabled && S.orb);
@@ -1012,6 +1014,7 @@ function applyRoot() {
 // 输入框高度变化（多行、快捷回复栏）时同步聊天区底部留白，并保持贴底
 const form = document.getElementById('form_sheld');
 const chatEl = document.getElementById('chat');
+const cardClarity = createCardTextClarity(chatEl);
 new ResizeObserver(() => {
     const atBottom = chatEl.scrollHeight - chatEl.scrollTop - chatEl.clientHeight < 40;
     root.style.setProperty('--ilg-form-h', `${form.offsetHeight}px`);
@@ -1119,7 +1122,7 @@ function statusText() {
 
 function iosTrialReport() {
     const rows = [
-        'NVWA ST / TT 通用测试 1.4.2-tt.4',
+        'NVWA ST / TT 通用测试 1.4.2-tt.5',
         'UA: ' + navigator.userAgent,
         '平台 / 触摸点: ' + navigator.platform + ' / ' + navigator.maxTouchPoints,
         '视口 / DPR: ' + innerWidth + ' × ' + innerHeight + ' / ' + devicePixelRatio,
@@ -1585,7 +1588,7 @@ new MutationObserver(muts => {
 
 // 角色卡状态栏：正文里自带底色的小面板，底色和当前深浅反着（深色模式里的白卡片、浅色模式里的黑卡片）时，
 // 标上 .ilg-lit / .ilg-dim，CSS 把那一块的字色变量和酒馆的字影换成配它底色的一套。
-// 半透明的底按“叠在外面那层上”算实际亮度；iframe 里的前端碰不到也不用管
+// 半透明的底按叠加亮度判断；可访问消息 iframe 的字影由 card-clarity.js 独立处理。
 const cardDirty = new Set();
 let cardTimer = 0;
 const parseRgba = s => { const m = s && s.match(/rgba?\(([^)]+)\)/); if (!m) return null; const p = m[1].split(/[\s,/]+/).filter(Boolean).map(Number); return { r: p[0], g: p[1], b: p[2], a: p.length > 3 ? p[3] : 1 }; };
@@ -1599,13 +1602,20 @@ function blockBg(el, cs = getComputedStyle(el)) {
 function tagCard(text) {
     // 以 <html> 上的 class 为准：CSS 也是按它配色的
     const light = root.classList.contains('ilg-light');
-    let fixedOverlay = false;
+    let fixedOverlay = false, cardRenderer = false;
     const walk = (el, base) => {
         for (const k of el.children) {
             const cs = getComputedStyle(k);
             if (cs.position === 'fixed' && cs.display !== 'none' && cs.visibility !== 'hidden' && k.getClientRects().length) fixedOverlay = true;
+            if (k.matches('iframe') && cs.display !== 'none' && cs.visibility !== 'hidden' && k.getBoundingClientRect().width > 0 && k.getBoundingClientRect().height > 0) cardRenderer = true;
             if (k.matches('iframe, img, video, svg, canvas, q, em, i, b, strong, br')) continue;
             const c = blockBg(k, cs);
+            const panel = k.matches('div, section, article, aside, details, summary, dialog, button, [role="dialog"], [role="button"], [role="menu"], [role="listbox"], [role="option"]');
+            const choice = k.matches('button, select, option, input[type="button"], input[type="submit"], [role="button"], [role="option"]');
+            const surface = choice || (panel && (!!c || cs.backgroundImage !== 'none' || cs.position === 'fixed'));
+            k.classList.toggle('ilg-card-surface', surface);
+            if (surface && cs.display !== 'none' && cs.visibility !== 'hidden' && k.getClientRects().length) cardRenderer = true;
+
             let lum = base;
             if (c) lum = lumOf(c) * c.a + base * (1 - c.a);
             k.classList.toggle('ilg-lit', !!c && lum > 0.62 && !light);
@@ -1615,8 +1625,9 @@ function tagCard(text) {
     };
     walk(text, light ? 0.95 : 0.08);
     const message = text.closest('.mes');
-    if (message && message.classList.contains('ilg-content-overlay') !== fixedOverlay) {
+    if (message && (message.classList.contains('ilg-content-overlay') !== fixedOverlay || message.classList.contains('ilg-card-renderer') !== cardRenderer)) {
         message.classList.toggle('ilg-content-overlay', fixedOverlay);
+        message.classList.toggle('ilg-card-renderer', cardRenderer);
         paint(message);
     }
 }
@@ -1633,7 +1644,7 @@ new MutationObserver(muts => {
     for (const m of muts) {
         // Ignore our luminance markers; host/card style and visibility changes still rescan the message.
         if (m.type === 'attributes' && m.attributeName === 'class') {
-            const clean = value => (value || '').split(/\s+/).filter(c => c && !['ilg-lit', 'ilg-dim'].includes(c)).sort().join(' ');
+            const clean = value => (value || '').split(/\s+/).filter(c => c && !['ilg-lit', 'ilg-dim', 'ilg-card-surface'].includes(c)).sort().join(' ');
             if (clean(m.oldValue) === clean(m.target.className)) continue;
         }
         // Only message content and its visibility changes belong to this pass.

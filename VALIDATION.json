@@ -1,19 +1,15 @@
 {
-  "version": "1.4.2-tt.4",
+  "version": "1.4.2-tt.5",
   "date": "2026-10-28",
   "sourceBase": {
-    "version": "1.4.2-tt.3",
-    "commit": "93ae27b139492f24225240fa00c6b20da4b0931a"
+    "version": "1.4.2-tt.4",
+    "commit": "3481cbff1f167a7e947f955ce53416596ef81e11"
   },
-  "scope": "Unified ST/TT capability routing, collapsible fine tuning, native confirmation checkbox visibility, same-document fixed overlay and foreground clarity guards",
-  "defaults": {
-    "compatibilityMode": "auto",
-    "iosSvgTrial": false,
-    "fineTuningExpanded": false
-  },
-  "migration": "Legacy Android checkbox field retained but no longer gates refraction; absent new mode selects auto. Explicit blur override persists and gates all platforms, including an enabled iOS trial.",
+  "scope": "Automatic card-panel and accessible message-iframe text clarity; bypass message SVG compositing for self-rendered card panels while retaining ordinary-message glass",
+  "userControl": "No independent clarity switch or saved setting. Follows beautification master switch.",
   "staticChecks": {
     "entrySyntax": "pass",
+    "clarityModuleSyntax": "pass",
     "manifest": {
       "pass": true,
       "files": [
@@ -298,7 +294,7 @@
         },
         "checks": [
           "Details collapsed by default; sliders hidden; click and keyboard toggle preserve values",
-          "Fixed-overlay displacement reproduced on tt.3; viewport alignment restored; authored shadow retained",
+          "Fixed-overlay displacement reproduced on tt.3; viewport alignment restored; panel text shadow automatically removed",
           "Dynamic overlay closing restores message glass",
           "Native delete/current-chat/custom checkboxes show state and preserve click/Space semantics",
           "Unrelated content and unregistered popup excluded; off restores host styles without changing checked state",
@@ -321,7 +317,7 @@
         },
         "checks": [
           "Details collapsed by default; sliders hidden; click and keyboard toggle preserve values",
-          "Fixed-overlay displacement reproduced on tt.3; viewport alignment restored; authored shadow retained",
+          "Fixed-overlay displacement reproduced on tt.3; viewport alignment restored; panel text shadow automatically removed",
           "Dynamic overlay closing restores message glass",
           "Native delete/current-chat/custom checkboxes show state and preserve click/Space semantics",
           "Unrelated content and unregistered popup excluded; off restores host styles without changing checked state",
@@ -344,7 +340,7 @@
         },
         "checks": [
           "Details collapsed by default; sliders hidden; click and keyboard toggle preserve values",
-          "Fixed-overlay displacement reproduced on tt.3; viewport alignment restored; authored shadow retained",
+          "Fixed-overlay displacement reproduced on tt.3; viewport alignment restored; panel text shadow automatically removed",
           "Dynamic overlay closing restores message glass",
           "Native delete/current-chat/custom checkboxes show state and preserve click/Space semantics",
           "Unrelated content and unregistered popup excluded; off restores host styles without changing checked state",
@@ -367,7 +363,7 @@
         },
         "checks": [
           "Details collapsed by default; sliders hidden; click and keyboard toggle preserve values",
-          "Fixed-overlay displacement reproduced on tt.3; viewport alignment restored; authored shadow retained",
+          "Fixed-overlay displacement reproduced on tt.3; viewport alignment restored; panel text shadow automatically removed",
           "Dynamic overlay closing restores message glass",
           "Native delete/current-chat/custom checkboxes show state and preserve click/Space semantics",
           "Unrelated content and unregistered popup excluded; off restores host styles without changing checked state",
@@ -390,7 +386,7 @@
         },
         "checks": [
           "Details collapsed by default; sliders hidden; click and keyboard toggle preserve values",
-          "Fixed-overlay displacement reproduced on tt.3; viewport alignment restored; authored shadow retained",
+          "Fixed-overlay displacement reproduced on tt.3; viewport alignment restored; panel text shadow automatically removed",
           "Dynamic overlay closing restores message glass",
           "Native delete/current-chat/custom checkboxes show state and preserve click/Space semantics",
           "Unrelated content and unregistered popup excluded; off restores host styles without changing checked state",
@@ -413,7 +409,7 @@
         },
         "checks": [
           "Details collapsed by default; sliders hidden; click and keyboard toggle preserve values",
-          "Fixed-overlay displacement reproduced on tt.3; viewport alignment restored; authored shadow retained",
+          "Fixed-overlay displacement reproduced on tt.3; viewport alignment restored; panel text shadow automatically removed",
           "Dynamic overlay closing restores message glass",
           "Native delete/current-chat/custom checkboxes show state and preserve click/Space semantics",
           "Unrelated content and unregistered popup excluded; off restores host styles without changing checked state",
@@ -436,7 +432,7 @@
         },
         "checks": [
           "Details collapsed by default; sliders hidden; click and keyboard toggle preserve values",
-          "Fixed-overlay displacement reproduced on tt.3; viewport alignment restored; authored shadow retained",
+          "Fixed-overlay displacement reproduced on tt.3; viewport alignment restored; panel text shadow automatically removed",
           "Dynamic overlay closing restores message glass",
           "Native delete/current-chat/custom checkboxes show state and preserve click/Space semantics",
           "Unrelated content and unregistered popup excluded; off restores host styles without changing checked state",
@@ -459,7 +455,7 @@
         },
         "checks": [
           "Details collapsed by default; sliders hidden; click and keyboard toggle preserve values",
-          "Fixed-overlay displacement reproduced on tt.3; viewport alignment restored; authored shadow retained",
+          "Fixed-overlay displacement reproduced on tt.3; viewport alignment restored; panel text shadow automatically removed",
           "Dynamic overlay closing restores message glass",
           "Native delete/current-chat/custom checkboxes show state and preserve click/Space semantics",
           "Unrelated content and unregistered popup excluded; off restores host styles without changing checked state",
@@ -475,31 +471,212 @@
       "Cross-origin iframe content and card-owned fixed widths require original-source diagnosis"
     ]
   },
+  "clarity": {
+    "caseCount": 8,
+    "cases": [
+      {
+        "engine": "edge",
+        "width": 390,
+        "tone": "dark",
+        "beforeShadow": "rgb(68, 34, 51) 2px 2px 2px",
+        "normalProseShadowPreserved": "rgba(0, 0, 0, 0.75) 0px 1px 2px",
+        "choicePixelDifference": 8.69,
+        "checks": [
+          "Automatic card-panel and same-origin iframe text-shadow removal including pseudo-elements",
+          "No new checkbox or saved clarity field; master off restores authored shadows and removes iframe styles",
+          "Plain prose, palette, font, border and box shadow preserved; choice click works",
+          "Accessible frame load/reload, dynamic insert, nested frames and removal cleanup",
+          "Opaque-origin and unrelated frames untouched; no frame source writes",
+          "Only self-rendered card messages bypass outer glass; plain-message glass and removal restoration verified; no duplicate styles or page errors"
+        ],
+        "errors": []
+      },
+      {
+        "engine": "edge",
+        "width": 390,
+        "tone": "light",
+        "beforeShadow": "rgb(68, 34, 51) 2px 2px 2px",
+        "normalProseShadowPreserved": "rgba(0, 0, 0, 0.75) 0px 1px 2px",
+        "choicePixelDifference": 8.69,
+        "checks": [
+          "Automatic card-panel and same-origin iframe text-shadow removal including pseudo-elements",
+          "No new checkbox or saved clarity field; master off restores authored shadows and removes iframe styles",
+          "Plain prose, palette, font, border and box shadow preserved; choice click works",
+          "Accessible frame load/reload, dynamic insert, nested frames and removal cleanup",
+          "Opaque-origin and unrelated frames untouched; no frame source writes",
+          "Only self-rendered card messages bypass outer glass; plain-message glass and removal restoration verified; no duplicate styles or page errors"
+        ],
+        "errors": []
+      },
+      {
+        "engine": "edge",
+        "width": 1280,
+        "tone": "dark",
+        "beforeShadow": "rgb(68, 34, 51) 2px 2px 2px",
+        "normalProseShadowPreserved": "rgba(0, 0, 0, 0.75) 0px 1px 2px",
+        "choicePixelDifference": 8.69,
+        "checks": [
+          "Automatic card-panel and same-origin iframe text-shadow removal including pseudo-elements",
+          "No new checkbox or saved clarity field; master off restores authored shadows and removes iframe styles",
+          "Plain prose, palette, font, border and box shadow preserved; choice click works",
+          "Accessible frame load/reload, dynamic insert, nested frames and removal cleanup",
+          "Opaque-origin and unrelated frames untouched; no frame source writes",
+          "Only self-rendered card messages bypass outer glass; plain-message glass and removal restoration verified; no duplicate styles or page errors"
+        ],
+        "errors": []
+      },
+      {
+        "engine": "edge",
+        "width": 1280,
+        "tone": "light",
+        "beforeShadow": "rgb(68, 34, 51) 2px 2px 2px",
+        "normalProseShadowPreserved": "rgba(0, 0, 0, 0.75) 0px 1px 2px",
+        "choicePixelDifference": 8.69,
+        "checks": [
+          "Automatic card-panel and same-origin iframe text-shadow removal including pseudo-elements",
+          "No new checkbox or saved clarity field; master off restores authored shadows and removes iframe styles",
+          "Plain prose, palette, font, border and box shadow preserved; choice click works",
+          "Accessible frame load/reload, dynamic insert, nested frames and removal cleanup",
+          "Opaque-origin and unrelated frames untouched; no frame source writes",
+          "Only self-rendered card messages bypass outer glass; plain-message glass and removal restoration verified; no duplicate styles or page errors"
+        ],
+        "errors": []
+      },
+      {
+        "engine": "webkit",
+        "width": 390,
+        "tone": "dark",
+        "beforeShadow": "rgb(68, 34, 51) 2px 2px 2px",
+        "normalProseShadowPreserved": "rgba(0, 0, 0, 0.75) 0px 1px 2px",
+        "choicePixelDifference": 8.72,
+        "checks": [
+          "Automatic card-panel and same-origin iframe text-shadow removal including pseudo-elements",
+          "No new checkbox or saved clarity field; master off restores authored shadows and removes iframe styles",
+          "Plain prose, palette, font, border and box shadow preserved; choice click works",
+          "Accessible frame load/reload, dynamic insert, nested frames and removal cleanup",
+          "Opaque-origin and unrelated frames untouched; no frame source writes",
+          "Only self-rendered card messages bypass outer glass; plain-message glass and removal restoration verified; no duplicate styles or page errors"
+        ],
+        "errors": []
+      },
+      {
+        "engine": "webkit",
+        "width": 390,
+        "tone": "light",
+        "beforeShadow": "rgb(68, 34, 51) 2px 2px 2px",
+        "normalProseShadowPreserved": "rgba(0, 0, 0, 0.75) 0px 1px 2px",
+        "choicePixelDifference": 8.72,
+        "checks": [
+          "Automatic card-panel and same-origin iframe text-shadow removal including pseudo-elements",
+          "No new checkbox or saved clarity field; master off restores authored shadows and removes iframe styles",
+          "Plain prose, palette, font, border and box shadow preserved; choice click works",
+          "Accessible frame load/reload, dynamic insert, nested frames and removal cleanup",
+          "Opaque-origin and unrelated frames untouched; no frame source writes",
+          "Only self-rendered card messages bypass outer glass; plain-message glass and removal restoration verified; no duplicate styles or page errors"
+        ],
+        "errors": []
+      },
+      {
+        "engine": "webkit",
+        "width": 1280,
+        "tone": "dark",
+        "beforeShadow": "rgb(68, 34, 51) 2px 2px 2px",
+        "normalProseShadowPreserved": "rgba(0, 0, 0, 0.75) 0px 1px 2px",
+        "choicePixelDifference": 8.72,
+        "checks": [
+          "Automatic card-panel and same-origin iframe text-shadow removal including pseudo-elements",
+          "No new checkbox or saved clarity field; master off restores authored shadows and removes iframe styles",
+          "Plain prose, palette, font, border and box shadow preserved; choice click works",
+          "Accessible frame load/reload, dynamic insert, nested frames and removal cleanup",
+          "Opaque-origin and unrelated frames untouched; no frame source writes",
+          "Only self-rendered card messages bypass outer glass; plain-message glass and removal restoration verified; no duplicate styles or page errors"
+        ],
+        "errors": []
+      },
+      {
+        "engine": "webkit",
+        "width": 1280,
+        "tone": "light",
+        "beforeShadow": "rgb(68, 34, 51) 2px 2px 2px",
+        "normalProseShadowPreserved": "rgba(0, 0, 0, 0.75) 0px 1px 2px",
+        "choicePixelDifference": 8.72,
+        "checks": [
+          "Automatic card-panel and same-origin iframe text-shadow removal including pseudo-elements",
+          "No new checkbox or saved clarity field; master off restores authored shadows and removes iframe styles",
+          "Plain prose, palette, font, border and box shadow preserved; choice click works",
+          "Accessible frame load/reload, dynamic insert, nested frames and removal cleanup",
+          "Opaque-origin and unrelated frames untouched; no frame source writes",
+          "Only self-rendered card messages bypass outer glass; plain-message glass and removal restoration verified; no duplicate styles or page errors"
+        ],
+        "errors": []
+      }
+    ],
+    "hostApiRequests": [],
+    "limitations": [
+      "Desktop engines with synthetic card panels; supplied rolecard source unavailable",
+      "Opaque-origin and cross-origin iframe contents cannot be changed",
+      "Card CSS with inline important text shadows, drop-shadow filters, stroke or duplicated text may require card source"
+    ],
+    "realDeviceAcceptance": "pending"
+  },
+  "frameOrigins": {
+    "caseCount": 2,
+    "cases": [
+      {
+        "engine": "edge",
+        "checks": [
+          "Same-origin URL iframe nested inside inherited-origin srcdoc gets clarity",
+          "Cross-origin URL iframe is skipped before document access",
+          "Destroy removes nested runtime styles; no page errors"
+        ],
+        "errors": []
+      },
+      {
+        "engine": "webkit",
+        "checks": [
+          "Same-origin URL iframe nested inside inherited-origin srcdoc gets clarity",
+          "Cross-origin URL iframe is skipped before document access",
+          "Destroy removes nested runtime styles; no page errors"
+        ],
+        "errors": []
+      }
+    ]
+  },
   "visualInspection": {
     "rounds": 2,
     "inspected": [
-      "Edge mobile light confirmation",
-      "Windows WebKit mobile dark confirmation",
-      "Edge desktop light confirmation",
-      "Edge mobile settings collapsed",
-      "Edge baseline/new fixed overlay",
-      "Windows WebKit mobile protected overlay"
+      "tt.4 baseline card renderer with shadows and blurred message compositing",
+      "Edge mobile light automatic clarity",
+      "Edge desktop dark automatic clarity",
+      "Windows WebKit mobile light/dark automatic clarity"
     ],
-    "note": "Desktop synthetic fixture screenshots only; not actual user card or mobile acceptance"
+    "note": "First inspection exposed residual whole-panel blur after text-shadow removal alone; card-only outer-glass bypass added and confirmed clear in second inspection. Synthetic panels, not supplied original card."
+  },
+  "preservation": {
+    "ordinaryProseShadow": true,
+    "ordinaryMessageGlass": true,
+    "topBarAndInputGlass": true,
+    "paletteFontBorderBoxShadow": true,
+    "iframeSourceUnmodified": true,
+    "originalEngineUnchanged": true
+  },
+  "runtimeBoundaries": {
+    "cardOwnership": "Same-document message card panels and controls detected by background/position; visible message iframes bypass message glass",
+    "frameOwnership": "Accessible message iframes and accessible nested frames only; no unrelated frames",
+    "isolatedFrames": "Known cross-origin URLs and opaque sandbox frames skipped before document probing",
+    "lifecycle": "Load/reload, nested/dynamic insertion, removal, stylesheet replacement, master disable and destroy tested"
   },
   "realHostEvidence": {
-    "androidTT": "Prior user-accepted version and new reported defects only; this version pending",
-    "iOSTT": "No iOS device test; true background refraction unconfirmed",
-    "reportedRolecard": "Original source unavailable; minimal same-document overlay reproducer passed, screenshot card still pending",
-    "sillyTavern": "Synthetic context/DOM and local installed-version native CSS/templates; no live user instance modified"
+    "reportedCards": "Images only; original card source unavailable; actual devices pending",
+    "androidTT": "Prior compatibility accepted by user; new text fix pending device acceptance",
+    "iOSTT": "No iOS device rendering acceptance; real refraction remains unconfirmed"
   },
-  "originalEngineUnchanged": true,
-  "originalRepositoryModified": false,
-  "publishTarget": "jjing8235-afk/test",
   "limits": [
-    "Capability/UA routing does not uniquely identify all TT clients or prove visible refraction",
-    "Card-owned fixed widths, wrapping/overflow and iframe internal layouts need original source and real-host diagnosis",
-    "No real chat deletion, host API request or actual enable/disable state mutation performed",
-    "Mobile keyboard, safe area, long-chat performance and installation remain device checks"
-  ]
+    "No claim that all possible reported ghosting has a single cause",
+    "Inline important text shadows, text stroke, drop-shadow filters or duplicated card text may require original-source work",
+    "Cross-origin/sandbox iframe contents remain inaccessible; restrictive frame style policy may prevent runtime CSS application",
+    "Mobile long-chat performance, keyboard/safe area and actual host installation remain device checks"
+  ],
+  "originalRepositoryModified": false,
+  "publishTarget": "jjing8235-afk/test"
 }

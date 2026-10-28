@@ -3366,3 +3366,10 @@ html.ilg body dialog.popup.ilg-glass:not(.ilg-adapted) {
 html.ilg.ilg-light body dialog.popup.ilg-glass:not(.ilg-adapted) {
     background-color: rgba(248, 249, 252, 0.94);
 }
+
+/* Automatic clarity override for card panels; follows the beautification master switch. */
+html.ilg body #chat .mes_text :is(.ilg-card-surface, .ilg-card-surface *),
+html.ilg body #chat .mes_text :is(.ilg-card-surface, .ilg-card-surface *)::before,
+html.ilg body #chat .mes_text :is(.ilg-card-surface, .ilg-card-surface *)::after {
+    text-shadow: none !important;
+}
