@@ -210,6 +210,16 @@ html.ilg body .ilg-glass:where(#top-bar, #top-bar *, #top-settings-holder, #top-
     mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
 }
 
+/* 普通消息玻璃不继承旧引擎的白色描边和内侧亮影；物理玻璃的底色蒙版保持原样。 */
+html.ilg body.bubblechat #chat .mes.ilg-glass:not(.ilg-phys):not(.smallSysMes)::before {
+    content: none;
+}
+html.ilg body.bubblechat:not(.noShadows) #chat .mes.ilg-glass:not(.ilg-phys):not(.smallSysMes) {
+    box-shadow:
+        0 var(--ilg-lift-y) var(--ilg-lift-b) rgba(var(--ilg-drop-rgb), var(--ilg-drop)),
+        0 2px 6px rgba(var(--ilg-drop-rgb), calc(var(--ilg-drop) * 0.55));
+}
+
 /* ---------- 浅色壁纸：深色文字 + 更白的玻璃（酒馆把颜色变量写在 html 上，这里在 body 层覆盖） ---------- */
 html.ilg.ilg-light body {
     --ilg-k: 1.25;

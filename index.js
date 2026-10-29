@@ -1011,14 +1011,14 @@ function applyRoot() {
     requestAnimationFrame(repaintAll);
 }
 
-// 输入框高度变化（多行、快捷回复栏）时同步聊天区底部留白，并保持贴底
+// 输入框高度变化时同步底部留白；仅在扩展启用且宿主允许自动滚动时保持贴底
 const form = document.getElementById('form_sheld');
 const chatEl = document.getElementById('chat');
 const cardClarity = createCardTextClarity(chatEl);
 new ResizeObserver(() => {
     const atBottom = chatEl.scrollHeight - chatEl.scrollTop - chatEl.clientHeight < 40;
     root.style.setProperty('--ilg-form-h', `${form.offsetHeight}px`);
-    if (atBottom) chatEl.scrollTop = chatEl.scrollHeight;
+    if (S.enabled && ctx.powerUserSettings?.auto_scroll_chat_to_bottom && atBottom) chatEl.scrollTop = chatEl.scrollHeight;
 }).observe(form);
 
 // 新消息、删除消息、切换聊天
@@ -1374,7 +1374,7 @@ function lumAt(x, y, bar) {
     return null;
 }
 function adaptBar(bar) {
-    if (!bar || bar.hidden) return false;
+    if (!bar || bar.hidden) return null;
     const r = bar.getBoundingClientRect();
     const ys = [r.top + r.height * 0.35, r.top + r.height * 0.7];
     let sum = 0, n = 0;
@@ -1383,26 +1383,33 @@ function adaptBar(bar) {
         if (l !== null) { sum += l; n++; }
     }
     const avg = n ? sum / n : null;
-    bar.classList.toggle('ilg-over-light', !lightBg && avg !== null && avg > 0.62);
-    bar.classList.toggle('ilg-over-dark', lightBg && avg !== null && avg < 0.38);
-    return bar.classList.contains('ilg-over-light');
+    return { bar, light: !lightBg && avg !== null && avg > 0.62, dark: lightBg && avg !== null && avg < 0.38 };
 }
-let adaptRaf = 0;
+// 合并滚动与流式输出的采样；最后一次请求仍会补采，先读完所有表面再更新样式。
+const ADAPT_INTERVAL = 100;
+let adaptRaf = 0, adaptTimer = 0, adaptLast = -Infinity;
 function scheduleAdapt() {
-    if (adaptRaf || !S.enabled) return;
-    adaptRaf = requestAnimationFrame(() => {
-        adaptRaf = 0;
-        if (S.islands && islands.length) {
-            // 每座岛各自判断；岛下面是浅色内容时，它那几个图标加深阴影
-            islands.forEach(isl => {
-                const over = adaptBar(isl);
-                (isl.icons || []).forEach(d => d.classList.toggle('ilg-icon-over-light', over));
-            });
-        } else {
-            adaptBar(document.getElementById('top-bar'));
-        }
-        adaptBar(document.querySelector(PILL_SEL));
-    });
+    if (adaptRaf || adaptTimer || !S.enabled) return;
+    const queue = () => {
+        adaptTimer = 0;
+        adaptRaf = requestAnimationFrame(() => {
+            adaptRaf = 0;
+            if (!S.enabled) return;
+            adaptLast = performance.now();
+            const bars = S.islands && islands.length ? islands : [document.getElementById('top-bar')];
+            const samples = [...bars, document.querySelector(PILL_SEL)].map(adaptBar);
+            for (const sample of samples) {
+                if (!sample) continue;
+                const { bar, light, dark } = sample;
+                bar.classList.toggle('ilg-over-light', light);
+                bar.classList.toggle('ilg-over-dark', dark);
+                (bar.icons || []).forEach(d => d.classList.toggle('ilg-icon-over-light', light));
+            }
+        });
+    };
+    const delay = Math.max(0, ADAPT_INTERVAL - (performance.now() - adaptLast));
+    if (delay) adaptTimer = setTimeout(queue, delay);
+    else queue();
 }
 chatEl.addEventListener('scroll', scheduleAdapt, { passive: true });
 // 滚动时消息卡片相对鼠标的位置变了，高光方向跟着变
@@ -1423,6 +1430,7 @@ floorChip.addEventListener('click', () => {
 });
 let floorRaf = 0;
 let floorHide = 0;
+let floorMessages = [], floorDirty = true;
 function flashFloor() {
     floorChip.classList.add('is-on');
     clearTimeout(floorHide);
@@ -1431,16 +1439,31 @@ function flashFloor() {
 function visibleFloor() {
     const bar = document.getElementById('top-bar');
     const chat = document.getElementById('chat');
-    const mes = chat ? chat.querySelectorAll('.mes[mesid]') : [];
+    if (floorDirty) {
+        floorMessages = chat ? [...chat.querySelectorAll('.mes[mesid]')] : [];
+        floorDirty = false;
+    }
+    const mes = floorMessages;
     if (!mes.length) return null;
     const last = Number(mes[mes.length - 1].getAttribute('mesid'));
-    // 已经滚到底：直接显示最后一楼，别显示屏幕顶上那条（读到底的人想知道的是「现在到第几楼」）
+    // 已经滚到底：直接显示最后一楼。
     if (chat && chat.scrollTop + chat.clientHeight >= chat.scrollHeight - 8) return last;
     const top = (bar ? bar.getBoundingClientRect().bottom : 43) + 6;
-    let cur = mes[mes.length - 1];
-    for (const m of mes) {
-        if (m.getBoundingClientRect().bottom > top) { cur = m; break; }
+    // 消息按楼层顺序纵向排列；二分定位第一条仍露在顶栏下方的消息。
+    let low = 0, high = mes.length;
+    while (low < high) {
+        const mid = (low + high) >>> 1;
+        const rect = mes[mid].getBoundingClientRect();
+        if (rect.width === 0 && rect.height === 0) {
+            // 隐藏消息没有顺序坐标；保留原来的线性语义，避免文档模式或插件隐藏楼层时误报。
+            low = mes.findIndex(m => m.getBoundingClientRect().bottom > top);
+            if (low < 0) low = mes.length - 1;
+            break;
+        }
+        if (rect.bottom > top) high = mid;
+        else low = mid + 1;
     }
+    const cur = mes[Math.min(low, mes.length - 1)];
     const id = Number(cur.getAttribute('mesid'));
     return Number.isFinite(id) ? id : null;
 }
@@ -1461,7 +1484,12 @@ function paintFloor() {
 function scheduleFloor() { if (!floorRaf) floorRaf = requestAnimationFrame(paintFloor); }
 // 滚动时才亮出来（1.6 秒后自己淡下去）：常驻会正好压在消息头上那行名字和日期上
 chatEl.addEventListener('scroll', () => { scheduleFloor(); flashFloor(); }, { passive: true });
-new MutationObserver(scheduleFloor).observe(chatEl, { childList: true, subtree: true });
+new MutationObserver(muts => {
+    if (muts.some(m => m.target === chatEl || m.type === 'attributes' ||
+        [...m.addedNodes, ...m.removedNodes].some(n => n.nodeType === 1 && (n.matches('.mes') || n.querySelector('.mes'))))) floorDirty = true;
+    scheduleFloor();
+}).observe(chatEl, { childList: true, subtree: true, attributes: true, attributeFilter: ['mesid'] });
+
 window.addEventListener('resize', scheduleFloor);
 scheduleFloor();
 
