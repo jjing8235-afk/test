@@ -203,6 +203,8 @@ document.body.appendChild(svg);
 const defs = svg.firstChild;
 
 const items = new Map();
+// Host UI state changes only need surfaces near the viewport; other messages update on intersection.
+const visibleItems = new Set();
 const cache = new Map();
 let uid = 0;
 function radiusOf(el, w, h) {
@@ -407,6 +409,8 @@ const io = new IntersectionObserver(entries => entries.forEach(e => {
     const it = items.get(e.target);
     if (!it || it.visible === e.isIntersecting) return;
     it.visible = e.isIntersecting;
+    if (it.visible) visibleItems.add(e.target);
+    else visibleItems.delete(e.target);
     paint(e.target);
 }), { root: document.getElementById('chat'), rootMargin: '200px 0px' });
 
@@ -414,6 +418,7 @@ function track(el, kind) {
     if (items.has(el) || !trackable(el)) return;
     const it = { id: `ilg-f${++uid}`, kind, visible: kind !== 'mes' };
     items.set(el, it);
+    if (it.visible) visibleItems.add(el);
     el.classList.add('ilg-glass');
     // 表面光泽只给不会内部滚动的表面，抽屉这类会滚的容器里光泽会跟着内容跑
     if (kind === 'bar' || kind === 'mes' || kind === 'toast') el.classList.add('ilg-sheen');
@@ -436,6 +441,7 @@ function untrack(el) {
     el.style.backdropFilter = '';
     el.style.webkitBackdropFilter = '';
     if (it.posFixed) el.style.position = '';
+    visibleItems.delete(el);
     items.delete(el);
 }
 
@@ -448,6 +454,7 @@ function scan() {
 }
 
 function repaintAll() { items.forEach((_, el) => paint(el)); }
+function repaintVisible() { visibleItems.forEach(paint); }
 function clearAll() { [...items.keys()].forEach(untrack); cache.clear(); clearMaps(); }
 
 // 顶栏分组悬浮岛：图标按功能分三组，每组后面画一块独立的玻璃。图标和抽屉面板都不动，抽屉是按整个图标区定位的
@@ -1041,8 +1048,12 @@ new MutationObserver(muts => {
     }
 }).observe(chatEl, { childList: true });
 
-// 弹窗是动态插入 body 的；body 的 class 变化代表切换了气泡模式 / 关闭模糊
+// 弹窗是动态插入 body 的；只在气泡模式变化时重扫消息，其他状态只重画屏幕附近的表面。
+let bodyBubbleMode = document.body.classList.contains('bubblechat');
 new MutationObserver(muts => {
+    const bubble = document.body.classList.contains('bubblechat');
+    const bubbleChanged = bubble !== bodyBubbleMode;
+    bodyBubbleMode = bubble;
     if (!S.enabled) return;
     let rescan = false;
     for (const m of muts) {
@@ -1058,7 +1069,10 @@ new MutationObserver(muts => {
             n.querySelectorAll?.('.ilg-glass').forEach(untrack);
         });
     }
-    if (rescan) { scan(); repaintAll(); }
+    if (rescan) {
+        if (bubbleChanged) scan();
+        repaintVisible();
+    }
 }).observe(document.body, { childList: true, attributes: true, attributeFilter: ['class'] });
 // 第三方弹窗不参与扫描：这里只监听酒馆核心弹窗和本扩展自己的宿主节点。
 function fmt(step, unit, v) {
