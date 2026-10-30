@@ -832,6 +832,7 @@ function setHome(on) {
         if (wantRecent) { wantRecent = false; requestAnimationFrame(() => setRecent(true)); }
     } else {
         setRecent(false);
+        releaseRecent();
         chat.querySelectorAll(':scope > .ilg-home-hide').forEach(n => n.classList.remove('ilg-home-hide'));
     }
 }
@@ -847,28 +848,54 @@ new MutationObserver(muts => {
         if (homeOn) n.classList.add('ilg-home-hide');
     }
     // 置顶、改名、删除后酒馆会重画整个欢迎面板：聊天记录开着的话，给新面板补上标题栏和玻璃
-    if (recentOn) {
+    if (recentPanel) {
         const panel = welcomePanel();
-        if (panel && panel !== recentPanel) { untrack(recentPanel); mountRecent(panel); }
+        if (panel !== recentPanel) { releaseRecent(); if (recentOn && panel) mountRecent(panel); }
     }
     syncHome();
 }).observe(document.getElementById('chat'), { childList: true });
 
 // 聊天记录：首页的醒目按钮 / 菜单第一行点开。直接把酒馆欢迎面板里的“最近聊天”列表当成一块浮起来的玻璃卡片显示，
 // 打开、置顶、改名、删除、显示更多都还是酒馆自己的按钮和逻辑，这里只负责摆位置、加标题栏
-let recentOn = false, recentPanel = null, wantRecent = false;
+let recentOn = false, recentPanel = null, recentAttrs = null, wantRecent = false;
 const welcomePanel = () => document.querySelector('#chat > .welcomePanel');
 const recentHead = document.createElement('div');
 recentHead.className = 'ilg-recent-head';
 recentHead.innerHTML = '<h2 class="ilg-recent-title" id="ilg-recent-title">聊天记录</h2>' +
+    '<button type="button" class="ilg-recent-settings" title="最近聊天记录设置">记录设置</button>' +
     '<button type="button" class="ilg-recent-close" title="关闭" aria-label="关闭聊天记录"></button>';
 recentHead.querySelector('.ilg-recent-close').addEventListener('click', () => setRecent(false, true));
+const recentSettings = recentHead.querySelector('.ilg-recent-settings');
+recentSettings.addEventListener('click', () => recentPanel?.querySelector('.recentChatsSettings')?.click());
+const recentStatus = document.createElement('p');
+recentStatus.className = 'ilg-recent-status';
+recentStatus.setAttribute('role', 'status');
+recentStatus.hidden = true;
+function releaseRecent() {
+    if (!recentPanel) return;
+    untrack(recentPanel);
+    recentPanel.classList.remove('ilg-recent');
+    for (const [name, value] of recentAttrs) {
+        if (value === null) recentPanel.removeAttribute(name);
+        else recentPanel.setAttribute(name, value);
+    }
+    recentHead.remove();
+    recentStatus.remove();
+    recentPanel = recentAttrs = null;
+}
 function mountRecent(panel) {
+    if (panel === recentPanel) return;
+    releaseRecent();
     recentPanel = panel;
+    recentAttrs = ['role', 'aria-labelledby', 'aria-hidden'].map(name => [name, panel.getAttribute(name)]);
     panel.classList.add('ilg-recent');
     panel.setAttribute('role', 'dialog');
     panel.setAttribute('aria-labelledby', 'ilg-recent-title');
-    if (recentHead.parentElement !== panel) panel.prepend(recentHead);
+    panel.setAttribute('aria-hidden', String(!recentOn));
+    recentStatus.hidden = !!panel.querySelector('.recentChat');
+    recentSettings.hidden = !panel.querySelector('.recentChatsSettings');
+    recentStatus.textContent = recentSettings.hidden ? '当前客户端未返回最近聊天记录，请重新打开首页或核对客户端版本。' : '当前酒馆未返回最近聊天记录，可检查“记录设置”后重新打开首页。';
+    panel.prepend(recentHead, recentStatus);
     track(panel, 'panel');
 }
 function setRecent(on, refocus) {
@@ -876,21 +903,18 @@ function setRecent(on, refocus) {
     on = on && homeOn && !!panel;
     if (on === recentOn) return;
     recentOn = on;
+    if (on) mountRecent(panel);
     root.classList.toggle('ilg-recent-open', on);
     recentBtn.setAttribute('aria-expanded', String(on));
+    if (recentPanel) {
+        recentPanel.setAttribute('aria-hidden', String(!on));
+    }
     if (on) {
         closeFoldMenu();
-        mountRecent(panel);
         panel.scrollTop = 0;
-        (panel.querySelector('.recentChat:not(.hidden)') || recentHead.querySelector('button')).focus({ preventScroll: true });
-    } else if (recentPanel) {
-        untrack(recentPanel);
-        recentPanel.classList.remove('ilg-recent');
-        recentPanel.removeAttribute('role');
-        recentHead.remove();
-        recentPanel = null;
-        if (refocus && homeOn) recentBtn.focus();
-    }
+        (panel.querySelector('.recentChat:not(.hidden)') || recentHead.querySelector('.ilg-recent-close')).focus({ preventScroll: true });
+        recentStatus.hidden = !!panel.querySelector('.recentChat');
+    } else if (refocus && homeOn) recentBtn.focus();
 }
 // 在聊天里点“聊天记录”：先关掉当前聊天（酒馆会自动保存，回到欢迎页），首页出现后自动展开列表
 function showRecent() {

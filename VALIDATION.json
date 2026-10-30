@@ -1,8 +1,8 @@
 {
   "date": "2026-10-30",
-  "version": "1.4.3-test.6",
-  "baseCommit": "e4e262cc31ca56e11fc23f69371a211b5fa05671",
-  "scope": "Settings drawer open/close, input + and wand menus, native NVWA preset compatibility",
+  "version": "1.4.3-test.7",
+  "baseCommit": "43fb6dd4d6d5647c853eb27edd0865c16bdd5311",
+  "scope": "Message missing-avatar alignment and native home history caching, settings access and empty state",
   "sourceChecks": [
     {
       "command": "--check index.js",
@@ -38,6 +38,10 @@
     },
     {
       "command": "--check dev/verify/panel-transitions-browser.mjs",
+      "passed": true
+    },
+    {
+      "command": "--check dev/verify/home-avatar-browser.mjs",
       "passed": true
     },
     {
@@ -127,56 +131,196 @@
     {
       "output": "after-interaction.json",
       "passed": true
+    },
+    {
+      "output": "after-transitions.json",
+      "passed": true
+    },
+    {
+      "output": "after-transitions-webkit.json",
+      "passed": true
     }
   ],
-  "transitionEvidence": {
+  "homeEvidence": {
     "baseline": [
       {
-        "floors": 4,
+        "records": 30,
         "width": 390,
-        "mode": "auto",
-        "nativePhysicalBuilds": 26,
-        "nativePaints": 26,
-        "closePhysicalBuilds": 34,
-        "presetSectionPhysicalBuilds": 60,
-        "presetSectionPaints": 60,
-        "tabbarFilter": "url(\"#ilg-f21\")",
+        "hostRecentHidden": true,
+        "listVisible": true,
+        "repeatedOpen": [
+          {
+            "filtersCreated": 1,
+            "physicalBuilds": 2,
+            "layoutCount": 2
+          },
+          {
+            "filtersCreated": 1,
+            "physicalBuilds": 2,
+            "layoutCount": 2
+          }
+        ],
+        "repeatedClose": [
+          {
+            "untrackCalls": 1,
+            "layoutCount": 1
+          },
+          {
+            "untrackCalls": 1,
+            "layoutCount": 1
+          }
+        ],
+        "missingAvatar": [
+          {
+            "big": false,
+            "frameWidth": 36,
+            "contentWidth": 50,
+            "inside": false,
+            "centered": false
+          },
+          {
+            "big": true,
+            "frameWidth": 35.9783935546875,
+            "contentWidth": 74.95492553710938,
+            "inside": false,
+            "centered": true
+          }
+        ],
         "lifecycle": {}
       },
       {
-        "floors": 240,
+        "records": 600,
         "width": 390,
-        "mode": "auto",
-        "nativePhysicalBuilds": 26,
-        "nativePaints": 26,
-        "closePhysicalBuilds": 31,
-        "presetSectionPhysicalBuilds": 53,
-        "presetSectionPaints": 53,
-        "tabbarFilter": "url(\"#ilg-f257\")",
+        "hostRecentHidden": false,
+        "listVisible": true,
+        "repeatedOpen": [
+          {
+            "filtersCreated": 1,
+            "physicalBuilds": 2,
+            "layoutCount": 2
+          },
+          {
+            "filtersCreated": 1,
+            "physicalBuilds": 2,
+            "layoutCount": 2
+          }
+        ],
+        "repeatedClose": [
+          {
+            "untrackCalls": 1,
+            "layoutCount": 1
+          },
+          {
+            "untrackCalls": 1,
+            "layoutCount": 1
+          }
+        ],
+        "missingAvatar": [
+          {
+            "big": false,
+            "frameWidth": 36,
+            "contentWidth": 50,
+            "inside": false,
+            "centered": false
+          },
+          {
+            "big": true,
+            "frameWidth": 35.978271484375,
+            "contentWidth": 74.95477294921875,
+            "inside": false,
+            "centered": true
+          }
+        ],
         "lifecycle": {}
       },
       {
-        "floors": 240,
-        "width": 390,
-        "mode": "blur",
-        "nativePhysicalBuilds": 0,
-        "nativePaints": 52,
-        "closePhysicalBuilds": 0,
-        "presetSectionPhysicalBuilds": 0,
-        "presetSectionPaints": 90,
-        "tabbarFilter": "blur(2px) saturate(1.6) brightness(1.05)",
-        "lifecycle": {}
-      },
-      {
-        "floors": 240,
+        "records": 600,
         "width": 1280,
-        "mode": "auto",
-        "nativePhysicalBuilds": 13,
-        "nativePaints": 13,
-        "closePhysicalBuilds": 18,
-        "presetSectionPhysicalBuilds": 42,
-        "presetSectionPaints": 42,
-        "tabbarFilter": "url(\"#ilg-f257\")",
+        "hostRecentHidden": true,
+        "listVisible": true,
+        "repeatedOpen": [
+          {
+            "filtersCreated": 1,
+            "physicalBuilds": 2,
+            "layoutCount": 2
+          },
+          {
+            "filtersCreated": 1,
+            "physicalBuilds": 2,
+            "layoutCount": 2
+          }
+        ],
+        "repeatedClose": [
+          {
+            "untrackCalls": 1,
+            "layoutCount": 1
+          },
+          {
+            "untrackCalls": 1,
+            "layoutCount": 1
+          }
+        ],
+        "missingAvatar": [
+          {
+            "big": false,
+            "frameWidth": 40,
+            "contentWidth": 50,
+            "inside": false,
+            "centered": false
+          },
+          {
+            "big": true,
+            "frameWidth": 39.9903564453125,
+            "contentWidth": 74.98193359375,
+            "inside": false,
+            "centered": true
+          }
+        ],
+        "lifecycle": {}
+      },
+      {
+        "records": 0,
+        "width": 390,
+        "hostRecentHidden": true,
+        "listVisible": true,
+        "repeatedOpen": [
+          {
+            "filtersCreated": 1,
+            "physicalBuilds": 2,
+            "layoutCount": 2
+          },
+          {
+            "filtersCreated": 1,
+            "physicalBuilds": 2,
+            "layoutCount": 2
+          }
+        ],
+        "repeatedClose": [
+          {
+            "untrackCalls": 1,
+            "layoutCount": 1
+          },
+          {
+            "untrackCalls": 1,
+            "layoutCount": 1
+          }
+        ],
+        "missingAvatar": [
+          {
+            "big": false,
+            "frameWidth": 36,
+            "contentWidth": 50,
+            "inside": false,
+            "centered": false
+          },
+          {
+            "big": true,
+            "frameWidth": 36,
+            "contentWidth": 75,
+            "inside": false,
+            "centered": true
+          }
+        ],
         "lifecycle": {}
       }
     ],
@@ -185,57 +329,203 @@
         "engine": "chromium",
         "cases": [
           {
-            "floors": 4,
+            "records": 30,
             "width": 390,
-            "mode": "auto",
-            "nativePhysicalBuilds": 1,
-            "nativePaints": 1,
-            "closePhysicalBuilds": 0,
-            "presetSectionPhysicalBuilds": 1,
-            "presetSectionPaints": 1,
-            "tabbarFilter": "none",
+            "hostRecentHidden": true,
+            "listVisible": true,
+            "repeatedOpen": [
+              {
+                "filtersCreated": 0,
+                "physicalBuilds": 1,
+                "layoutCount": 1
+              },
+              {
+                "filtersCreated": 0,
+                "physicalBuilds": 1,
+                "layoutCount": 1
+              }
+            ],
+            "repeatedClose": [
+              {
+                "untrackCalls": 0,
+                "layoutCount": 1
+              },
+              {
+                "untrackCalls": 0,
+                "layoutCount": 1
+              }
+            ],
+            "missingAvatar": [
+              {
+                "big": false,
+                "frameWidth": 36,
+                "contentWidth": 29,
+                "inside": true,
+                "centered": true
+              },
+              {
+                "big": true,
+                "frameWidth": 35.978302001953125,
+                "contentWidth": 28.98248291015625,
+                "inside": true,
+                "centered": true
+              }
+            ],
             "lifecycle": {
-              "allNativeDrawersAndRapidToggles": true,
-              "replacedTabbarDoesNotLeakFilters": true,
-              "disableRestoresHostAndEnableRestoresAdaptation": true,
-              "noBlurAndMemoryBoundary": true
+              "nativeActions": true,
+              "panelReplacement": true,
+              "showMoreHiddenRows": true,
+              "openChatAndReturn": true,
+              "disableRestoresHostPreference": true,
+              "reEnableAndOutsideClose": true,
+              "nativeRecordSettingsForwarding": true
             }
           },
           {
-            "floors": 240,
+            "records": 600,
             "width": 390,
-            "mode": "auto",
-            "nativePhysicalBuilds": 1,
-            "nativePaints": 1,
-            "closePhysicalBuilds": 0,
-            "presetSectionPhysicalBuilds": 1,
-            "presetSectionPaints": 1,
-            "tabbarFilter": "none",
-            "lifecycle": {}
+            "hostRecentHidden": false,
+            "listVisible": true,
+            "repeatedOpen": [
+              {
+                "filtersCreated": 0,
+                "physicalBuilds": 1,
+                "layoutCount": 1
+              },
+              {
+                "filtersCreated": 0,
+                "physicalBuilds": 1,
+                "layoutCount": 1
+              }
+            ],
+            "repeatedClose": [
+              {
+                "untrackCalls": 0,
+                "layoutCount": 1
+              },
+              {
+                "untrackCalls": 0,
+                "layoutCount": 1
+              }
+            ],
+            "missingAvatar": [
+              {
+                "big": false,
+                "frameWidth": 36,
+                "contentWidth": 29,
+                "inside": true,
+                "centered": true
+              },
+              {
+                "big": true,
+                "frameWidth": 35.983001708984375,
+                "contentWidth": 28.986297607421875,
+                "inside": true,
+                "centered": true
+              }
+            ],
+            "lifecycle": {
+              "nativeRecordSettingsForwarding": true,
+              "offscreenRowNativeAction": true,
+              "closedReplacementAndResize": true
+            }
           },
           {
-            "floors": 240,
-            "width": 390,
-            "mode": "blur",
-            "nativePhysicalBuilds": 0,
-            "nativePaints": 1,
-            "closePhysicalBuilds": 0,
-            "presetSectionPhysicalBuilds": 0,
-            "presetSectionPaints": 1,
-            "tabbarFilter": "none",
-            "lifecycle": {}
-          },
-          {
-            "floors": 240,
+            "records": 600,
             "width": 1280,
-            "mode": "auto",
-            "nativePhysicalBuilds": 1,
-            "nativePaints": 1,
-            "closePhysicalBuilds": 0,
-            "presetSectionPhysicalBuilds": 1,
-            "presetSectionPaints": 1,
-            "tabbarFilter": "none",
-            "lifecycle": {}
+            "hostRecentHidden": true,
+            "listVisible": true,
+            "repeatedOpen": [
+              {
+                "filtersCreated": 0,
+                "physicalBuilds": 1,
+                "layoutCount": 1
+              },
+              {
+                "filtersCreated": 0,
+                "physicalBuilds": 1,
+                "layoutCount": 1
+              }
+            ],
+            "repeatedClose": [
+              {
+                "untrackCalls": 0,
+                "layoutCount": 1
+              },
+              {
+                "untrackCalls": 0,
+                "layoutCount": 1
+              }
+            ],
+            "missingAvatar": [
+              {
+                "big": false,
+                "frameWidth": 40,
+                "contentWidth": 33,
+                "inside": true,
+                "centered": true
+              },
+              {
+                "big": true,
+                "frameWidth": 39.990478515625,
+                "contentWidth": 32.9920654296875,
+                "inside": true,
+                "centered": true
+              }
+            ],
+            "lifecycle": {
+              "nativeRecordSettingsForwarding": true,
+              "offscreenRowNativeAction": true,
+              "closedReplacementAndResize": true
+            }
+          },
+          {
+            "records": 0,
+            "width": 390,
+            "hostRecentHidden": true,
+            "listVisible": true,
+            "repeatedOpen": [
+              {
+                "filtersCreated": 0,
+                "physicalBuilds": 1,
+                "layoutCount": 1
+              },
+              {
+                "filtersCreated": 0,
+                "physicalBuilds": 1,
+                "layoutCount": 1
+              }
+            ],
+            "repeatedClose": [
+              {
+                "untrackCalls": 0,
+                "layoutCount": 1
+              },
+              {
+                "untrackCalls": 0,
+                "layoutCount": 1
+              }
+            ],
+            "missingAvatar": [
+              {
+                "big": false,
+                "frameWidth": 36,
+                "contentWidth": 29,
+                "inside": true,
+                "centered": true
+              },
+              {
+                "big": true,
+                "frameWidth": 35.978363037109375,
+                "contentWidth": 28.9825439453125,
+                "inside": true,
+                "centered": true
+              }
+            ],
+            "lifecycle": {
+              "nativeRecordSettingsForwarding": true,
+              "emptyListAndLateNativeData": true
+            }
           }
         ]
       },
@@ -243,65 +533,211 @@
         "engine": "webkit",
         "cases": [
           {
-            "floors": 4,
+            "records": 30,
             "width": 390,
-            "mode": "auto",
-            "nativePhysicalBuilds": 0,
-            "nativePaints": 1,
-            "closePhysicalBuilds": 0,
-            "presetSectionPhysicalBuilds": 0,
-            "presetSectionPaints": 1,
-            "tabbarFilter": "none",
+            "hostRecentHidden": true,
+            "listVisible": true,
+            "repeatedOpen": [
+              {
+                "filtersCreated": 0,
+                "physicalBuilds": 0,
+                "layoutCount": null
+              },
+              {
+                "filtersCreated": 0,
+                "physicalBuilds": 0,
+                "layoutCount": null
+              }
+            ],
+            "repeatedClose": [
+              {
+                "untrackCalls": 0,
+                "layoutCount": null
+              },
+              {
+                "untrackCalls": 0,
+                "layoutCount": null
+              }
+            ],
+            "missingAvatar": [
+              {
+                "big": false,
+                "frameWidth": 36,
+                "contentWidth": 29,
+                "inside": true,
+                "centered": true
+              },
+              {
+                "big": true,
+                "frameWidth": 36.019317626953125,
+                "contentWidth": 29.01556396484375,
+                "inside": true,
+                "centered": true
+              }
+            ],
             "lifecycle": {
-              "allNativeDrawersAndRapidToggles": true,
-              "replacedTabbarDoesNotLeakFilters": true,
-              "disableRestoresHostAndEnableRestoresAdaptation": true,
-              "noBlurAndMemoryBoundary": true
+              "nativeActions": true,
+              "panelReplacement": true,
+              "showMoreHiddenRows": true,
+              "openChatAndReturn": true,
+              "disableRestoresHostPreference": true,
+              "reEnableAndOutsideClose": true,
+              "nativeRecordSettingsForwarding": true
             }
           },
           {
-            "floors": 240,
+            "records": 600,
             "width": 390,
-            "mode": "auto",
-            "nativePhysicalBuilds": 0,
-            "nativePaints": 1,
-            "closePhysicalBuilds": 0,
-            "presetSectionPhysicalBuilds": 0,
-            "presetSectionPaints": 1,
-            "tabbarFilter": "none",
-            "lifecycle": {}
+            "hostRecentHidden": false,
+            "listVisible": true,
+            "repeatedOpen": [
+              {
+                "filtersCreated": 0,
+                "physicalBuilds": 0,
+                "layoutCount": null
+              },
+              {
+                "filtersCreated": 0,
+                "physicalBuilds": 0,
+                "layoutCount": null
+              }
+            ],
+            "repeatedClose": [
+              {
+                "untrackCalls": 0,
+                "layoutCount": null
+              },
+              {
+                "untrackCalls": 0,
+                "layoutCount": null
+              }
+            ],
+            "missingAvatar": [
+              {
+                "big": false,
+                "frameWidth": 36,
+                "contentWidth": 29,
+                "inside": true,
+                "centered": true
+              },
+              {
+                "big": true,
+                "frameWidth": 36.019989013671875,
+                "contentWidth": 29.01611328125,
+                "inside": true,
+                "centered": true
+              }
+            ],
+            "lifecycle": {
+              "nativeRecordSettingsForwarding": true,
+              "offscreenRowNativeAction": true,
+              "closedReplacementAndResize": true
+            }
           },
           {
-            "floors": 240,
-            "width": 390,
-            "mode": "blur",
-            "nativePhysicalBuilds": 0,
-            "nativePaints": 1,
-            "closePhysicalBuilds": 0,
-            "presetSectionPhysicalBuilds": 0,
-            "presetSectionPaints": 1,
-            "tabbarFilter": "none",
-            "lifecycle": {}
-          },
-          {
-            "floors": 240,
+            "records": 600,
             "width": 1280,
-            "mode": "auto",
-            "nativePhysicalBuilds": 0,
-            "nativePaints": 1,
-            "closePhysicalBuilds": 0,
-            "presetSectionPhysicalBuilds": 0,
-            "presetSectionPaints": 1,
-            "tabbarFilter": "none",
-            "lifecycle": {}
+            "hostRecentHidden": true,
+            "listVisible": true,
+            "repeatedOpen": [
+              {
+                "filtersCreated": 0,
+                "physicalBuilds": 0,
+                "layoutCount": null
+              },
+              {
+                "filtersCreated": 0,
+                "physicalBuilds": 0,
+                "layoutCount": null
+              }
+            ],
+            "repeatedClose": [
+              {
+                "untrackCalls": 0,
+                "layoutCount": null
+              },
+              {
+                "untrackCalls": 0,
+                "layoutCount": null
+              }
+            ],
+            "missingAvatar": [
+              {
+                "big": false,
+                "frameWidth": 40,
+                "contentWidth": 33,
+                "inside": true,
+                "centered": true
+              },
+              {
+                "big": true,
+                "frameWidth": 40,
+                "contentWidth": 33,
+                "inside": true,
+                "centered": true
+              }
+            ],
+            "lifecycle": {
+              "nativeRecordSettingsForwarding": true,
+              "offscreenRowNativeAction": true,
+              "closedReplacementAndResize": true
+            }
+          },
+          {
+            "records": 0,
+            "width": 390,
+            "hostRecentHidden": true,
+            "listVisible": true,
+            "repeatedOpen": [
+              {
+                "filtersCreated": 0,
+                "physicalBuilds": 0,
+                "layoutCount": null
+              },
+              {
+                "filtersCreated": 0,
+                "physicalBuilds": 0,
+                "layoutCount": null
+              }
+            ],
+            "repeatedClose": [
+              {
+                "untrackCalls": 0,
+                "layoutCount": null
+              },
+              {
+                "untrackCalls": 0,
+                "layoutCount": null
+              }
+            ],
+            "missingAvatar": [
+              {
+                "big": false,
+                "frameWidth": 36,
+                "contentWidth": 29,
+                "inside": true,
+                "centered": true
+              },
+              {
+                "big": true,
+                "frameWidth": 36.01983642578125,
+                "contentWidth": 29.0159912109375,
+                "inside": true,
+                "centered": true
+              }
+            ],
+            "lifecycle": {
+              "nativeRecordSettingsForwarding": true,
+              "emptyListAndLateNativeData": true
+            }
           }
         ]
       }
     ],
-    "actualPresetCSSReadOnly": true,
-    "originalPresetBytesUnchanged": true,
-    "hostFadeDriver": "jquery",
-    "metric": "Instrumented extension work counts, not click latency, INP, or phone performance"
+    "metric": "Instrumented extension counts and Chromium layout counts, not phone latency",
+    "nativeListAndActionsRetained": true,
+    "hostHiddenPreferenceUnchanged": true,
+    "forcedHomeReload": false
   },
   "productionScope": {
     "files": [
@@ -310,12 +746,12 @@
     ],
     "patch": {
       "index.js": {
-        "added": 0,
-        "removed": 5
+        "added": 38,
+        "removed": 14
       },
       "style.css": {
-        "added": 24,
-        "removed": 4
+        "added": 31,
+        "removed": 5
       }
     },
     "byteIdentical": [
@@ -323,23 +759,31 @@
       "card-clarity.js",
       "orb.js"
     ],
-    "presetContentOrScriptChanged": false,
-    "hostChanged": false,
-    "newSettingsOrDependencies": false
+    "cardOrChatOrPresetChanged": false,
+    "newDependencyOrStorageFields": false,
+    "newHistoryAPI": false
+  },
+  "sourceAuthority": {
+    "host": "SillyTavern 1.18.0 local source, inspected read-only",
+    "sourceCommit": "8172dcd0ee672d3cd9a5e5f7af134f91a45cd2b8",
+    "contracts": [
+      "Image error replaces img with .missing-avatar",
+      "Native welcomePanel recentChatsSettings handler",
+      "Native list replacement and per-row action listeners"
+    ],
+    "userAndroidTTRuntimeIdentified": false
   },
   "acceptance": {
-    "realSillyTavernWithCandidate": false,
-    "originalPresetScriptExecuted": false,
-    "originalPhone": false,
     "syntheticMobileAndDesktop": true,
-    "lookAlikeOwnershipChecked": true,
-    "saveCancelFixtureActions": true,
-    "rapidTogglesAndDisableRestore": true
+    "originalTTAvatarAcceptance": false,
+    "originalTTEmptyListReproduced": false,
+    "originalPhoneTiming": false,
+    "originalHostInstalledCandidate": false
   },
   "limitations": [
-    "Synthetic host with native drawer animation model and actual preset CSS; original preset script not executed",
-    "Desktop Chromium and Windows WebKit; no original Android/iOS hardware latency measurement",
-    "Host animation duration and host/card code remain unchanged",
-    "Focused adaptation fix; not a full repository/host review"
+    "Current test.6 already handles the ordinary recentHidden case; original Android TT missing-list root cause remains unverified",
+    "Existing native list is reused; first load, host list rebuilding and data retrieval still require original work",
+    "Desktop Chromium with Android UA and Windows WebKit with iPhone UA are not original phones",
+    "Focused fix, not a full repository/host audit"
   ]
 }
