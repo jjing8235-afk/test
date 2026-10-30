@@ -1,14 +1,15 @@
 {
-  "version": "1.4.3-test.4",
+  "version": "1.4.3-test.5",
   "date": "2026-10-30",
   "sourceBase": {
-    "version": "1.4.3-test.3",
-    "commit": "e69c8048922681322ee488e790e700cafc0b5851"
+    "version": "1.4.3-test.4",
+    "commit": "4a730f1e98c996cd99ef59ec0f7cde40b59acdfd"
   },
   "changes": [
-    "Reuse unchanged upper-left menu controls and batch drawer metadata reads before DOM writes",
-    "Use shared CSS width and viewport clamping instead of measuring the newly opened menu",
-    "Add chat-only 12–32 px font controls with numeric input, persistence, bounds validation and follow-host reset"
+    "Coalesce glass sliders, presets, profile and light-follow controls into near-viewport updates",
+    "Avoid full card-luminance checks when tone state is unchanged",
+    "Read card siblings before writing markers, then descend to preserve inherited colors",
+    "Limit lighting to near-viewport surfaces and skip disabled-feature message work"
   ],
   "sourceChecks": [
     {
@@ -37,6 +38,10 @@
     },
     {
       "check": "--check dev/verify/chat-font-regression.mjs",
+      "passed": true
+    },
+    {
+      "check": "--check dev/verify/shared-performance-browser.mjs",
       "passed": true
     },
     {
@@ -98,662 +103,941 @@
       "passed": true
     }
   ],
-  "foldMenu": {
+  "extendedChecks": [
+    {
+      "output": "after-performance-webkit.json",
+      "passed": true
+    },
+    {
+      "output": "menu-font-chromium.json",
+      "passed": true
+    },
+    {
+      "output": "menu-font-webkit.json",
+      "passed": true
+    },
+    {
+      "output": "after-host.json",
+      "passed": true
+    },
+    {
+      "output": "after-host-webkit.json",
+      "passed": true
+    },
+    {
+      "output": "after-interaction.json",
+      "passed": true
+    }
+  ],
+  "performance": {
     "baseline": [
       {
         "floors": 4,
-        "openings": [
-          {
-            "rebuilds": 1,
-            "menuWidthReads": 1,
-            "drawerStyleReads": 14,
-            "fullScans": 0,
-            "messagePaints": 0,
-            "synchronousMs": 16.5,
-            "layouts": 2,
-            "styleRecalculations": 10,
-            "bounds": {
-              "left": 16,
-              "right": 352,
-              "width": 336,
-              "viewport": 390
-            }
-          },
-          {
-            "rebuilds": 1,
-            "menuWidthReads": 1,
-            "drawerStyleReads": 14,
-            "fullScans": 0,
-            "messagePaints": 0,
-            "synchronousMs": 9.899999999906868,
-            "layouts": 1,
-            "styleRecalculations": 10,
-            "bounds": {
-              "left": 16,
-              "right": 352,
-              "width": 336,
-              "viewport": 390
-            }
-          },
-          {
-            "rebuilds": 1,
-            "menuWidthReads": 1,
-            "drawerStyleReads": 14,
-            "fullScans": 0,
-            "messagePaints": 0,
-            "synchronousMs": 9.800000000046566,
-            "layouts": 1,
-            "styleRecalculations": 10,
-            "bounds": {
-              "left": 16,
-              "right": 352,
-              "width": 336,
-              "viewport": 390
-            }
-          }
-        ],
-        "keyboard": {
-          "first": true,
-          "moved": true,
-          "closed": true,
-          "refocused": true
+        "slider": {
+          "fullScans": 3,
+          "fullPaints": 3,
+          "visiblePaints": 0,
+          "messagePaints": 12,
+          "cardTags": 4,
+          "fullCardQueues": 3,
+          "thinkPasses": 1,
+          "lightPasses": 0,
+          "registryEntries": 39,
+          "layouts": 8,
+          "styleRecalculations": 11
+        },
+        "preset": {
+          "fullScans": 1,
+          "fullPaints": 1,
+          "visiblePaints": 0,
+          "messagePaints": 4,
+          "cardTags": 4,
+          "fullCardQueues": 1,
+          "thinkPasses": 1,
+          "lightPasses": 0,
+          "registryEntries": 13,
+          "layouts": 8,
+          "styleRecalculations": 10
+        },
+        "follow": {
+          "fullScans": 1,
+          "fullPaints": 1,
+          "visiblePaints": 0,
+          "messagePaints": 4,
+          "cardTags": 4,
+          "fullCardQueues": 1,
+          "thinkPasses": 1,
+          "lightPasses": 0,
+          "registryEntries": 13,
+          "layouts": 0,
+          "styleRecalculations": 14
+        },
+        "avatar": {
+          "fullScans": 1,
+          "fullPaints": 1,
+          "visiblePaints": 0,
+          "messagePaints": 8,
+          "cardTags": 4,
+          "fullCardQueues": 1,
+          "thinkPasses": 1,
+          "lightPasses": 0,
+          "registryEntries": 13,
+          "layouts": 1,
+          "styleRecalculations": 1
+        },
+        "cardPanel": {
+          "fullScans": 0,
+          "fullPaints": 0,
+          "visiblePaints": 0,
+          "messagePaints": 2,
+          "cardTags": 1,
+          "fullCardQueues": 0,
+          "thinkPasses": 1,
+          "lightPasses": 0,
+          "registryEntries": 0,
+          "layouts": 3,
+          "styleRecalculations": 96
+        },
+        "theme": {
+          "fullScans": 0,
+          "fullPaints": 0,
+          "visiblePaints": 0,
+          "messagePaints": 0,
+          "cardTags": 4,
+          "fullCardQueues": 1,
+          "thinkPasses": 0,
+          "lightPasses": 0,
+          "registryEntries": 0,
+          "layouts": 1,
+          "styleRecalculations": 114
+        },
+        "lighting": {
+          "fullScans": 0,
+          "fullPaints": 0,
+          "visiblePaints": 0,
+          "messagePaints": 0,
+          "cardTags": 0,
+          "fullCardQueues": 0,
+          "thinkPasses": 0,
+          "lightPasses": 1,
+          "registryEntries": 13,
+          "layouts": 0,
+          "styleRecalculations": 0
+        },
+        "qr": {
+          "fullScans": 0,
+          "fullPaints": 0,
+          "visiblePaints": 0,
+          "messagePaints": 0,
+          "cardTags": 0,
+          "fullCardQueues": 0,
+          "thinkPasses": 0,
+          "lightPasses": 0,
+          "registryEntries": 0,
+          "layouts": 2,
+          "styleRecalculations": 23
+        },
+        "native": {
+          "fullScans": 0,
+          "fullPaints": 0,
+          "visiblePaints": 0,
+          "messagePaints": 0,
+          "cardTags": 0,
+          "fullCardQueues": 0,
+          "thinkPasses": 0,
+          "lightPasses": 0,
+          "registryEntries": 0,
+          "layouts": 3,
+          "styleRecalculations": 59
+        },
+        "idleText": {
+          "fullScans": 0,
+          "fullPaints": 0,
+          "visiblePaints": 0,
+          "messagePaints": 0,
+          "cardTags": 1,
+          "fullCardQueues": 0,
+          "thinkPasses": 1,
+          "lightPasses": 0,
+          "registryEntries": 0,
+          "layouts": 1,
+          "styleRecalculations": 0
+        },
+        "disabledText": {
+          "fullScans": 0,
+          "fullPaints": 0,
+          "visiblePaints": 0,
+          "messagePaints": 0,
+          "cardTags": 1,
+          "fullCardQueues": 0,
+          "thinkPasses": 1,
+          "lightPasses": 0,
+          "registryEntries": 0,
+          "layouts": 1,
+          "styleRecalculations": 0
         }
       },
       {
         "floors": 80,
-        "openings": [
-          {
-            "rebuilds": 1,
-            "menuWidthReads": 1,
-            "drawerStyleReads": 14,
-            "fullScans": 0,
-            "messagePaints": 0,
-            "synchronousMs": 45.60000000009313,
-            "layouts": 2,
-            "styleRecalculations": 10,
-            "bounds": {
-              "left": 16,
-              "right": 352,
-              "width": 336,
-              "viewport": 390
-            }
-          },
-          {
-            "rebuilds": 1,
-            "menuWidthReads": 1,
-            "drawerStyleReads": 14,
-            "fullScans": 0,
-            "messagePaints": 0,
-            "synchronousMs": 35.9000000001397,
-            "layouts": 1,
-            "styleRecalculations": 10,
-            "bounds": {
-              "left": 16,
-              "right": 352,
-              "width": 336,
-              "viewport": 390
-            }
-          },
-          {
-            "rebuilds": 1,
-            "menuWidthReads": 1,
-            "drawerStyleReads": 14,
-            "fullScans": 0,
-            "messagePaints": 0,
-            "synchronousMs": 36,
-            "layouts": 1,
-            "styleRecalculations": 10,
-            "bounds": {
-              "left": 16,
-              "right": 352,
-              "width": 336,
-              "viewport": 390
-            }
-          }
-        ],
-        "keyboard": {
-          "first": true,
-          "moved": true,
-          "closed": true,
-          "refocused": true
+        "slider": {
+          "fullScans": 3,
+          "fullPaints": 3,
+          "visiblePaints": 0,
+          "messagePaints": 240,
+          "cardTags": 80,
+          "fullCardQueues": 3,
+          "thinkPasses": 1,
+          "lightPasses": 0,
+          "registryEntries": 267,
+          "layouts": 10,
+          "styleRecalculations": 13
+        },
+        "preset": {
+          "fullScans": 1,
+          "fullPaints": 1,
+          "visiblePaints": 0,
+          "messagePaints": 80,
+          "cardTags": 80,
+          "fullCardQueues": 1,
+          "thinkPasses": 1,
+          "lightPasses": 0,
+          "registryEntries": 89,
+          "layouts": 10,
+          "styleRecalculations": 12
+        },
+        "follow": {
+          "fullScans": 1,
+          "fullPaints": 1,
+          "visiblePaints": 0,
+          "messagePaints": 80,
+          "cardTags": 80,
+          "fullCardQueues": 1,
+          "thinkPasses": 1,
+          "lightPasses": 0,
+          "registryEntries": 89,
+          "layouts": 0,
+          "styleRecalculations": 14
+        },
+        "avatar": {
+          "fullScans": 1,
+          "fullPaints": 1,
+          "visiblePaints": 0,
+          "messagePaints": 160,
+          "cardTags": 80,
+          "fullCardQueues": 1,
+          "thinkPasses": 1,
+          "lightPasses": 0,
+          "registryEntries": 89,
+          "layouts": 1,
+          "styleRecalculations": 1
+        },
+        "cardPanel": {
+          "fullScans": 0,
+          "fullPaints": 0,
+          "visiblePaints": 0,
+          "messagePaints": 2,
+          "cardTags": 1,
+          "fullCardQueues": 0,
+          "thinkPasses": 1,
+          "lightPasses": 0,
+          "registryEntries": 0,
+          "layouts": 3,
+          "styleRecalculations": 84
+        },
+        "theme": {
+          "fullScans": 0,
+          "fullPaints": 0,
+          "visiblePaints": 0,
+          "messagePaints": 0,
+          "cardTags": 80,
+          "fullCardQueues": 1,
+          "thinkPasses": 0,
+          "lightPasses": 0,
+          "registryEntries": 0,
+          "layouts": 1,
+          "styleRecalculations": 116
+        },
+        "lighting": {
+          "fullScans": 0,
+          "fullPaints": 0,
+          "visiblePaints": 0,
+          "messagePaints": 0,
+          "cardTags": 0,
+          "fullCardQueues": 0,
+          "thinkPasses": 0,
+          "lightPasses": 1,
+          "registryEntries": 89,
+          "layouts": 0,
+          "styleRecalculations": 0
+        },
+        "qr": {
+          "fullScans": 0,
+          "fullPaints": 0,
+          "visiblePaints": 0,
+          "messagePaints": 0,
+          "cardTags": 0,
+          "fullCardQueues": 0,
+          "thinkPasses": 0,
+          "lightPasses": 0,
+          "registryEntries": 0,
+          "layouts": 2,
+          "styleRecalculations": 23
+        },
+        "native": {
+          "fullScans": 0,
+          "fullPaints": 0,
+          "visiblePaints": 0,
+          "messagePaints": 0,
+          "cardTags": 0,
+          "fullCardQueues": 0,
+          "thinkPasses": 0,
+          "lightPasses": 0,
+          "registryEntries": 0,
+          "layouts": 4,
+          "styleRecalculations": 61
+        },
+        "idleText": {
+          "fullScans": 0,
+          "fullPaints": 0,
+          "visiblePaints": 0,
+          "messagePaints": 0,
+          "cardTags": 1,
+          "fullCardQueues": 0,
+          "thinkPasses": 1,
+          "lightPasses": 0,
+          "registryEntries": 0,
+          "layouts": 1,
+          "styleRecalculations": 0
+        },
+        "disabledText": {
+          "fullScans": 0,
+          "fullPaints": 0,
+          "visiblePaints": 0,
+          "messagePaints": 0,
+          "cardTags": 1,
+          "fullCardQueues": 0,
+          "thinkPasses": 1,
+          "lightPasses": 0,
+          "registryEntries": 0,
+          "layouts": 1,
+          "styleRecalculations": 0
         }
       },
       {
         "floors": 240,
-        "openings": [
-          {
-            "rebuilds": 1,
-            "menuWidthReads": 1,
-            "drawerStyleReads": 14,
-            "fullScans": 0,
-            "messagePaints": 0,
-            "synchronousMs": 105.30000000004657,
-            "layouts": 2,
-            "styleRecalculations": 10,
-            "bounds": {
-              "left": 16,
-              "right": 352,
-              "width": 336,
-              "viewport": 390
-            }
-          },
-          {
-            "rebuilds": 1,
-            "menuWidthReads": 1,
-            "drawerStyleReads": 14,
-            "fullScans": 0,
-            "messagePaints": 0,
-            "synchronousMs": 91,
-            "layouts": 1,
-            "styleRecalculations": 10,
-            "bounds": {
-              "left": 16,
-              "right": 352,
-              "width": 336,
-              "viewport": 390
-            }
-          },
-          {
-            "rebuilds": 1,
-            "menuWidthReads": 1,
-            "drawerStyleReads": 14,
-            "fullScans": 0,
-            "messagePaints": 0,
-            "synchronousMs": 86.9000000001397,
-            "layouts": 1,
-            "styleRecalculations": 10,
-            "bounds": {
-              "left": 16,
-              "right": 352,
-              "width": 336,
-              "viewport": 390
-            }
-          }
-        ],
-        "keyboard": {
-          "first": true,
-          "moved": true,
-          "closed": true,
-          "refocused": true
+        "slider": {
+          "fullScans": 3,
+          "fullPaints": 3,
+          "visiblePaints": 0,
+          "messagePaints": 720,
+          "cardTags": 240,
+          "fullCardQueues": 3,
+          "thinkPasses": 1,
+          "lightPasses": 0,
+          "registryEntries": 747,
+          "layouts": 10,
+          "styleRecalculations": 13
+        },
+        "preset": {
+          "fullScans": 1,
+          "fullPaints": 1,
+          "visiblePaints": 0,
+          "messagePaints": 240,
+          "cardTags": 240,
+          "fullCardQueues": 1,
+          "thinkPasses": 1,
+          "lightPasses": 0,
+          "registryEntries": 249,
+          "layouts": 10,
+          "styleRecalculations": 15
+        },
+        "follow": {
+          "fullScans": 1,
+          "fullPaints": 1,
+          "visiblePaints": 0,
+          "messagePaints": 240,
+          "cardTags": 240,
+          "fullCardQueues": 1,
+          "thinkPasses": 1,
+          "lightPasses": 0,
+          "registryEntries": 249,
+          "layouts": 0,
+          "styleRecalculations": 13
+        },
+        "avatar": {
+          "fullScans": 1,
+          "fullPaints": 1,
+          "visiblePaints": 0,
+          "messagePaints": 480,
+          "cardTags": 240,
+          "fullCardQueues": 1,
+          "thinkPasses": 1,
+          "lightPasses": 0,
+          "registryEntries": 249,
+          "layouts": 1,
+          "styleRecalculations": 1
+        },
+        "cardPanel": {
+          "fullScans": 0,
+          "fullPaints": 0,
+          "visiblePaints": 0,
+          "messagePaints": 2,
+          "cardTags": 1,
+          "fullCardQueues": 0,
+          "thinkPasses": 1,
+          "lightPasses": 0,
+          "registryEntries": 0,
+          "layouts": 3,
+          "styleRecalculations": 84
+        },
+        "theme": {
+          "fullScans": 0,
+          "fullPaints": 0,
+          "visiblePaints": 0,
+          "messagePaints": 0,
+          "cardTags": 240,
+          "fullCardQueues": 1,
+          "thinkPasses": 0,
+          "lightPasses": 0,
+          "registryEntries": 0,
+          "layouts": 1,
+          "styleRecalculations": 115
+        },
+        "lighting": {
+          "fullScans": 0,
+          "fullPaints": 0,
+          "visiblePaints": 0,
+          "messagePaints": 0,
+          "cardTags": 0,
+          "fullCardQueues": 0,
+          "thinkPasses": 0,
+          "lightPasses": 1,
+          "registryEntries": 249,
+          "layouts": 0,
+          "styleRecalculations": 0
+        },
+        "qr": {
+          "fullScans": 0,
+          "fullPaints": 0,
+          "visiblePaints": 0,
+          "messagePaints": 0,
+          "cardTags": 0,
+          "fullCardQueues": 0,
+          "thinkPasses": 0,
+          "lightPasses": 0,
+          "registryEntries": 0,
+          "layouts": 2,
+          "styleRecalculations": 23
+        },
+        "native": {
+          "fullScans": 0,
+          "fullPaints": 0,
+          "visiblePaints": 0,
+          "messagePaints": 0,
+          "cardTags": 0,
+          "fullCardQueues": 0,
+          "thinkPasses": 0,
+          "lightPasses": 0,
+          "registryEntries": 0,
+          "layouts": 4,
+          "styleRecalculations": 61
+        },
+        "idleText": {
+          "fullScans": 0,
+          "fullPaints": 0,
+          "visiblePaints": 0,
+          "messagePaints": 0,
+          "cardTags": 1,
+          "fullCardQueues": 0,
+          "thinkPasses": 1,
+          "lightPasses": 0,
+          "registryEntries": 0,
+          "layouts": 1,
+          "styleRecalculations": 0
+        },
+        "disabledText": {
+          "fullScans": 0,
+          "fullPaints": 0,
+          "visiblePaints": 0,
+          "messagePaints": 0,
+          "cardTags": 1,
+          "fullCardQueues": 0,
+          "thinkPasses": 1,
+          "lightPasses": 0,
+          "registryEntries": 0,
+          "layouts": 1,
+          "styleRecalculations": 0
         }
       }
     ],
     "candidate": [
       {
         "engine": "chromium",
-        "histories": [
-          {
-            "floors": 4,
-            "openings": [
-              {
-                "rebuilds": 1,
-                "menuWidthReads": 0,
-                "drawerStyleReads": 14,
-                "fullScans": 0,
-                "messagePaints": 0,
-                "synchronousMs": 1,
-                "layouts": 1,
-                "styleRecalculations": 1,
-                "bounds": {
-                  "left": 16,
-                  "right": 352,
-                  "width": 336,
-                  "viewport": 390
-                }
-              },
-              {
-                "rebuilds": 0,
-                "menuWidthReads": 0,
-                "drawerStyleReads": 14,
-                "fullScans": 0,
-                "messagePaints": 0,
-                "synchronousMs": 0.30000000004656613,
-                "layouts": 0,
-                "styleRecalculations": 0,
-                "bounds": {
-                  "left": 16,
-                  "right": 352,
-                  "width": 336,
-                  "viewport": 390
-                }
-              },
-              {
-                "rebuilds": 0,
-                "menuWidthReads": 0,
-                "drawerStyleReads": 14,
-                "fullScans": 0,
-                "messagePaints": 0,
-                "synchronousMs": 0.19999999995343387,
-                "layouts": 0,
-                "styleRecalculations": 0,
-                "bounds": {
-                  "left": 16,
-                  "right": 352,
-                  "width": 336,
-                  "viewport": 390
-                }
-              }
-            ],
-            "keyboard": {
-              "first": true,
-              "moved": true,
-              "closed": true,
-              "refocused": true
-            }
-          },
-          {
-            "floors": 80,
-            "openings": [
-              {
-                "rebuilds": 1,
-                "menuWidthReads": 0,
-                "drawerStyleReads": 14,
-                "fullScans": 0,
-                "messagePaints": 0,
-                "synchronousMs": 0.8000000000465661,
-                "layouts": 1,
-                "styleRecalculations": 1,
-                "bounds": {
-                  "left": 16,
-                  "right": 352,
-                  "width": 336,
-                  "viewport": 390
-                }
-              },
-              {
-                "rebuilds": 0,
-                "menuWidthReads": 0,
-                "drawerStyleReads": 14,
-                "fullScans": 0,
-                "messagePaints": 0,
-                "synchronousMs": 0.30000000004656613,
-                "layouts": 0,
-                "styleRecalculations": 0,
-                "bounds": {
-                  "left": 16,
-                  "right": 352,
-                  "width": 336,
-                  "viewport": 390
-                }
-              },
-              {
-                "rebuilds": 0,
-                "menuWidthReads": 0,
-                "drawerStyleReads": 14,
-                "fullScans": 0,
-                "messagePaints": 0,
-                "synchronousMs": 0.10000000009313226,
-                "layouts": 0,
-                "styleRecalculations": 0,
-                "bounds": {
-                  "left": 16,
-                  "right": 352,
-                  "width": 336,
-                  "viewport": 390
-                }
-              }
-            ],
-            "keyboard": {
-              "first": true,
-              "moved": true,
-              "closed": true,
-              "refocused": true
-            }
-          },
-          {
-            "floors": 240,
-            "openings": [
-              {
-                "rebuilds": 1,
-                "menuWidthReads": 0,
-                "drawerStyleReads": 14,
-                "fullScans": 0,
-                "messagePaints": 0,
-                "synchronousMs": 0.6999999999534339,
-                "layouts": 1,
-                "styleRecalculations": 1,
-                "bounds": {
-                  "left": 16,
-                  "right": 352,
-                  "width": 336,
-                  "viewport": 390
-                }
-              },
-              {
-                "rebuilds": 0,
-                "menuWidthReads": 0,
-                "drawerStyleReads": 14,
-                "fullScans": 0,
-                "messagePaints": 0,
-                "synchronousMs": 0.19999999995343387,
-                "layouts": 0,
-                "styleRecalculations": 0,
-                "bounds": {
-                  "left": 16,
-                  "right": 352,
-                  "width": 336,
-                  "viewport": 390
-                }
-              },
-              {
-                "rebuilds": 0,
-                "menuWidthReads": 0,
-                "drawerStyleReads": 14,
-                "fullScans": 0,
-                "messagePaints": 0,
-                "synchronousMs": 0.09999999986030161,
-                "layouts": 0,
-                "styleRecalculations": 0,
-                "bounds": {
-                  "left": 16,
-                  "right": 352,
-                  "width": 336,
-                  "viewport": 390
-                }
-              }
-            ],
-            "keyboard": {
-              "first": true,
-              "moved": true,
-              "closed": true,
-              "refocused": true
-            }
-          }
-        ],
-        "dynamicCases": [
-          {
-            "nativeDrawerProxy": true,
-            "sheetBack": true,
-            "newDrawer": true,
-            "hiddenDrawer": true,
-            "updatedTitleAndMask": true,
-            "alertRefresh": true,
-            "removedDrawer": true,
-            "viewportWidths": [
-              320,
-              360,
-              768,
-              1280
-            ]
-          }
-        ]
-      },
-      {
-        "engine": "webkit",
-        "histories": [
-          {
-            "floors": 4,
-            "openings": [
-              {
-                "rebuilds": 1,
-                "menuWidthReads": 0,
-                "drawerStyleReads": 14,
-                "fullScans": 0,
-                "messagePaints": 0,
-                "synchronousMs": 1,
-                "layouts": null,
-                "styleRecalculations": null,
-                "bounds": {
-                  "left": 16,
-                  "right": 352,
-                  "width": 336,
-                  "viewport": 390
-                }
-              },
-              {
-                "rebuilds": 0,
-                "menuWidthReads": 0,
-                "drawerStyleReads": 14,
-                "fullScans": 0,
-                "messagePaints": 0,
-                "synchronousMs": 1,
-                "layouts": null,
-                "styleRecalculations": null,
-                "bounds": {
-                  "left": 16,
-                  "right": 352,
-                  "width": 336,
-                  "viewport": 390
-                }
-              },
-              {
-                "rebuilds": 0,
-                "menuWidthReads": 0,
-                "drawerStyleReads": 14,
-                "fullScans": 0,
-                "messagePaints": 0,
-                "synchronousMs": 0,
-                "layouts": null,
-                "styleRecalculations": null,
-                "bounds": {
-                  "left": 16,
-                  "right": 352,
-                  "width": 336,
-                  "viewport": 390
-                }
-              }
-            ],
-            "keyboard": {
-              "first": true,
-              "moved": true,
-              "closed": true,
-              "refocused": true
-            }
-          },
-          {
-            "floors": 80,
-            "openings": [
-              {
-                "rebuilds": 1,
-                "menuWidthReads": 0,
-                "drawerStyleReads": 14,
-                "fullScans": 0,
-                "messagePaints": 0,
-                "synchronousMs": 1,
-                "layouts": null,
-                "styleRecalculations": null,
-                "bounds": {
-                  "left": 16,
-                  "right": 352,
-                  "width": 336,
-                  "viewport": 390
-                }
-              },
-              {
-                "rebuilds": 0,
-                "menuWidthReads": 0,
-                "drawerStyleReads": 14,
-                "fullScans": 0,
-                "messagePaints": 0,
-                "synchronousMs": 1,
-                "layouts": null,
-                "styleRecalculations": null,
-                "bounds": {
-                  "left": 16,
-                  "right": 352,
-                  "width": 336,
-                  "viewport": 390
-                }
-              },
-              {
-                "rebuilds": 0,
-                "menuWidthReads": 0,
-                "drawerStyleReads": 14,
-                "fullScans": 0,
-                "messagePaints": 0,
-                "synchronousMs": 1,
-                "layouts": null,
-                "styleRecalculations": null,
-                "bounds": {
-                  "left": 16,
-                  "right": 352,
-                  "width": 336,
-                  "viewport": 390
-                }
-              }
-            ],
-            "keyboard": {
-              "first": true,
-              "moved": true,
-              "closed": true,
-              "refocused": true
-            }
-          },
-          {
-            "floors": 240,
-            "openings": [
-              {
-                "rebuilds": 1,
-                "menuWidthReads": 0,
-                "drawerStyleReads": 14,
-                "fullScans": 0,
-                "messagePaints": 0,
-                "synchronousMs": 1,
-                "layouts": null,
-                "styleRecalculations": null,
-                "bounds": {
-                  "left": 16,
-                  "right": 352,
-                  "width": 336,
-                  "viewport": 390
-                }
-              },
-              {
-                "rebuilds": 0,
-                "menuWidthReads": 0,
-                "drawerStyleReads": 14,
-                "fullScans": 0,
-                "messagePaints": 0,
-                "synchronousMs": 0,
-                "layouts": null,
-                "styleRecalculations": null,
-                "bounds": {
-                  "left": 16,
-                  "right": 352,
-                  "width": 336,
-                  "viewport": 390
-                }
-              },
-              {
-                "rebuilds": 0,
-                "menuWidthReads": 0,
-                "drawerStyleReads": 14,
-                "fullScans": 0,
-                "messagePaints": 0,
-                "synchronousMs": 0,
-                "layouts": null,
-                "styleRecalculations": null,
-                "bounds": {
-                  "left": 16,
-                  "right": 352,
-                  "width": 336,
-                  "viewport": 390
-                }
-              }
-            ],
-            "keyboard": {
-              "first": true,
-              "moved": true,
-              "closed": true,
-              "refocused": true
-            }
-          }
-        ],
-        "dynamicCases": [
-          {
-            "nativeDrawerProxy": true,
-            "sheetBack": true,
-            "newDrawer": true,
-            "hiddenDrawer": true,
-            "updatedTitleAndMask": true,
-            "alertRefresh": true,
-            "removedDrawer": true,
-            "viewportWidths": [
-              320,
-              360,
-              768,
-              1280
-            ]
-          }
-        ]
-      }
-    ],
-    "metrics": "Instrumented synchronous JavaScript work and CDP layout/style counts; not full input latency"
-  },
-  "chatFont": {
-    "default": 0,
-    "defaultMeaning": "Follow existing host and NVWA mobile typography",
-    "rangePx": [
-      12,
-      32
-    ],
-    "candidate": [
-      {
-        "engine": "chromium",
         "cases": [
           {
-            "width": 390,
-            "tone": "dark",
-            "defaultFollowsHost": true,
-            "rangeAndNumber": true,
-            "boundsAndRounding": true,
-            "normalAndUserAndReasoning": true,
-            "uiAndFrameAndAuthoredSizePreserved": true,
-            "noFullScanOnFontInput": true,
-            "reloadPersists": true,
-            "disableRestore": true,
-            "followHostReset": true,
-            "blankResets": true,
-            "fullReset": true,
-            "noOverflow": true
+            "floors": 4,
+            "slider": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 1,
+              "messagePaints": 4,
+              "cardTags": 0,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": 8,
+              "styleRecalculations": 9
+            },
+            "preset": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 1,
+              "messagePaints": 4,
+              "cardTags": 0,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": 8,
+              "styleRecalculations": 9
+            },
+            "follow": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 1,
+              "messagePaints": 4,
+              "cardTags": 0,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": 0,
+              "styleRecalculations": 11
+            },
+            "avatar": {
+              "fullScans": 1,
+              "fullPaints": 1,
+              "visiblePaints": 0,
+              "messagePaints": 8,
+              "cardTags": 0,
+              "fullCardQueues": 0,
+              "thinkPasses": 1,
+              "lightPasses": 0,
+              "registryEntries": 13,
+              "layouts": 1,
+              "styleRecalculations": 1
+            },
+            "cardPanel": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 0,
+              "messagePaints": 2,
+              "cardTags": 1,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": 3,
+              "styleRecalculations": 17
+            },
+            "theme": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 0,
+              "messagePaints": 0,
+              "cardTags": 4,
+              "fullCardQueues": 1,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": 1,
+              "styleRecalculations": 76
+            },
+            "lighting": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 0,
+              "messagePaints": 0,
+              "cardTags": 0,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 1,
+              "registryEntries": 0,
+              "layouts": 0,
+              "styleRecalculations": 0
+            },
+            "qr": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 0,
+              "messagePaints": 0,
+              "cardTags": 0,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": 2,
+              "styleRecalculations": 24
+            },
+            "native": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 0,
+              "messagePaints": 0,
+              "cardTags": 0,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": 3,
+              "styleRecalculations": 59
+            },
+            "idleText": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 0,
+              "messagePaints": 0,
+              "cardTags": 1,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": 1,
+              "styleRecalculations": 0
+            },
+            "disabledText": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 0,
+              "messagePaints": 0,
+              "cardTags": 0,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": 1,
+              "styleRecalculations": 0
+            },
+            "lifecycle": {
+              "offscreenRestored": true,
+              "pendingDisableClean": true,
+              "reenabledValue": true,
+              "resetWins": true,
+              "parentColorInheritance": true,
+              "quickToggleRechecks": true,
+              "unknownSettingsPreserved": true
+            }
           },
           {
-            "width": 390,
-            "tone": "light",
-            "defaultFollowsHost": true,
-            "rangeAndNumber": true,
-            "boundsAndRounding": true,
-            "normalAndUserAndReasoning": true,
-            "uiAndFrameAndAuthoredSizePreserved": true,
-            "noFullScanOnFontInput": true,
-            "reloadPersists": true,
-            "disableRestore": true,
-            "followHostReset": true,
-            "blankResets": true,
-            "fullReset": true,
-            "noOverflow": true
+            "floors": 80,
+            "slider": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 1,
+              "messagePaints": 6,
+              "cardTags": 0,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": 10,
+              "styleRecalculations": 11
+            },
+            "preset": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 1,
+              "messagePaints": 6,
+              "cardTags": 0,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": 10,
+              "styleRecalculations": 12
+            },
+            "follow": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 1,
+              "messagePaints": 6,
+              "cardTags": 0,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": 0,
+              "styleRecalculations": 5
+            },
+            "avatar": {
+              "fullScans": 1,
+              "fullPaints": 1,
+              "visiblePaints": 0,
+              "messagePaints": 160,
+              "cardTags": 0,
+              "fullCardQueues": 0,
+              "thinkPasses": 1,
+              "lightPasses": 0,
+              "registryEntries": 89,
+              "layouts": 1,
+              "styleRecalculations": 12
+            },
+            "cardPanel": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 0,
+              "messagePaints": 2,
+              "cardTags": 1,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": 3,
+              "styleRecalculations": 4
+            },
+            "theme": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 0,
+              "messagePaints": 0,
+              "cardTags": 80,
+              "fullCardQueues": 1,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": 1,
+              "styleRecalculations": 76
+            },
+            "lighting": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 0,
+              "messagePaints": 0,
+              "cardTags": 0,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 1,
+              "registryEntries": 0,
+              "layouts": 0,
+              "styleRecalculations": 0
+            },
+            "qr": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 0,
+              "messagePaints": 0,
+              "cardTags": 0,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": 2,
+              "styleRecalculations": 23
+            },
+            "native": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 0,
+              "messagePaints": 0,
+              "cardTags": 0,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": 4,
+              "styleRecalculations": 63
+            },
+            "idleText": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 0,
+              "messagePaints": 0,
+              "cardTags": 1,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": 1,
+              "styleRecalculations": 0
+            },
+            "disabledText": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 0,
+              "messagePaints": 0,
+              "cardTags": 0,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": 1,
+              "styleRecalculations": 0
+            },
+            "lifecycle": {
+              "offscreenRestored": true,
+              "pendingDisableClean": true,
+              "reenabledValue": true,
+              "resetWins": true,
+              "parentColorInheritance": true,
+              "quickToggleRechecks": true,
+              "unknownSettingsPreserved": true
+            }
           },
           {
-            "width": 1280,
-            "tone": "dark",
-            "defaultFollowsHost": true,
-            "rangeAndNumber": true,
-            "boundsAndRounding": true,
-            "normalAndUserAndReasoning": true,
-            "uiAndFrameAndAuthoredSizePreserved": true,
-            "noFullScanOnFontInput": true,
-            "reloadPersists": true,
-            "disableRestore": true,
-            "followHostReset": true,
-            "blankResets": true,
-            "fullReset": true,
-            "noOverflow": true
-          },
-          {
-            "width": 1280,
-            "tone": "light",
-            "defaultFollowsHost": true,
-            "rangeAndNumber": true,
-            "boundsAndRounding": true,
-            "normalAndUserAndReasoning": true,
-            "uiAndFrameAndAuthoredSizePreserved": true,
-            "noFullScanOnFontInput": true,
-            "reloadPersists": true,
-            "disableRestore": true,
-            "followHostReset": true,
-            "blankResets": true,
-            "fullReset": true,
-            "noOverflow": true
+            "floors": 240,
+            "slider": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 1,
+              "messagePaints": 6,
+              "cardTags": 0,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": 10,
+              "styleRecalculations": 11
+            },
+            "preset": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 1,
+              "messagePaints": 6,
+              "cardTags": 0,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": 10,
+              "styleRecalculations": 12
+            },
+            "follow": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 1,
+              "messagePaints": 6,
+              "cardTags": 0,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": 0,
+              "styleRecalculations": 11
+            },
+            "avatar": {
+              "fullScans": 1,
+              "fullPaints": 1,
+              "visiblePaints": 0,
+              "messagePaints": 480,
+              "cardTags": 0,
+              "fullCardQueues": 0,
+              "thinkPasses": 1,
+              "lightPasses": 0,
+              "registryEntries": 249,
+              "layouts": 1,
+              "styleRecalculations": 1
+            },
+            "cardPanel": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 0,
+              "messagePaints": 2,
+              "cardTags": 1,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": 3,
+              "styleRecalculations": 4
+            },
+            "theme": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 0,
+              "messagePaints": 0,
+              "cardTags": 240,
+              "fullCardQueues": 1,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": 1,
+              "styleRecalculations": 76
+            },
+            "lighting": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 0,
+              "messagePaints": 0,
+              "cardTags": 0,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 1,
+              "registryEntries": 0,
+              "layouts": 0,
+              "styleRecalculations": 0
+            },
+            "qr": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 0,
+              "messagePaints": 0,
+              "cardTags": 0,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": 2,
+              "styleRecalculations": 23
+            },
+            "native": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 0,
+              "messagePaints": 0,
+              "cardTags": 0,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": 3,
+              "styleRecalculations": 63
+            },
+            "idleText": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 0,
+              "messagePaints": 0,
+              "cardTags": 1,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": 1,
+              "styleRecalculations": 0
+            },
+            "disabledText": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 0,
+              "messagePaints": 0,
+              "cardTags": 0,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": 1,
+              "styleRecalculations": 0
+            },
+            "lifecycle": {
+              "offscreenRestored": true,
+              "pendingDisableClean": true,
+              "reenabledValue": true,
+              "resetWins": true,
+              "parentColorInheritance": true,
+              "quickToggleRechecks": true,
+              "unknownSettingsPreserved": true
+            }
           }
         ]
       },
@@ -761,425 +1045,502 @@
         "engine": "webkit",
         "cases": [
           {
-            "width": 390,
-            "tone": "dark",
-            "defaultFollowsHost": true,
-            "rangeAndNumber": true,
-            "boundsAndRounding": true,
-            "normalAndUserAndReasoning": true,
-            "uiAndFrameAndAuthoredSizePreserved": true,
-            "noFullScanOnFontInput": true,
-            "reloadPersists": true,
-            "disableRestore": true,
-            "followHostReset": true,
-            "blankResets": true,
-            "fullReset": true,
-            "noOverflow": true
+            "floors": 4,
+            "slider": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 1,
+              "messagePaints": 4,
+              "cardTags": 0,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": null,
+              "styleRecalculations": null
+            },
+            "preset": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 1,
+              "messagePaints": 4,
+              "cardTags": 0,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": null,
+              "styleRecalculations": null
+            },
+            "follow": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 1,
+              "messagePaints": 4,
+              "cardTags": 0,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": null,
+              "styleRecalculations": null
+            },
+            "avatar": {
+              "fullScans": 1,
+              "fullPaints": 1,
+              "visiblePaints": 0,
+              "messagePaints": 8,
+              "cardTags": 0,
+              "fullCardQueues": 0,
+              "thinkPasses": 1,
+              "lightPasses": 0,
+              "registryEntries": 13,
+              "layouts": null,
+              "styleRecalculations": null
+            },
+            "cardPanel": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 0,
+              "messagePaints": 2,
+              "cardTags": 1,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": null,
+              "styleRecalculations": null
+            },
+            "theme": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 0,
+              "messagePaints": 0,
+              "cardTags": 4,
+              "fullCardQueues": 1,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": null,
+              "styleRecalculations": null
+            },
+            "lighting": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 0,
+              "messagePaints": 0,
+              "cardTags": 0,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 1,
+              "registryEntries": 0,
+              "layouts": null,
+              "styleRecalculations": null
+            },
+            "qr": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 0,
+              "messagePaints": 0,
+              "cardTags": 0,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": null,
+              "styleRecalculations": null
+            },
+            "native": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 0,
+              "messagePaints": 0,
+              "cardTags": 0,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": null,
+              "styleRecalculations": null
+            },
+            "idleText": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 0,
+              "messagePaints": 0,
+              "cardTags": 1,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": null,
+              "styleRecalculations": null
+            },
+            "disabledText": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 0,
+              "messagePaints": 0,
+              "cardTags": 0,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": null,
+              "styleRecalculations": null
+            },
+            "lifecycle": {
+              "offscreenRestored": true,
+              "pendingDisableClean": true,
+              "reenabledValue": true,
+              "resetWins": true,
+              "parentColorInheritance": true,
+              "quickToggleRechecks": true,
+              "unknownSettingsPreserved": true
+            }
           },
           {
-            "width": 390,
-            "tone": "light",
-            "defaultFollowsHost": true,
-            "rangeAndNumber": true,
-            "boundsAndRounding": true,
-            "normalAndUserAndReasoning": true,
-            "uiAndFrameAndAuthoredSizePreserved": true,
-            "noFullScanOnFontInput": true,
-            "reloadPersists": true,
-            "disableRestore": true,
-            "followHostReset": true,
-            "blankResets": true,
-            "fullReset": true,
-            "noOverflow": true
+            "floors": 80,
+            "slider": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 1,
+              "messagePaints": 5,
+              "cardTags": 0,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": null,
+              "styleRecalculations": null
+            },
+            "preset": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 1,
+              "messagePaints": 5,
+              "cardTags": 0,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": null,
+              "styleRecalculations": null
+            },
+            "follow": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 1,
+              "messagePaints": 5,
+              "cardTags": 0,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": null,
+              "styleRecalculations": null
+            },
+            "avatar": {
+              "fullScans": 1,
+              "fullPaints": 1,
+              "visiblePaints": 0,
+              "messagePaints": 160,
+              "cardTags": 0,
+              "fullCardQueues": 0,
+              "thinkPasses": 1,
+              "lightPasses": 0,
+              "registryEntries": 89,
+              "layouts": null,
+              "styleRecalculations": null
+            },
+            "cardPanel": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 0,
+              "messagePaints": 2,
+              "cardTags": 1,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": null,
+              "styleRecalculations": null
+            },
+            "theme": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 0,
+              "messagePaints": 0,
+              "cardTags": 80,
+              "fullCardQueues": 1,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": null,
+              "styleRecalculations": null
+            },
+            "lighting": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 0,
+              "messagePaints": 0,
+              "cardTags": 0,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 1,
+              "registryEntries": 0,
+              "layouts": null,
+              "styleRecalculations": null
+            },
+            "qr": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 0,
+              "messagePaints": 0,
+              "cardTags": 0,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": null,
+              "styleRecalculations": null
+            },
+            "native": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 0,
+              "messagePaints": 0,
+              "cardTags": 0,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": null,
+              "styleRecalculations": null
+            },
+            "idleText": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 0,
+              "messagePaints": 0,
+              "cardTags": 1,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": null,
+              "styleRecalculations": null
+            },
+            "disabledText": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 0,
+              "messagePaints": 0,
+              "cardTags": 0,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": null,
+              "styleRecalculations": null
+            },
+            "lifecycle": {
+              "offscreenRestored": true,
+              "pendingDisableClean": true,
+              "reenabledValue": true,
+              "resetWins": true,
+              "parentColorInheritance": true,
+              "quickToggleRechecks": true,
+              "unknownSettingsPreserved": true
+            }
           },
           {
-            "width": 1280,
-            "tone": "dark",
-            "defaultFollowsHost": true,
-            "rangeAndNumber": true,
-            "boundsAndRounding": true,
-            "normalAndUserAndReasoning": true,
-            "uiAndFrameAndAuthoredSizePreserved": true,
-            "noFullScanOnFontInput": true,
-            "reloadPersists": true,
-            "disableRestore": true,
-            "followHostReset": true,
-            "blankResets": true,
-            "fullReset": true,
-            "noOverflow": true
-          },
-          {
-            "width": 1280,
-            "tone": "light",
-            "defaultFollowsHost": true,
-            "rangeAndNumber": true,
-            "boundsAndRounding": true,
-            "normalAndUserAndReasoning": true,
-            "uiAndFrameAndAuthoredSizePreserved": true,
-            "noFullScanOnFontInput": true,
-            "reloadPersists": true,
-            "disableRestore": true,
-            "followHostReset": true,
-            "blankResets": true,
-            "fullReset": true,
-            "noOverflow": true
+            "floors": 240,
+            "slider": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 1,
+              "messagePaints": 5,
+              "cardTags": 0,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": null,
+              "styleRecalculations": null
+            },
+            "preset": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 1,
+              "messagePaints": 5,
+              "cardTags": 0,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": null,
+              "styleRecalculations": null
+            },
+            "follow": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 1,
+              "messagePaints": 5,
+              "cardTags": 0,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": null,
+              "styleRecalculations": null
+            },
+            "avatar": {
+              "fullScans": 1,
+              "fullPaints": 1,
+              "visiblePaints": 0,
+              "messagePaints": 480,
+              "cardTags": 0,
+              "fullCardQueues": 0,
+              "thinkPasses": 1,
+              "lightPasses": 0,
+              "registryEntries": 249,
+              "layouts": null,
+              "styleRecalculations": null
+            },
+            "cardPanel": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 0,
+              "messagePaints": 2,
+              "cardTags": 1,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": null,
+              "styleRecalculations": null
+            },
+            "theme": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 0,
+              "messagePaints": 0,
+              "cardTags": 240,
+              "fullCardQueues": 1,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": null,
+              "styleRecalculations": null
+            },
+            "lighting": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 0,
+              "messagePaints": 0,
+              "cardTags": 0,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 1,
+              "registryEntries": 0,
+              "layouts": null,
+              "styleRecalculations": null
+            },
+            "qr": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 0,
+              "messagePaints": 0,
+              "cardTags": 0,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": null,
+              "styleRecalculations": null
+            },
+            "native": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 0,
+              "messagePaints": 0,
+              "cardTags": 0,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": null,
+              "styleRecalculations": null
+            },
+            "idleText": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 0,
+              "messagePaints": 0,
+              "cardTags": 1,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": null,
+              "styleRecalculations": null
+            },
+            "disabledText": {
+              "fullScans": 0,
+              "fullPaints": 0,
+              "visiblePaints": 0,
+              "messagePaints": 0,
+              "cardTags": 0,
+              "fullCardQueues": 0,
+              "thinkPasses": 0,
+              "lightPasses": 0,
+              "registryEntries": 0,
+              "layouts": null,
+              "styleRecalculations": null
+            },
+            "lifecycle": {
+              "offscreenRestored": true,
+              "pendingDisableClean": true,
+              "reenabledValue": true,
+              "resetWins": true,
+              "parentColorInheritance": true,
+              "quickToggleRechecks": true,
+              "unknownSettingsPreserved": true
+            }
           }
         ]
       }
     ],
-    "unchangedBoundaries": [
-      "Host UI and input typography",
-      "Small system messages",
-      "Fixed authored card font sizes",
-      "Iframe document font sizes"
-    ]
+    "metric": "Instrumented work counts and Chromium style/layout counters, not input latency"
   },
-  "retained": {
-    "hostInteraction": [
-      {
-        "browser": "chromium",
-        "results": [
-          {
-            "floors": 4,
-            "physical": true,
-            "opened": {
-              "scans": 0,
-              "messagePaints": 4,
-              "registryEntries": 0,
-              "paintedFloors": [
-                "0",
-                "1",
-                "2",
-                "3"
-              ]
-            },
-            "closed": {
-              "scans": 0,
-              "messagePaints": 4,
-              "registryEntries": 0,
-              "paintedFloors": [
-                "0",
-                "1",
-                "2",
-                "3"
-              ]
-            },
-            "lifecycle": {
-              "enteringViewport": true,
-              "radiusRestored": true,
-              "blurDisabled": true,
-              "blurRestored": true,
-              "plainModeClean": true,
-              "bubbleModeRestored": true,
-              "insertedTracked": true,
-              "removedClean": true,
-              "disabledClean": true,
-              "enabledRestored": true
-            }
-          },
-          {
-            "floors": 80,
-            "physical": true,
-            "opened": {
-              "scans": 0,
-              "messagePaints": 6,
-              "registryEntries": 0,
-              "paintedFloors": [
-                "0",
-                "1",
-                "2",
-                "3",
-                "4",
-                "5"
-              ]
-            },
-            "closed": {
-              "scans": 0,
-              "messagePaints": 6,
-              "registryEntries": 0,
-              "paintedFloors": [
-                "0",
-                "1",
-                "2",
-                "3",
-                "4",
-                "5"
-              ]
-            },
-            "lifecycle": {
-              "enteringViewport": true,
-              "radiusRestored": true,
-              "blurDisabled": true,
-              "blurRestored": true,
-              "plainModeClean": true,
-              "bubbleModeRestored": true,
-              "insertedTracked": true,
-              "removedClean": true,
-              "disabledClean": true,
-              "enabledRestored": true
-            }
-          },
-          {
-            "floors": 240,
-            "physical": true,
-            "opened": {
-              "scans": 0,
-              "messagePaints": 6,
-              "registryEntries": 0,
-              "paintedFloors": [
-                "0",
-                "1",
-                "2",
-                "3",
-                "4",
-                "5"
-              ]
-            },
-            "closed": {
-              "scans": 0,
-              "messagePaints": 6,
-              "registryEntries": 0,
-              "paintedFloors": [
-                "0",
-                "1",
-                "2",
-                "3",
-                "4",
-                "5"
-              ]
-            },
-            "lifecycle": {
-              "enteringViewport": true,
-              "radiusRestored": true,
-              "blurDisabled": true,
-              "blurRestored": true,
-              "plainModeClean": true,
-              "bubbleModeRestored": true,
-              "insertedTracked": true,
-              "removedClean": true,
-              "disabledClean": true,
-              "enabledRestored": true
-            }
-          }
-        ]
-      },
-      {
-        "browser": "webkit",
-        "results": [
-          {
-            "floors": 4,
-            "physical": false,
-            "opened": {
-              "scans": 0,
-              "messagePaints": 4,
-              "registryEntries": 0,
-              "paintedFloors": [
-                "0",
-                "1",
-                "2",
-                "3"
-              ]
-            },
-            "closed": {
-              "scans": 0,
-              "messagePaints": 4,
-              "registryEntries": 0,
-              "paintedFloors": [
-                "0",
-                "1",
-                "2",
-                "3"
-              ]
-            },
-            "lifecycle": {
-              "enteringViewport": true,
-              "radiusRestored": true,
-              "blurDisabled": true,
-              "blurRestored": true,
-              "plainModeClean": true,
-              "bubbleModeRestored": true,
-              "insertedTracked": true,
-              "removedClean": true,
-              "disabledClean": true,
-              "enabledRestored": true
-            }
-          },
-          {
-            "floors": 80,
-            "physical": false,
-            "opened": {
-              "scans": 0,
-              "messagePaints": 6,
-              "registryEntries": 0,
-              "paintedFloors": [
-                "0",
-                "1",
-                "2",
-                "3",
-                "4",
-                "5"
-              ]
-            },
-            "closed": {
-              "scans": 0,
-              "messagePaints": 6,
-              "registryEntries": 0,
-              "paintedFloors": [
-                "0",
-                "1",
-                "2",
-                "3",
-                "4",
-                "5"
-              ]
-            },
-            "lifecycle": {
-              "enteringViewport": true,
-              "radiusRestored": true,
-              "blurDisabled": true,
-              "blurRestored": true,
-              "plainModeClean": true,
-              "bubbleModeRestored": true,
-              "insertedTracked": true,
-              "removedClean": true,
-              "disabledClean": true,
-              "enabledRestored": true
-            }
-          },
-          {
-            "floors": 240,
-            "physical": false,
-            "opened": {
-              "scans": 0,
-              "messagePaints": 6,
-              "registryEntries": 0,
-              "paintedFloors": [
-                "0",
-                "1",
-                "2",
-                "3",
-                "4",
-                "5"
-              ]
-            },
-            "closed": {
-              "scans": 0,
-              "messagePaints": 6,
-              "registryEntries": 0,
-              "paintedFloors": [
-                "0",
-                "1",
-                "2",
-                "3",
-                "4",
-                "5"
-              ]
-            },
-            "lifecycle": {
-              "enteringViewport": true,
-              "radiusRestored": true,
-              "blurDisabled": true,
-              "blurRestored": true,
-              "plainModeClean": true,
-              "bubbleModeRestored": true,
-              "insertedTracked": true,
-              "removedClean": true,
-              "disabledClean": true,
-              "enabledRestored": true
-            }
-          }
-        ]
-      }
+  "productionScope": {
+    "files": [
+      "index.js"
     ],
-    "clarity": [
-      {
-        "floors": 4,
-        "portal": {
-          "frameProbes": 0,
-          "rootQueries": 0,
-          "registryEntries": 0,
-          "sampledTurnaroundMs": 14.700000000186265,
-          "styled": true
-        },
-        "message": {
-          "frameProbes": 0,
-          "rootQueries": 0,
-          "registryEntries": 0
-        },
-        "lifecycle": {
-          "insertedStyled": true,
-          "reloadedStyled": true,
-          "detachedClean": true,
-          "disabledClean": true,
-          "enabledRestored": true
-        }
-      },
-      {
-        "floors": 80,
-        "portal": {
-          "frameProbes": 0,
-          "rootQueries": 0,
-          "registryEntries": 0,
-          "sampledTurnaroundMs": 15.799999999813735,
-          "styled": true
-        },
-        "message": {
-          "frameProbes": 0,
-          "rootQueries": 0,
-          "registryEntries": 0
-        },
-        "lifecycle": {
-          "insertedStyled": true,
-          "reloadedStyled": true,
-          "detachedClean": true,
-          "disabledClean": true,
-          "enabledRestored": true
-        }
-      },
-      {
-        "floors": 240,
-        "portal": {
-          "frameProbes": 0,
-          "rootQueries": 0,
-          "registryEntries": 0,
-          "sampledTurnaroundMs": 14.5,
-          "styled": true
-        },
-        "message": {
-          "frameProbes": 0,
-          "rootQueries": 0,
-          "registryEntries": 0
-        },
-        "lifecycle": {
-          "insertedStyled": true,
-          "reloadedStyled": true,
-          "detachedClean": true,
-          "disabledClean": true,
-          "enabledRestored": true
-        }
-      }
-    ],
-    "byteIdenticalModules": [
+    "addedLines": 50,
+    "removedLines": 19,
+    "byteIdentical": [
+      "style.css",
       "glass2.js",
       "card-clarity.js",
       "orb.js"
-    ]
-  },
-  "designReview": {
-    "newControlsInspected": true,
-    "mechanicalWarningsPreExistingOnly": true
+    ],
+    "newSettingsOrDependencies": false
   },
   "acceptance": {
-    "originalPhoneMenuLatency": false,
+    "originalPhonePerformance": false,
     "realAndroid": false,
     "realIOS": false,
-    "originalCardNotEdited": true,
-    "chatHistoryNotEdited": true
+    "originalCardEdited": false,
+    "chatHistoryEdited": false,
+    "syntheticUIAndLifecycleChecked": true
   },
   "limitations": [
-    "Synthetic desktop Chromium and Windows WebKit, not the original phone/card",
-    "Synchronous handler timing excludes later rendering and is not INP or end-to-end menu latency",
-    "Changing chat font size necessarily reflows message text; no claim of eliminating that work",
-    "Fixed card typography and frame documents intentionally retain their own sizes"
+    "Synthetic desktop Chromium and Windows WebKit; original phone and card still require acceptance",
+    "Count reductions do not translate directly to latency or battery-life ratios",
+    "Actual tone changes, engine switches and master switches can still require full work",
+    "Host/card-owned logic and enabled idle reasoning scans remain outside this bounded change",
+    "Hotspot performance work; not a full host/repository audit"
   ]
 }

@@ -387,8 +387,9 @@ function lightAngle(el) {
 }
 function updateLights() {
     lightRaf = 0;
-    items.forEach((it, el) => {
-        if (!it.lights) return;
+    visibleItems.forEach(el => {
+        const it = items.get(el);
+        if (!it?.lights) return;
         const a = lightAngle(el);
         // 角度变化不到 1.5° 不动，免得鼠标一动所有玻璃都重绘
         if (Math.abs(((a - it.angle) % 360 + 540) % 360 - 180) < 1.5) return;
@@ -919,7 +920,7 @@ new ResizeObserver(() => requestAnimationFrame(layoutIslands)).observe(holder);
 window.addEventListener('resize', () => requestAnimationFrame(layoutIslands));
 
 // 明暗判定：浅色壁纸配白字会看不清，所以按壁纸平均亮度切换
-let lightBg = false;
+let lightBg = false, cardTone = null;
 function sampleLuminance(url) {
     return new Promise(resolve => {
         const img = new Image();
@@ -991,7 +992,11 @@ async function applyTone() {
     if (st) st.textContent = statusText();
     scheduleAdapt();
     // 深浅一换，正文里卡片小面板的“反色”判断要重来（推到下一拍：模块初始化时这里会先于 queueCards 那段代码执行）
-    setTimeout(() => queueCards(true));
+    const nextCardTone = S.enabled ? (lightBg ? 'light' : 'dark') : null;
+    if (nextCardTone !== cardTone) {
+        cardTone = nextCardTone;
+        if (S.enabled) setTimeout(() => queueCards(true));
+    }
     followTone();
 }
 setInterval(followTone, 60000);
@@ -1010,7 +1015,29 @@ function applyChatFontSize() {
     else chatEl.style.removeProperty('--ilg-chat-font-size');
 }
 
+let glassSettingsRaf = 0;
+function applySurfaceSettings() {
+    root.style.setProperty('--ilg-hl', S.highlight);
+    root.style.setProperty('--ilg-radius', `${S.radius}px`);
+    root.style.setProperty('--ilg-shadow-k', S.pShadow);
+    root.style.setProperty('--ilg-sheen-k', S.pSheen);
+    root.style.setProperty('--ilg-mes-a', S.mesTint);
+    root.style.setProperty('--ilg-scrim-a', S.scrim);
+    root.style.setProperty('--ilg-tint', `rgba(255, 255, 255, ${lightBg ? Math.min(0.7, S.tint + 0.3) : S.tint})`);
+}
+function queueGlassSettings() {
+    if (!S.enabled || glassSettingsRaf) return;
+    glassSettingsRaf = requestAnimationFrame(() => {
+        glassSettingsRaf = 0;
+        if (!S.enabled) return;
+        applySurfaceSettings();
+        repaintVisible();
+    });
+}
+
 function applyRoot() {
+    if (glassSettingsRaf) { cancelAnimationFrame(glassSettingsRaf); glassSettingsRaf = 0; }
+    if (!S.enabled) cardTone = null;
     applyChatFontSize();
     root.classList.toggle('ilg', S.enabled);
     root.classList.toggle('ilg-ios-experiment', S.enabled && isIOS);
@@ -1023,12 +1050,7 @@ function applyRoot() {
     root.classList.toggle('ilg-avline', S.enabled && S.avatar === 'line');
     root.classList.toggle('ilg-orb-on', S.enabled && S.orb);
     applyTone();
-    root.style.setProperty('--ilg-hl', S.highlight);
-    root.style.setProperty('--ilg-radius', `${S.radius}px`);
-    root.style.setProperty('--ilg-shadow-k', S.pShadow);
-    root.style.setProperty('--ilg-sheen-k', S.pSheen);
-    root.style.setProperty('--ilg-mes-a', S.mesTint);
-    root.style.setProperty('--ilg-scrim-a', S.scrim);
+    applySurfaceSettings();
     applyToneBtn();
     applyFold();
     applyQrFold();
@@ -1383,7 +1405,7 @@ function buildPanel() {
     });
     document.getElementById('ilg-opt-profile').addEventListener('change', e => {
         S.profile = e.target.value;
-        applyRoot(); sync(); ctx.saveSettingsDebounced();
+        queueGlassSettings(); sync(); ctx.saveSettingsDebounced();
     });
     document.getElementById('ilg-opt-homeName').addEventListener('input', e => {
         S.homeName = e.target.value;
@@ -1391,11 +1413,11 @@ function buildPanel() {
     });
     document.getElementById('ilg-opt-follow').addEventListener('change', e => {
         S.follow = e.target.checked;
-        applyRoot(); ctx.saveSettingsDebounced();
+        queueGlassSettings(); ctx.saveSettingsDebounced();
     });
     wrap.querySelectorAll('[data-preset]').forEach(b => b.addEventListener('click', () => {
         Object.assign(S, PRESETS[b.dataset.preset][1]);
-        applyRoot(); sync(); ctx.saveSettingsDebounced();
+        queueGlassSettings(); sync(); ctx.saveSettingsDebounced();
     }));
     TOGGLES.forEach(([k]) => document.getElementById(`ilg-opt-${k}`).addEventListener('change', e => {
         if (k === 'iosSvgTrial' && !iosSvgEligible) { e.target.checked = !!S[k]; return; }
@@ -1411,7 +1433,7 @@ function buildPanel() {
     SLIDERS.forEach(([k, , , , step, unit]) => document.getElementById(`ilg-opt-${k}`).addEventListener('input', e => {
         S[k] = parseFloat(e.target.value);
         document.getElementById(`ilg-opt-${k}-v`).textContent = fmt(step, unit, S[k]);
-        applyRoot(); markPresets(); ctx.saveSettingsDebounced();
+        queueGlassSettings(); markPresets(); ctx.saveSettingsDebounced();
     }));
     const reset = () => {
         // 只重置本扩展的外观参数，保留原主题备份和首次清理记录。
@@ -1691,6 +1713,7 @@ new MutationObserver(() => {
     queueThink();
 }).observe(document.body, { attributes: true, attributeFilter: ['data-generating'] });
 new MutationObserver(muts => {
+    if (!S.enabled || !S.orb) return;
     // 自己插胶囊 / 小球引起的变化不用再处理，不然会自己触发自己
     const own = n => n.nodeType === 1 && n.matches('.ilg-think, .ilg-orb');
     if (muts.every(m => m.target.closest?.('.ilg-think') || (m.type === 'childList' && [...m.addedNodes, ...m.removedNodes].every(own)))) return;
@@ -1715,6 +1738,9 @@ function tagCard(text) {
     const light = root.classList.contains('ilg-light');
     let fixedOverlay = false, cardRenderer = false;
     const walk = (el, base) => {
+        // Read siblings together, then apply markers before inspecting their children.
+        // Child panels can inherit colors changed by the parent markers.
+        const updates = [];
         for (const k of el.children) {
             const cs = getComputedStyle(k);
             if (cs.position === 'fixed' && cs.display !== 'none' && cs.visibility !== 'hidden' && k.getClientRects().length) fixedOverlay = true;
@@ -1724,15 +1750,18 @@ function tagCard(text) {
             const panel = k.matches('div, section, article, aside, details, summary, dialog, button, [role="dialog"], [role="button"], [role="menu"], [role="listbox"], [role="option"]');
             const choice = k.matches('button, select, option, input[type="button"], input[type="submit"], [role="button"], [role="option"]');
             const surface = choice || (panel && (!!c || cs.backgroundImage !== 'none' || cs.position === 'fixed'));
-            k.classList.toggle('ilg-card-surface', surface);
             if (surface && cs.display !== 'none' && cs.visibility !== 'hidden' && k.getClientRects().length) cardRenderer = true;
 
             let lum = base;
             if (c) lum = lumOf(c) * c.a + base * (1 - c.a);
-            k.classList.toggle('ilg-lit', !!c && lum > 0.62 && !light);
-            k.classList.toggle('ilg-dim', !!c && lum < 0.38 && light);
-            if (k.children.length) walk(k, lum);
+            updates.push({ element: k, surface, lit: !!c && lum > 0.62 && !light, dim: !!c && lum < 0.38 && light, lum });
         }
+        for (const { element, surface, lit, dim } of updates) {
+            element.classList.toggle('ilg-card-surface', surface);
+            element.classList.toggle('ilg-lit', lit);
+            element.classList.toggle('ilg-dim', dim);
+        }
+        for (const { element, lum } of updates) if (element.children.length) walk(element, lum);
     };
     walk(text, light ? 0.95 : 0.08);
     const message = text.closest('.mes');
@@ -1743,14 +1772,16 @@ function tagCard(text) {
     }
 }
 function queueCards(all) {
+    if (!S.enabled) { clearTimeout(cardTimer); cardDirty.clear(); return; }
     if (all) chatEl.querySelectorAll('.mes_text').forEach(t => cardDirty.add(t));
     clearTimeout(cardTimer);
     cardTimer = setTimeout(() => {
-        cardDirty.forEach(t => t.isConnected && tagCard(t));
+        if (S.enabled) cardDirty.forEach(t => t.isConnected && tagCard(t));
         cardDirty.clear();
     }, 200);
 }
 new MutationObserver(muts => {
+    if (!S.enabled) return;
     let hit = false;
     for (const m of muts) {
         // Ignore our luminance markers; host/card style and visibility changes still rescan the message.
