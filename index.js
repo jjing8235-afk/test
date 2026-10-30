@@ -164,7 +164,6 @@ const KIND = {
     panel: { blur: () => S.panelBlur, k: 0.7, bezelK: 1.1, thickK: 1.5 },
     // 用户明确指定的 NVWA 预设 / 记忆面板使用清透材质；其他第三方内容不接管。
     clearPanel: { blur: () => S.barBlur + 1, k: 0.9, bezelK: 1.1, thickK: 1.5 },
-    panelTab: { blur: () => S.barBlur + 1, k: 0.6, bezelK: 0.75, thickK: 0.8 },
     // 右上角提示：文字压在玻璃上，比顶栏多一点模糊保证可读
     toast: { blur: () => Math.max(S.barBlur, 10), k: 0.6, bezelK: 0.75, thickK: 0.8 },
 };
@@ -333,10 +332,6 @@ function paint(el) {
         const panel = adaptedPanel(el);
         it.kind = panel ? 'clearPanel' : 'panel';
         el.classList.toggle('ilg-adapted', !!panel);
-        if (panel) {
-            const tabbar = panel.querySelector(':scope > :is(.nvp-tabbar, .m-tabbar)');
-            if (tabbar) track(tabbar, 'panelTab');
-        }
     }
     if (document.body.classList.contains('no-blur')) {
         setPhys(el, it, false);

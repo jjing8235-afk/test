@@ -427,7 +427,8 @@ html.ilg body :is(#options .options-content, #extensionsMenu) {
     border-radius: 20px;
     min-width: 210px;
     background-color: rgba(22, 16, 30, 0.5);
-    animation: ilg-menu-in .24s cubic-bezier(.3, 1.3, .5, 1);
+    /* The host already fades these menus; avoid resampling glass through a second scale animation. */
+    animation: none;
 }
 html.ilg.ilg-light body :is(#options .options-content, #extensionsMenu) { background-color: rgba(255, 255, 255, 0.62); }
 @keyframes ilg-menu-in {
@@ -1229,6 +1230,11 @@ html.ilg body #ilg-fold-menu .ilg-fold-label { font-size: 12.5px; letter-spacing
     html.ilg body #ilg-fold-menu .ilg-fold-label { font-size: 13px; }
 }
 
+/* Native drawers resolve their final height once; do not rebuild glass at every intermediate height. */
+html.ilg body #top-settings-holder > .drawer > .drawer-content {
+    transition: none;
+    animation: none;
+}
 /* ---------- 二级页面（从菜单打开的抽屉）：浮起来的圆角玻璃页，四周留出和顶栏一样的空隙，底部让出输入框 ---------- */
 html.ilg.ilg-float body:not(.movingUI) #top-settings-holder > .drawer > .drawer-content {
     border-radius: 24px;
@@ -1893,7 +1899,7 @@ html.ilg body #form_sheld #send_form:has(#send_textarea:focus-visible) { outline
 
 /* ---------- NVWA 预设 / 记忆面板定点适配：只有已确认的原生 Popup 生效 ----------
    只适配用户明确指定的两个内容根，不改变其他第三方浮窗。
-   外壳和吸顶标签栏的折射由 JS 引擎绘制，不叠加高模糊、白色亮边或实心底。 */
+   外壳保留折射，吸顶标签栏共用外壳玻璃，避免重复过滤同一背景。 */
 html.ilg body dialog.popup.ilg-adapted {
     border-radius: 28px;
     background-color: rgba(12, 8, 20, 0.12);
@@ -1922,13 +1928,15 @@ html.ilg.ilg-light body dialog.popup.ilg-adapted > .popup-body > .popup-content 
     --nvp-shadow: rgba(30, 40, 70, 0.12);
 }
 html.ilg body dialog.popup.ilg-adapted > .popup-body > .popup-content > :is(#nvwa-panel, #nvwa-memory) > :is(.nvp-tabbar, .m-tabbar) {
-    background: rgba(16, 14, 26, 0.12);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: rgba(16, 14, 26, 0.28);
     border-radius: 18px;
     padding: 4px;
     margin-bottom: 8px;
 }
 html.ilg.ilg-light body dialog.popup.ilg-adapted > .popup-body > .popup-content > :is(#nvwa-panel, #nvwa-memory) > :is(.nvp-tabbar, .m-tabbar) {
-    background: rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.38);
 }
 html.ilg body dialog.popup.ilg-adapted > .popup-body > .popup-content > :is(#nvwa-panel, #nvwa-memory) :is(.nvp-tabs, .m-tabs) {
     border-radius: 14px;
@@ -1949,6 +1957,17 @@ html.ilg body dialog.popup.ilg-adapted > .popup-body > .popup-content > #nvwa-me
     border-color: var(--m-line);
     background-color: var(--m-bg);
     color: var(--m-text);
+}
+
+/* Presentation only: section/tab state and all preset handlers remain owned by the preset. */
+html.ilg body dialog.popup.ilg-adapted > .popup-body > .popup-content > #nvwa-panel {
+    --nvp-d: 50ms;
+}
+html.ilg body dialog.popup.ilg-adapted > .popup-body > .popup-content > #nvwa-panel :is(.nvp-page.on, .nvp-sec, .nvp-plan) {
+    animation: none;
+}
+html.ilg body dialog.popup.ilg-adapted > .popup-body > .popup-content > #nvwa-panel .nvp-sec-b {
+    transition: none;
 }
 
 /* ---------- 预设（提示词管理）面板 ----------
@@ -3411,3 +3430,4 @@ html.ilg body .ilg-floating-clarity *::before,
 html.ilg body .ilg-floating-clarity *::after {
     text-shadow: none !important;
 }
+
