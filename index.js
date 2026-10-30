@@ -30,7 +30,7 @@ const PRESETS = {
 };
 
 const DEFAULTS = {
-    firstLineIndent: false, compatibilityMode: 'auto', androidWebViewRefract: false, iosSvgTrial: false,
+    chatFontSize: 0, firstLineIndent: false, compatibilityMode: 'auto', androidWebViewRefract: false, iosSvgTrial: false,
     enabled: true, float: true, islands: true, fold: true, qrFold: true, home: true, toneBtn: true, homeName: 'NVWA 用户', icons: true, refract: true, refractMes: true, font: true, tone: 'time', dayStart: 7, dayEnd: 19, avatar: 'line', orb: true,
     engine: 'physical', follow: true, pLight: 135,
     // 自然弧度没写的参数（厚度、折射率等，只给物理折射截面用）沿用清透立体的
@@ -94,6 +94,7 @@ const TOGGLES = [
 
 ctx.extensionSettings[MODULE] = Object.assign({}, DEFAULTS, ctx.extensionSettings[MODULE]);
 const S = ctx.extensionSettings[MODULE];
+S.chatFontSize = normalizeChatFontSize(S.chatFontSize);
 // v2：玻璃改得更厚、更透。只迁移还停在旧默认值的参数，用户自己调过的不动
 if (!S.v || S.v < 2) {
     const OLD = { scale: 70, bevel: 22, aberration: 6, barBlur: 2, mesBlur: 6, panelBlur: 18, tint: 0.08 };
@@ -558,55 +559,74 @@ function syncFold() {
     foldIcon.setAttribute('aria-expanded', String(!foldMenu.hidden));
     foldBtn.classList.toggle('ilg-alert', apiAlert());
 }
+let foldTiles = [], foldRowHelp = null;
 function buildFoldTiles() {
-    foldMenu.replaceChildren();
-    // 第一行：整行宽的“聊天记录”，下面一行小标题，再下面才是设置图标宫格
-    const row = document.createElement('button');
-    row.type = 'button';
-    row.className = 'ilg-fold-row';
-    row.setAttribute('role', 'menuitem');
-    row.innerHTML = '<span class="ilg-fold-row-icon" aria-hidden="true"></span><span class="ilg-fold-row-text"><b>聊天记录</b><small></small></span><span class="ilg-fold-row-chev" aria-hidden="true"></span>';
-    row.querySelector('small').textContent = homeOn ? '最近和谁聊过，点一下接着聊' : '回到首页，看看最近的聊天';
-    row.addEventListener('click', () => { closeFoldMenu(); showRecent(); });
-    const cap = document.createElement('div');
-    cap.className = 'ilg-fold-cap';
-    cap.setAttribute('role', 'presentation');
-    cap.textContent = '设置';
-    foldMenu.append(row, cap);
-    for (const d of foldedDrawers()) {
-        const toggle = d.querySelector(':scope > .drawer-toggle');
+    // Collect live drawer metadata before any menu writes. Reuse controls while their identity is unchanged.
+    const next = foldedDrawers().flatMap(drawer => {
+        const toggle = drawer.querySelector(':scope > .drawer-toggle');
         const icon = toggle?.querySelector('.drawer-icon');
-        if (!icon || getComputedStyle(d).display === 'none') continue;
-        const tile = document.createElement('button');
-        tile.type = 'button';
-        tile.className = 'ilg-fold-tile';
-        tile.setAttribute('role', 'menuitem');
-        const glyph = document.createElement('span');
-        glyph.className = 'ilg-fold-glyph';
-        glyph.setAttribute('aria-hidden', 'true');
-        const mask = getComputedStyle(icon).getPropertyValue('--ilg-icon').trim();
-        if (S.icons && mask) glyph.style.setProperty('--ilg-icon', mask);
-        else glyph.classList.add('ilg-fa', ...[...icon.classList].filter(c => c.startsWith('fa')));
-        const label = document.createElement('span');
-        label.className = 'ilg-fold-label';
-        label.textContent = FOLD_LABELS[d.id] || icon.title || d.id;
-        tile.append(glyph, label);
-        tile.classList.toggle('ilg-alert', icon.classList.contains('redOverlayGlow'));
-        tile.classList.toggle('ilg-on', !!d.querySelector(':scope > .drawer-content.openDrawer'));
-        tile.addEventListener('click', () => {
-            closeFoldMenu();
-            toggle.click();
+        if (!icon || getComputedStyle(drawer).display === 'none') return [];
+        const mask = S.icons ? getComputedStyle(icon).getPropertyValue('--ilg-icon').trim() : '';
+        return [{ drawer, toggle, mask, fa: [...icon.classList].filter(c => c.startsWith('fa')).join(' '),
+            label: FOLD_LABELS[drawer.id] || icon.title || drawer.id,
+            alert: icon.classList.contains('redOverlayGlow'),
+            open: !!drawer.querySelector(':scope > .drawer-content.openDrawer') }];
+    });
+    const changed = next.length !== foldTiles.length || !foldRowHelp || next.some((entry, i) =>
+        ['drawer', 'toggle', 'mask', 'fa', 'label'].some(key => entry[key] !== foldTiles[i][key]));
+    if (changed) {
+        const fragment = document.createDocumentFragment();
+        // 第一行：整行宽的“聊天记录”，下面一行小标题，再下面才是设置图标宫格
+        const row = document.createElement('button');
+        row.type = 'button';
+        row.className = 'ilg-fold-row';
+        row.setAttribute('role', 'menuitem');
+        row.innerHTML = '<span class="ilg-fold-row-icon" aria-hidden="true"></span><span class="ilg-fold-row-text"><b>聊天记录</b><small></small></span><span class="ilg-fold-row-chev" aria-hidden="true"></span>';
+        foldRowHelp = row.querySelector('small');
+        row.addEventListener('click', () => { closeFoldMenu(); showRecent(); });
+        const cap = document.createElement('div');
+        cap.className = 'ilg-fold-cap';
+        cap.setAttribute('role', 'presentation');
+        cap.textContent = '设置';
+        fragment.append(row, cap);
+        foldTiles = next.map(entry => {
+            const { toggle, mask, fa, label: title } = entry;
+            const tile = document.createElement('button');
+            tile.type = 'button';
+            tile.className = 'ilg-fold-tile';
+            tile.setAttribute('role', 'menuitem');
+            const glyph = document.createElement('span');
+            glyph.className = 'ilg-fold-glyph';
+            glyph.setAttribute('aria-hidden', 'true');
+            if (mask) glyph.style.setProperty('--ilg-icon', mask);
+            else glyph.classList.add('ilg-fa', ...fa.split(' ').filter(Boolean));
+            const label = document.createElement('span');
+            label.className = 'ilg-fold-label';
+            label.textContent = title;
+            tile.append(glyph, label);
+            tile.addEventListener('click', () => {
+                closeFoldMenu();
+                toggle.click();
+            });
+            fragment.appendChild(tile);
+            return { ...entry, tile };
         });
-        foldMenu.appendChild(tile);
+        foldMenu.replaceChildren(fragment);
     }
+    const help = homeOn ? '最近和谁聊过，点一下接着聊' : '回到首页，看看最近的聊天';
+    if (foldRowHelp.textContent !== help) foldRowHelp.textContent = help;
+    next.forEach((entry, i) => {
+        foldTiles[i].tile.classList.toggle('ilg-alert', entry.alert);
+        foldTiles[i].tile.classList.toggle('ilg-on', entry.open);
+    });
 }
 function openFoldMenu(viaKeyboard) {
-    buildFoldTiles();
     const r = foldIcon.getBoundingClientRect();
+    buildFoldTiles();
     foldMenu.style.top = `${r.bottom + 12}px`;
+    // Width and viewport clamping share one CSS value; opening does not synchronously measure the menu.
+    foldMenu.style.left = `clamp(8px, ${r.left - 6}px, max(8px, calc(100vw - var(--ilg-fold-menu-width) - 8px)))`;
     foldMenu.hidden = false;
-    const w = foldMenu.offsetWidth;
-    foldMenu.style.left = `${Math.max(8, Math.min(r.left - 6, innerWidth - w - 8))}px`;
     syncFold();
     if (viaKeyboard) foldMenu.querySelector('button')?.focus();
 }
@@ -977,7 +997,21 @@ async function applyTone() {
 setInterval(followTone, 60000);
 sysDark.addEventListener('change', followTone);
 
+function normalizeChatFontSize(value) {
+    const numeric = Number(value);
+    return Number.isFinite(numeric) && numeric > 0 ? Math.min(32, Math.max(12, Math.round(numeric))) : 0;
+}
+function applyChatFontSize() {
+    const size = normalizeChatFontSize(S.chatFontSize);
+    S.chatFontSize = size;
+    const active = S.enabled && size > 0;
+    chatEl.classList.toggle('ilg-chat-font', active);
+    if (active) chatEl.style.setProperty('--ilg-chat-font-size', size + 'px');
+    else chatEl.style.removeProperty('--ilg-chat-font-size');
+}
+
 function applyRoot() {
+    applyChatFontSize();
     root.classList.toggle('ilg', S.enabled);
     root.classList.toggle('ilg-ios-experiment', S.enabled && isIOS);
     root.classList.toggle('ilg-indent', S.enabled && !!S.firstLineIndent);
@@ -1183,6 +1217,15 @@ function buildPanel() {
         <option value="blur">仅模糊（折射异常时选择）</option>
       </select></div>
     ${TOGGLES.filter(([k]) => k !== 'iosSvgTrial').map(([k, label]) => `<label class="checkbox_label" for="ilg-opt-${k}"><input type="checkbox" id="ilg-opt-${k}"><span>${label}</span></label>`).join('')}
+    <div class="ilg-row ilg-chat-font-row">
+      <label for="ilg-opt-chatFontSize"><span>聊天正文字号</span><output id="ilg-opt-chatFontSize-v" for="ilg-opt-chatFontSize ilg-opt-chatFontSize-number">跟随酒馆</output></label>
+      <div class="ilg-chat-font-controls">
+        <input type="range" id="ilg-opt-chatFontSize" min="12" max="32" step="1" aria-describedby="ilg-chat-font-hint">
+        <input type="number" id="ilg-opt-chatFontSize-number" class="text_pole" min="12" max="32" step="1" inputmode="numeric" aria-label="聊天正文字号，单位像素" aria-describedby="ilg-chat-font-hint">
+        <button type="button" id="ilg-chat-font-reset" class="menu_button">跟随酒馆</button>
+      </div>
+      <p class="ilg-hint" id="ilg-chat-font-hint">12–32 像素，自动保存。只调整聊天正文；菜单、输入框及 iframe 内的字号不变，自带固定字号的卡片样式不强制改动。</p>
+    </div>
     <div class="ilg-row"><label for="ilg-opt-homeName"><span>首页问候里的称呼</span></label>
       <input type="text" id="ilg-opt-homeName" class="text_pole" maxlength="20" placeholder="留空就只显示“晚上好”"></div>
     <div class="ilg-row"><label for="ilg-opt-tone"><span>明暗</span></label>
@@ -1250,7 +1293,33 @@ function buildPanel() {
         const p = PRESETS[b.dataset.preset][1];
         b.setAttribute('aria-pressed', String(Object.keys(p).every(k => S[k] === p[k] || Math.abs(S[k] - p[k]) < 1e-6)));
     });
+    const fontRange = document.getElementById('ilg-opt-chatFontSize');
+    const fontNumber = document.getElementById('ilg-opt-chatFontSize-number');
+    const syncChatFont = () => {
+        const size = S.chatFontSize;
+        const inherited = parseFloat(getComputedStyle(chatEl).getPropertyValue('--mainFontSize')) || 16;
+        fontRange.value = size || Math.min(32, Math.max(12, Math.round(inherited)));
+        fontNumber.value = size || '';
+        fontNumber.placeholder = '自动';
+        document.getElementById('ilg-opt-chatFontSize-v').textContent = size ? size + ' px' : '跟随酒馆';
+        fontRange.setAttribute('aria-valuetext', size ? size + ' 像素' : '跟随酒馆');
+    };
+    const saveChatFont = value => {
+        S.chatFontSize = value;
+        applyChatFontSize();
+        syncChatFont();
+        ctx.saveSettingsDebounced();
+    };
+    fontRange.addEventListener('input', () => saveChatFont(Number(fontRange.value)));
+    fontNumber.addEventListener('change', () => {
+        if (fontNumber.value.trim() === '') { saveChatFont(0); return; }
+        const value = Number(fontNumber.value);
+        if (!Number.isFinite(value)) { syncChatFont(); return; }
+        saveChatFont(Math.min(32, Math.max(12, Math.round(value))));
+    });
+    document.getElementById('ilg-chat-font-reset').addEventListener('click', () => saveChatFont(0));
     const sync = () => {
+        syncChatFont();
         TOGGLES.forEach(([k]) => { document.getElementById(`ilg-opt-${k}`).checked = !!S[k]; });
         SLIDERS.forEach(([k, , , , step, unit]) => {
             document.getElementById(`ilg-opt-${k}`).value = S[k];

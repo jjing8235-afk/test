@@ -1,11 +1,15 @@
 {
-  "version": "1.4.3-test.3",
+  "version": "1.4.3-test.4",
   "date": "2026-10-30",
   "sourceBase": {
-    "version": "1.4.3-test.2",
-    "commit": "a5d338cee82340332a4b25fcaa941d0cc92d6ace"
+    "version": "1.4.3-test.3",
+    "commit": "e69c8048922681322ee488e790e700cafc0b5851"
   },
-  "change": "Bound body-class UI refreshes to near-viewport surfaces; scan historical message membership only when bubble mode changes",
+  "changes": [
+    "Reuse unchanged upper-left menu controls and batch drawer metadata reads before DOM writes",
+    "Use shared CSS width and viewport clamping instead of measuring the newly opened menu",
+    "Add chat-only 12–32 px font controls with numeric input, persistence, bounds validation and follow-host reset"
+  ],
   "sourceChecks": [
     {
       "check": "--check index.js",
@@ -25,6 +29,14 @@
     },
     {
       "check": "--check dev/verify/host-interaction-browser.mjs",
+      "passed": true
+    },
+    {
+      "check": "--check dev/verify/fold-menu-font-browser.mjs",
+      "passed": true
+    },
+    {
+      "check": "--check dev/verify/chat-font-regression.mjs",
       "passed": true
     },
     {
@@ -49,6 +61,10 @@
     },
     {
       "check": "dev/verify/popup-boundary-regression.mjs",
+      "passed": true
+    },
+    {
+      "check": "dev/verify/chat-font-regression.mjs",
       "passed": true
     },
     {
@@ -82,713 +98,747 @@
       "passed": true
     }
   ],
-  "hostInteraction": {
-    "baselineBrowser": "chromium",
+  "foldMenu": {
     "baseline": [
       {
         "floors": 4,
-        "opened": {
-          "scans": 1,
-          "messagePaints": 4,
-          "registryEntries": 7,
-          "paintedFloors": [
-            "0",
-            "1",
-            "2",
-            "3"
-          ]
-        },
-        "closed": {
-          "scans": 1,
-          "messagePaints": 4,
-          "registryEntries": 7,
-          "paintedFloors": [
-            "0",
-            "1",
-            "2",
-            "3"
-          ]
+        "openings": [
+          {
+            "rebuilds": 1,
+            "menuWidthReads": 1,
+            "drawerStyleReads": 14,
+            "fullScans": 0,
+            "messagePaints": 0,
+            "synchronousMs": 16.5,
+            "layouts": 2,
+            "styleRecalculations": 10,
+            "bounds": {
+              "left": 16,
+              "right": 352,
+              "width": 336,
+              "viewport": 390
+            }
+          },
+          {
+            "rebuilds": 1,
+            "menuWidthReads": 1,
+            "drawerStyleReads": 14,
+            "fullScans": 0,
+            "messagePaints": 0,
+            "synchronousMs": 9.899999999906868,
+            "layouts": 1,
+            "styleRecalculations": 10,
+            "bounds": {
+              "left": 16,
+              "right": 352,
+              "width": 336,
+              "viewport": 390
+            }
+          },
+          {
+            "rebuilds": 1,
+            "menuWidthReads": 1,
+            "drawerStyleReads": 14,
+            "fullScans": 0,
+            "messagePaints": 0,
+            "synchronousMs": 9.800000000046566,
+            "layouts": 1,
+            "styleRecalculations": 10,
+            "bounds": {
+              "left": 16,
+              "right": 352,
+              "width": 336,
+              "viewport": 390
+            }
+          }
+        ],
+        "keyboard": {
+          "first": true,
+          "moved": true,
+          "closed": true,
+          "refocused": true
         }
       },
       {
         "floors": 80,
-        "opened": {
-          "scans": 1,
-          "messagePaints": 80,
-          "registryEntries": 83,
-          "paintedFloors": [
-            "0",
-            "1",
-            "2",
-            "3",
-            "4",
-            "5",
-            "6",
-            "7",
-            "8",
-            "9",
-            "10",
-            "11",
-            "12",
-            "13",
-            "14",
-            "15",
-            "16",
-            "17",
-            "18",
-            "19",
-            "20",
-            "21",
-            "22",
-            "23",
-            "24",
-            "25",
-            "26",
-            "27",
-            "28",
-            "29",
-            "30",
-            "31",
-            "32",
-            "33",
-            "34",
-            "35",
-            "36",
-            "37",
-            "38",
-            "39",
-            "40",
-            "41",
-            "42",
-            "43",
-            "44",
-            "45",
-            "46",
-            "47",
-            "48",
-            "49",
-            "50",
-            "51",
-            "52",
-            "53",
-            "54",
-            "55",
-            "56",
-            "57",
-            "58",
-            "59",
-            "60",
-            "61",
-            "62",
-            "63",
-            "64",
-            "65",
-            "66",
-            "67",
-            "68",
-            "69",
-            "70",
-            "71",
-            "72",
-            "73",
-            "74",
-            "75",
-            "76",
-            "77",
-            "78",
-            "79"
-          ]
-        },
-        "closed": {
-          "scans": 1,
-          "messagePaints": 80,
-          "registryEntries": 83,
-          "paintedFloors": [
-            "0",
-            "1",
-            "2",
-            "3",
-            "4",
-            "5",
-            "6",
-            "7",
-            "8",
-            "9",
-            "10",
-            "11",
-            "12",
-            "13",
-            "14",
-            "15",
-            "16",
-            "17",
-            "18",
-            "19",
-            "20",
-            "21",
-            "22",
-            "23",
-            "24",
-            "25",
-            "26",
-            "27",
-            "28",
-            "29",
-            "30",
-            "31",
-            "32",
-            "33",
-            "34",
-            "35",
-            "36",
-            "37",
-            "38",
-            "39",
-            "40",
-            "41",
-            "42",
-            "43",
-            "44",
-            "45",
-            "46",
-            "47",
-            "48",
-            "49",
-            "50",
-            "51",
-            "52",
-            "53",
-            "54",
-            "55",
-            "56",
-            "57",
-            "58",
-            "59",
-            "60",
-            "61",
-            "62",
-            "63",
-            "64",
-            "65",
-            "66",
-            "67",
-            "68",
-            "69",
-            "70",
-            "71",
-            "72",
-            "73",
-            "74",
-            "75",
-            "76",
-            "77",
-            "78",
-            "79"
-          ]
+        "openings": [
+          {
+            "rebuilds": 1,
+            "menuWidthReads": 1,
+            "drawerStyleReads": 14,
+            "fullScans": 0,
+            "messagePaints": 0,
+            "synchronousMs": 45.60000000009313,
+            "layouts": 2,
+            "styleRecalculations": 10,
+            "bounds": {
+              "left": 16,
+              "right": 352,
+              "width": 336,
+              "viewport": 390
+            }
+          },
+          {
+            "rebuilds": 1,
+            "menuWidthReads": 1,
+            "drawerStyleReads": 14,
+            "fullScans": 0,
+            "messagePaints": 0,
+            "synchronousMs": 35.9000000001397,
+            "layouts": 1,
+            "styleRecalculations": 10,
+            "bounds": {
+              "left": 16,
+              "right": 352,
+              "width": 336,
+              "viewport": 390
+            }
+          },
+          {
+            "rebuilds": 1,
+            "menuWidthReads": 1,
+            "drawerStyleReads": 14,
+            "fullScans": 0,
+            "messagePaints": 0,
+            "synchronousMs": 36,
+            "layouts": 1,
+            "styleRecalculations": 10,
+            "bounds": {
+              "left": 16,
+              "right": 352,
+              "width": 336,
+              "viewport": 390
+            }
+          }
+        ],
+        "keyboard": {
+          "first": true,
+          "moved": true,
+          "closed": true,
+          "refocused": true
         }
       },
       {
         "floors": 240,
-        "opened": {
-          "scans": 1,
-          "messagePaints": 240,
-          "registryEntries": 243,
-          "paintedFloors": [
-            "0",
-            "1",
-            "2",
-            "3",
-            "4",
-            "5",
-            "6",
-            "7",
-            "8",
-            "9",
-            "10",
-            "11",
-            "12",
-            "13",
-            "14",
-            "15",
-            "16",
-            "17",
-            "18",
-            "19",
-            "20",
-            "21",
-            "22",
-            "23",
-            "24",
-            "25",
-            "26",
-            "27",
-            "28",
-            "29",
-            "30",
-            "31",
-            "32",
-            "33",
-            "34",
-            "35",
-            "36",
-            "37",
-            "38",
-            "39",
-            "40",
-            "41",
-            "42",
-            "43",
-            "44",
-            "45",
-            "46",
-            "47",
-            "48",
-            "49",
-            "50",
-            "51",
-            "52",
-            "53",
-            "54",
-            "55",
-            "56",
-            "57",
-            "58",
-            "59",
-            "60",
-            "61",
-            "62",
-            "63",
-            "64",
-            "65",
-            "66",
-            "67",
-            "68",
-            "69",
-            "70",
-            "71",
-            "72",
-            "73",
-            "74",
-            "75",
-            "76",
-            "77",
-            "78",
-            "79",
-            "80",
-            "81",
-            "82",
-            "83",
-            "84",
-            "85",
-            "86",
-            "87",
-            "88",
-            "89",
-            "90",
-            "91",
-            "92",
-            "93",
-            "94",
-            "95",
-            "96",
-            "97",
-            "98",
-            "99",
-            "100",
-            "101",
-            "102",
-            "103",
-            "104",
-            "105",
-            "106",
-            "107",
-            "108",
-            "109",
-            "110",
-            "111",
-            "112",
-            "113",
-            "114",
-            "115",
-            "116",
-            "117",
-            "118",
-            "119",
-            "120",
-            "121",
-            "122",
-            "123",
-            "124",
-            "125",
-            "126",
-            "127",
-            "128",
-            "129",
-            "130",
-            "131",
-            "132",
-            "133",
-            "134",
-            "135",
-            "136",
-            "137",
-            "138",
-            "139",
-            "140",
-            "141",
-            "142",
-            "143",
-            "144",
-            "145",
-            "146",
-            "147",
-            "148",
-            "149",
-            "150",
-            "151",
-            "152",
-            "153",
-            "154",
-            "155",
-            "156",
-            "157",
-            "158",
-            "159",
-            "160",
-            "161",
-            "162",
-            "163",
-            "164",
-            "165",
-            "166",
-            "167",
-            "168",
-            "169",
-            "170",
-            "171",
-            "172",
-            "173",
-            "174",
-            "175",
-            "176",
-            "177",
-            "178",
-            "179",
-            "180",
-            "181",
-            "182",
-            "183",
-            "184",
-            "185",
-            "186",
-            "187",
-            "188",
-            "189",
-            "190",
-            "191",
-            "192",
-            "193",
-            "194",
-            "195",
-            "196",
-            "197",
-            "198",
-            "199",
-            "200",
-            "201",
-            "202",
-            "203",
-            "204",
-            "205",
-            "206",
-            "207",
-            "208",
-            "209",
-            "210",
-            "211",
-            "212",
-            "213",
-            "214",
-            "215",
-            "216",
-            "217",
-            "218",
-            "219",
-            "220",
-            "221",
-            "222",
-            "223",
-            "224",
-            "225",
-            "226",
-            "227",
-            "228",
-            "229",
-            "230",
-            "231",
-            "232",
-            "233",
-            "234",
-            "235",
-            "236",
-            "237",
-            "238",
-            "239"
-          ]
-        },
-        "closed": {
-          "scans": 1,
-          "messagePaints": 240,
-          "registryEntries": 243,
-          "paintedFloors": [
-            "0",
-            "1",
-            "2",
-            "3",
-            "4",
-            "5",
-            "6",
-            "7",
-            "8",
-            "9",
-            "10",
-            "11",
-            "12",
-            "13",
-            "14",
-            "15",
-            "16",
-            "17",
-            "18",
-            "19",
-            "20",
-            "21",
-            "22",
-            "23",
-            "24",
-            "25",
-            "26",
-            "27",
-            "28",
-            "29",
-            "30",
-            "31",
-            "32",
-            "33",
-            "34",
-            "35",
-            "36",
-            "37",
-            "38",
-            "39",
-            "40",
-            "41",
-            "42",
-            "43",
-            "44",
-            "45",
-            "46",
-            "47",
-            "48",
-            "49",
-            "50",
-            "51",
-            "52",
-            "53",
-            "54",
-            "55",
-            "56",
-            "57",
-            "58",
-            "59",
-            "60",
-            "61",
-            "62",
-            "63",
-            "64",
-            "65",
-            "66",
-            "67",
-            "68",
-            "69",
-            "70",
-            "71",
-            "72",
-            "73",
-            "74",
-            "75",
-            "76",
-            "77",
-            "78",
-            "79",
-            "80",
-            "81",
-            "82",
-            "83",
-            "84",
-            "85",
-            "86",
-            "87",
-            "88",
-            "89",
-            "90",
-            "91",
-            "92",
-            "93",
-            "94",
-            "95",
-            "96",
-            "97",
-            "98",
-            "99",
-            "100",
-            "101",
-            "102",
-            "103",
-            "104",
-            "105",
-            "106",
-            "107",
-            "108",
-            "109",
-            "110",
-            "111",
-            "112",
-            "113",
-            "114",
-            "115",
-            "116",
-            "117",
-            "118",
-            "119",
-            "120",
-            "121",
-            "122",
-            "123",
-            "124",
-            "125",
-            "126",
-            "127",
-            "128",
-            "129",
-            "130",
-            "131",
-            "132",
-            "133",
-            "134",
-            "135",
-            "136",
-            "137",
-            "138",
-            "139",
-            "140",
-            "141",
-            "142",
-            "143",
-            "144",
-            "145",
-            "146",
-            "147",
-            "148",
-            "149",
-            "150",
-            "151",
-            "152",
-            "153",
-            "154",
-            "155",
-            "156",
-            "157",
-            "158",
-            "159",
-            "160",
-            "161",
-            "162",
-            "163",
-            "164",
-            "165",
-            "166",
-            "167",
-            "168",
-            "169",
-            "170",
-            "171",
-            "172",
-            "173",
-            "174",
-            "175",
-            "176",
-            "177",
-            "178",
-            "179",
-            "180",
-            "181",
-            "182",
-            "183",
-            "184",
-            "185",
-            "186",
-            "187",
-            "188",
-            "189",
-            "190",
-            "191",
-            "192",
-            "193",
-            "194",
-            "195",
-            "196",
-            "197",
-            "198",
-            "199",
-            "200",
-            "201",
-            "202",
-            "203",
-            "204",
-            "205",
-            "206",
-            "207",
-            "208",
-            "209",
-            "210",
-            "211",
-            "212",
-            "213",
-            "214",
-            "215",
-            "216",
-            "217",
-            "218",
-            "219",
-            "220",
-            "221",
-            "222",
-            "223",
-            "224",
-            "225",
-            "226",
-            "227",
-            "228",
-            "229",
-            "230",
-            "231",
-            "232",
-            "233",
-            "234",
-            "235",
-            "236",
-            "237",
-            "238",
-            "239"
-          ]
+        "openings": [
+          {
+            "rebuilds": 1,
+            "menuWidthReads": 1,
+            "drawerStyleReads": 14,
+            "fullScans": 0,
+            "messagePaints": 0,
+            "synchronousMs": 105.30000000004657,
+            "layouts": 2,
+            "styleRecalculations": 10,
+            "bounds": {
+              "left": 16,
+              "right": 352,
+              "width": 336,
+              "viewport": 390
+            }
+          },
+          {
+            "rebuilds": 1,
+            "menuWidthReads": 1,
+            "drawerStyleReads": 14,
+            "fullScans": 0,
+            "messagePaints": 0,
+            "synchronousMs": 91,
+            "layouts": 1,
+            "styleRecalculations": 10,
+            "bounds": {
+              "left": 16,
+              "right": 352,
+              "width": 336,
+              "viewport": 390
+            }
+          },
+          {
+            "rebuilds": 1,
+            "menuWidthReads": 1,
+            "drawerStyleReads": 14,
+            "fullScans": 0,
+            "messagePaints": 0,
+            "synchronousMs": 86.9000000001397,
+            "layouts": 1,
+            "styleRecalculations": 10,
+            "bounds": {
+              "left": 16,
+              "right": 352,
+              "width": 336,
+              "viewport": 390
+            }
+          }
+        ],
+        "keyboard": {
+          "first": true,
+          "moved": true,
+          "closed": true,
+          "refocused": true
         }
       }
     ],
     "candidate": [
       {
-        "browser": "chromium",
+        "engine": "chromium",
+        "histories": [
+          {
+            "floors": 4,
+            "openings": [
+              {
+                "rebuilds": 1,
+                "menuWidthReads": 0,
+                "drawerStyleReads": 14,
+                "fullScans": 0,
+                "messagePaints": 0,
+                "synchronousMs": 1,
+                "layouts": 1,
+                "styleRecalculations": 1,
+                "bounds": {
+                  "left": 16,
+                  "right": 352,
+                  "width": 336,
+                  "viewport": 390
+                }
+              },
+              {
+                "rebuilds": 0,
+                "menuWidthReads": 0,
+                "drawerStyleReads": 14,
+                "fullScans": 0,
+                "messagePaints": 0,
+                "synchronousMs": 0.30000000004656613,
+                "layouts": 0,
+                "styleRecalculations": 0,
+                "bounds": {
+                  "left": 16,
+                  "right": 352,
+                  "width": 336,
+                  "viewport": 390
+                }
+              },
+              {
+                "rebuilds": 0,
+                "menuWidthReads": 0,
+                "drawerStyleReads": 14,
+                "fullScans": 0,
+                "messagePaints": 0,
+                "synchronousMs": 0.19999999995343387,
+                "layouts": 0,
+                "styleRecalculations": 0,
+                "bounds": {
+                  "left": 16,
+                  "right": 352,
+                  "width": 336,
+                  "viewport": 390
+                }
+              }
+            ],
+            "keyboard": {
+              "first": true,
+              "moved": true,
+              "closed": true,
+              "refocused": true
+            }
+          },
+          {
+            "floors": 80,
+            "openings": [
+              {
+                "rebuilds": 1,
+                "menuWidthReads": 0,
+                "drawerStyleReads": 14,
+                "fullScans": 0,
+                "messagePaints": 0,
+                "synchronousMs": 0.8000000000465661,
+                "layouts": 1,
+                "styleRecalculations": 1,
+                "bounds": {
+                  "left": 16,
+                  "right": 352,
+                  "width": 336,
+                  "viewport": 390
+                }
+              },
+              {
+                "rebuilds": 0,
+                "menuWidthReads": 0,
+                "drawerStyleReads": 14,
+                "fullScans": 0,
+                "messagePaints": 0,
+                "synchronousMs": 0.30000000004656613,
+                "layouts": 0,
+                "styleRecalculations": 0,
+                "bounds": {
+                  "left": 16,
+                  "right": 352,
+                  "width": 336,
+                  "viewport": 390
+                }
+              },
+              {
+                "rebuilds": 0,
+                "menuWidthReads": 0,
+                "drawerStyleReads": 14,
+                "fullScans": 0,
+                "messagePaints": 0,
+                "synchronousMs": 0.10000000009313226,
+                "layouts": 0,
+                "styleRecalculations": 0,
+                "bounds": {
+                  "left": 16,
+                  "right": 352,
+                  "width": 336,
+                  "viewport": 390
+                }
+              }
+            ],
+            "keyboard": {
+              "first": true,
+              "moved": true,
+              "closed": true,
+              "refocused": true
+            }
+          },
+          {
+            "floors": 240,
+            "openings": [
+              {
+                "rebuilds": 1,
+                "menuWidthReads": 0,
+                "drawerStyleReads": 14,
+                "fullScans": 0,
+                "messagePaints": 0,
+                "synchronousMs": 0.6999999999534339,
+                "layouts": 1,
+                "styleRecalculations": 1,
+                "bounds": {
+                  "left": 16,
+                  "right": 352,
+                  "width": 336,
+                  "viewport": 390
+                }
+              },
+              {
+                "rebuilds": 0,
+                "menuWidthReads": 0,
+                "drawerStyleReads": 14,
+                "fullScans": 0,
+                "messagePaints": 0,
+                "synchronousMs": 0.19999999995343387,
+                "layouts": 0,
+                "styleRecalculations": 0,
+                "bounds": {
+                  "left": 16,
+                  "right": 352,
+                  "width": 336,
+                  "viewport": 390
+                }
+              },
+              {
+                "rebuilds": 0,
+                "menuWidthReads": 0,
+                "drawerStyleReads": 14,
+                "fullScans": 0,
+                "messagePaints": 0,
+                "synchronousMs": 0.09999999986030161,
+                "layouts": 0,
+                "styleRecalculations": 0,
+                "bounds": {
+                  "left": 16,
+                  "right": 352,
+                  "width": 336,
+                  "viewport": 390
+                }
+              }
+            ],
+            "keyboard": {
+              "first": true,
+              "moved": true,
+              "closed": true,
+              "refocused": true
+            }
+          }
+        ],
+        "dynamicCases": [
+          {
+            "nativeDrawerProxy": true,
+            "sheetBack": true,
+            "newDrawer": true,
+            "hiddenDrawer": true,
+            "updatedTitleAndMask": true,
+            "alertRefresh": true,
+            "removedDrawer": true,
+            "viewportWidths": [
+              320,
+              360,
+              768,
+              1280
+            ]
+          }
+        ]
+      },
+      {
+        "engine": "webkit",
+        "histories": [
+          {
+            "floors": 4,
+            "openings": [
+              {
+                "rebuilds": 1,
+                "menuWidthReads": 0,
+                "drawerStyleReads": 14,
+                "fullScans": 0,
+                "messagePaints": 0,
+                "synchronousMs": 1,
+                "layouts": null,
+                "styleRecalculations": null,
+                "bounds": {
+                  "left": 16,
+                  "right": 352,
+                  "width": 336,
+                  "viewport": 390
+                }
+              },
+              {
+                "rebuilds": 0,
+                "menuWidthReads": 0,
+                "drawerStyleReads": 14,
+                "fullScans": 0,
+                "messagePaints": 0,
+                "synchronousMs": 1,
+                "layouts": null,
+                "styleRecalculations": null,
+                "bounds": {
+                  "left": 16,
+                  "right": 352,
+                  "width": 336,
+                  "viewport": 390
+                }
+              },
+              {
+                "rebuilds": 0,
+                "menuWidthReads": 0,
+                "drawerStyleReads": 14,
+                "fullScans": 0,
+                "messagePaints": 0,
+                "synchronousMs": 0,
+                "layouts": null,
+                "styleRecalculations": null,
+                "bounds": {
+                  "left": 16,
+                  "right": 352,
+                  "width": 336,
+                  "viewport": 390
+                }
+              }
+            ],
+            "keyboard": {
+              "first": true,
+              "moved": true,
+              "closed": true,
+              "refocused": true
+            }
+          },
+          {
+            "floors": 80,
+            "openings": [
+              {
+                "rebuilds": 1,
+                "menuWidthReads": 0,
+                "drawerStyleReads": 14,
+                "fullScans": 0,
+                "messagePaints": 0,
+                "synchronousMs": 1,
+                "layouts": null,
+                "styleRecalculations": null,
+                "bounds": {
+                  "left": 16,
+                  "right": 352,
+                  "width": 336,
+                  "viewport": 390
+                }
+              },
+              {
+                "rebuilds": 0,
+                "menuWidthReads": 0,
+                "drawerStyleReads": 14,
+                "fullScans": 0,
+                "messagePaints": 0,
+                "synchronousMs": 1,
+                "layouts": null,
+                "styleRecalculations": null,
+                "bounds": {
+                  "left": 16,
+                  "right": 352,
+                  "width": 336,
+                  "viewport": 390
+                }
+              },
+              {
+                "rebuilds": 0,
+                "menuWidthReads": 0,
+                "drawerStyleReads": 14,
+                "fullScans": 0,
+                "messagePaints": 0,
+                "synchronousMs": 1,
+                "layouts": null,
+                "styleRecalculations": null,
+                "bounds": {
+                  "left": 16,
+                  "right": 352,
+                  "width": 336,
+                  "viewport": 390
+                }
+              }
+            ],
+            "keyboard": {
+              "first": true,
+              "moved": true,
+              "closed": true,
+              "refocused": true
+            }
+          },
+          {
+            "floors": 240,
+            "openings": [
+              {
+                "rebuilds": 1,
+                "menuWidthReads": 0,
+                "drawerStyleReads": 14,
+                "fullScans": 0,
+                "messagePaints": 0,
+                "synchronousMs": 1,
+                "layouts": null,
+                "styleRecalculations": null,
+                "bounds": {
+                  "left": 16,
+                  "right": 352,
+                  "width": 336,
+                  "viewport": 390
+                }
+              },
+              {
+                "rebuilds": 0,
+                "menuWidthReads": 0,
+                "drawerStyleReads": 14,
+                "fullScans": 0,
+                "messagePaints": 0,
+                "synchronousMs": 0,
+                "layouts": null,
+                "styleRecalculations": null,
+                "bounds": {
+                  "left": 16,
+                  "right": 352,
+                  "width": 336,
+                  "viewport": 390
+                }
+              },
+              {
+                "rebuilds": 0,
+                "menuWidthReads": 0,
+                "drawerStyleReads": 14,
+                "fullScans": 0,
+                "messagePaints": 0,
+                "synchronousMs": 0,
+                "layouts": null,
+                "styleRecalculations": null,
+                "bounds": {
+                  "left": 16,
+                  "right": 352,
+                  "width": 336,
+                  "viewport": 390
+                }
+              }
+            ],
+            "keyboard": {
+              "first": true,
+              "moved": true,
+              "closed": true,
+              "refocused": true
+            }
+          }
+        ],
+        "dynamicCases": [
+          {
+            "nativeDrawerProxy": true,
+            "sheetBack": true,
+            "newDrawer": true,
+            "hiddenDrawer": true,
+            "updatedTitleAndMask": true,
+            "alertRefresh": true,
+            "removedDrawer": true,
+            "viewportWidths": [
+              320,
+              360,
+              768,
+              1280
+            ]
+          }
+        ]
+      }
+    ],
+    "metrics": "Instrumented synchronous JavaScript work and CDP layout/style counts; not full input latency"
+  },
+  "chatFont": {
+    "default": 0,
+    "defaultMeaning": "Follow existing host and NVWA mobile typography",
+    "rangePx": [
+      12,
+      32
+    ],
+    "candidate": [
+      {
+        "engine": "chromium",
         "cases": [
+          {
+            "width": 390,
+            "tone": "dark",
+            "defaultFollowsHost": true,
+            "rangeAndNumber": true,
+            "boundsAndRounding": true,
+            "normalAndUserAndReasoning": true,
+            "uiAndFrameAndAuthoredSizePreserved": true,
+            "noFullScanOnFontInput": true,
+            "reloadPersists": true,
+            "disableRestore": true,
+            "followHostReset": true,
+            "blankResets": true,
+            "fullReset": true,
+            "noOverflow": true
+          },
+          {
+            "width": 390,
+            "tone": "light",
+            "defaultFollowsHost": true,
+            "rangeAndNumber": true,
+            "boundsAndRounding": true,
+            "normalAndUserAndReasoning": true,
+            "uiAndFrameAndAuthoredSizePreserved": true,
+            "noFullScanOnFontInput": true,
+            "reloadPersists": true,
+            "disableRestore": true,
+            "followHostReset": true,
+            "blankResets": true,
+            "fullReset": true,
+            "noOverflow": true
+          },
+          {
+            "width": 1280,
+            "tone": "dark",
+            "defaultFollowsHost": true,
+            "rangeAndNumber": true,
+            "boundsAndRounding": true,
+            "normalAndUserAndReasoning": true,
+            "uiAndFrameAndAuthoredSizePreserved": true,
+            "noFullScanOnFontInput": true,
+            "reloadPersists": true,
+            "disableRestore": true,
+            "followHostReset": true,
+            "blankResets": true,
+            "fullReset": true,
+            "noOverflow": true
+          },
+          {
+            "width": 1280,
+            "tone": "light",
+            "defaultFollowsHost": true,
+            "rangeAndNumber": true,
+            "boundsAndRounding": true,
+            "normalAndUserAndReasoning": true,
+            "uiAndFrameAndAuthoredSizePreserved": true,
+            "noFullScanOnFontInput": true,
+            "reloadPersists": true,
+            "disableRestore": true,
+            "followHostReset": true,
+            "blankResets": true,
+            "fullReset": true,
+            "noOverflow": true
+          }
+        ]
+      },
+      {
+        "engine": "webkit",
+        "cases": [
+          {
+            "width": 390,
+            "tone": "dark",
+            "defaultFollowsHost": true,
+            "rangeAndNumber": true,
+            "boundsAndRounding": true,
+            "normalAndUserAndReasoning": true,
+            "uiAndFrameAndAuthoredSizePreserved": true,
+            "noFullScanOnFontInput": true,
+            "reloadPersists": true,
+            "disableRestore": true,
+            "followHostReset": true,
+            "blankResets": true,
+            "fullReset": true,
+            "noOverflow": true
+          },
+          {
+            "width": 390,
+            "tone": "light",
+            "defaultFollowsHost": true,
+            "rangeAndNumber": true,
+            "boundsAndRounding": true,
+            "normalAndUserAndReasoning": true,
+            "uiAndFrameAndAuthoredSizePreserved": true,
+            "noFullScanOnFontInput": true,
+            "reloadPersists": true,
+            "disableRestore": true,
+            "followHostReset": true,
+            "blankResets": true,
+            "fullReset": true,
+            "noOverflow": true
+          },
+          {
+            "width": 1280,
+            "tone": "dark",
+            "defaultFollowsHost": true,
+            "rangeAndNumber": true,
+            "boundsAndRounding": true,
+            "normalAndUserAndReasoning": true,
+            "uiAndFrameAndAuthoredSizePreserved": true,
+            "noFullScanOnFontInput": true,
+            "reloadPersists": true,
+            "disableRestore": true,
+            "followHostReset": true,
+            "blankResets": true,
+            "fullReset": true,
+            "noOverflow": true
+          },
+          {
+            "width": 1280,
+            "tone": "light",
+            "defaultFollowsHost": true,
+            "rangeAndNumber": true,
+            "boundsAndRounding": true,
+            "normalAndUserAndReasoning": true,
+            "uiAndFrameAndAuthoredSizePreserved": true,
+            "noFullScanOnFontInput": true,
+            "reloadPersists": true,
+            "disableRestore": true,
+            "followHostReset": true,
+            "blankResets": true,
+            "fullReset": true,
+            "noOverflow": true
+          }
+        ]
+      }
+    ],
+    "unchangedBoundaries": [
+      "Host UI and input typography",
+      "Small system messages",
+      "Fixed authored card font sizes",
+      "Iframe document font sizes"
+    ]
+  },
+  "retained": {
+    "hostInteraction": [
+      {
+        "browser": "chromium",
+        "results": [
           {
             "floors": 4,
             "physical": true,
@@ -915,7 +965,7 @@
       },
       {
         "browser": "webkit",
-        "cases": [
+        "results": [
           {
             "floors": 4,
             "physical": false,
@@ -1041,95 +1091,95 @@
         ]
       }
     ],
-    "metric": "Calls to message paint processing, full scans and historical registry iterations; not timing"
+    "clarity": [
+      {
+        "floors": 4,
+        "portal": {
+          "frameProbes": 0,
+          "rootQueries": 0,
+          "registryEntries": 0,
+          "sampledTurnaroundMs": 14.700000000186265,
+          "styled": true
+        },
+        "message": {
+          "frameProbes": 0,
+          "rootQueries": 0,
+          "registryEntries": 0
+        },
+        "lifecycle": {
+          "insertedStyled": true,
+          "reloadedStyled": true,
+          "detachedClean": true,
+          "disabledClean": true,
+          "enabledRestored": true
+        }
+      },
+      {
+        "floors": 80,
+        "portal": {
+          "frameProbes": 0,
+          "rootQueries": 0,
+          "registryEntries": 0,
+          "sampledTurnaroundMs": 15.799999999813735,
+          "styled": true
+        },
+        "message": {
+          "frameProbes": 0,
+          "rootQueries": 0,
+          "registryEntries": 0
+        },
+        "lifecycle": {
+          "insertedStyled": true,
+          "reloadedStyled": true,
+          "detachedClean": true,
+          "disabledClean": true,
+          "enabledRestored": true
+        }
+      },
+      {
+        "floors": 240,
+        "portal": {
+          "frameProbes": 0,
+          "rootQueries": 0,
+          "registryEntries": 0,
+          "sampledTurnaroundMs": 14.5,
+          "styled": true
+        },
+        "message": {
+          "frameProbes": 0,
+          "rootQueries": 0,
+          "registryEntries": 0
+        },
+        "lifecycle": {
+          "insertedStyled": true,
+          "reloadedStyled": true,
+          "detachedClean": true,
+          "disabledClean": true,
+          "enabledRestored": true
+        }
+      }
+    ],
+    "byteIdenticalModules": [
+      "glass2.js",
+      "card-clarity.js",
+      "orb.js"
+    ]
   },
-  "retainedClarityScopes": [
-    {
-      "floors": 4,
-      "portal": {
-        "frameProbes": 0,
-        "rootQueries": 0,
-        "registryEntries": 0,
-        "sampledTurnaroundMs": 11.599999999627471,
-        "styled": true
-      },
-      "message": {
-        "frameProbes": 0,
-        "rootQueries": 0,
-        "registryEntries": 0
-      },
-      "lifecycle": {
-        "insertedStyled": true,
-        "reloadedStyled": true,
-        "detachedClean": true,
-        "disabledClean": true,
-        "enabledRestored": true
-      }
-    },
-    {
-      "floors": 80,
-      "portal": {
-        "frameProbes": 0,
-        "rootQueries": 0,
-        "registryEntries": 0,
-        "sampledTurnaroundMs": 15.900000000372529,
-        "styled": true
-      },
-      "message": {
-        "frameProbes": 0,
-        "rootQueries": 0,
-        "registryEntries": 0
-      },
-      "lifecycle": {
-        "insertedStyled": true,
-        "reloadedStyled": true,
-        "detachedClean": true,
-        "disabledClean": true,
-        "enabledRestored": true
-      }
-    },
-    {
-      "floors": 240,
-      "portal": {
-        "frameProbes": 0,
-        "rootQueries": 0,
-        "registryEntries": 0,
-        "sampledTurnaroundMs": 15.800000000745058,
-        "styled": true
-      },
-      "message": {
-        "frameProbes": 0,
-        "rootQueries": 0,
-        "registryEntries": 0
-      },
-      "lifecycle": {
-        "insertedStyled": true,
-        "reloadedStyled": true,
-        "detachedClean": true,
-        "disabledClean": true,
-        "enabledRestored": true
-      }
-    }
-  ],
-  "preservedModules": [
-    "glass2.js",
-    "card-clarity.js",
-    "style.css",
-    "orb.js"
-  ],
+  "designReview": {
+    "newControlsInspected": true,
+    "mechanicalWarningsPreExistingOnly": true
+  },
   "acceptance": {
-    "previousVersionUserReportedFaster": true,
-    "thisVersionOriginalCardPhoneLatency": false,
+    "originalPhoneMenuLatency": false,
     "realAndroid": false,
     "realIOS": false,
-    "appearanceCheckedInDesktopFixtures": true,
-    "rolecardEdited": false,
-    "chatHistoryEdited": false
+    "originalCardNotEdited": true,
+    "chatHistoryNotEdited": true
   },
   "limitations": [
-    "Synthetic hosts in desktop Chromium and Windows WebKit at a mobile viewport",
-    "240-to-6 operation counts do not imply a 40-times improvement in phone latency",
-    "Initial loading, settings changes that rebuild all glass, card-owned scripts and host work can still depend on history size",
-    "Original long conversation and real devices require acceptance"
+    "Synthetic desktop Chromium and Windows WebKit, not the original phone/card",
+    "Synchronous handler timing excludes later rendering and is not INP or end-to-end menu latency",
+    "Changing chat font size necessarily reflows message text; no claim of eliminating that work",
+    "Fixed card typography and frame documents intentionally retain their own sizes"
   ]
 }

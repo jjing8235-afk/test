@@ -296,6 +296,22 @@ html.ilg body :is(#top-bar, #top-settings-holder, .drawer-content, #nonQRFormIte
 }
 html.ilg body #chat .mes :is(.mes_text, .mes_reasoning) { font-family: var(--mainFontFamily); }
 html.ilg body #chat .mes .mes_text > p { line-height: 1.75; }
+
+/* Chat-only font sizing leaves host UI and frame documents under their own typography. */
+html.ilg body #chat.ilg-chat-font .mes:not(.smallSysMes) :is(.mes_text, .mes_reasoning) {
+    --mainFontSize: var(--ilg-chat-font-size);
+    font-size: var(--ilg-chat-font-size);
+}
+html.ilg body .ilg-settings .ilg-chat-font-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+html.ilg body .ilg-settings .ilg-chat-font-controls input[type="range"] { flex: 1; min-width: 40px; }
+html.ilg body .ilg-settings #ilg-opt-chatFontSize-number { width: 72px; flex: 0 0 72px; min-height: 36px; }
+html.ilg body .ilg-settings #ilg-chat-font-reset { flex: none; min-height: 36px; margin: 0; white-space: nowrap; }
+html.ilg body .ilg-settings #ilg-chat-font-hint { color: var(--SmartThemeBodyColor); opacity: 0.75; }
+
 html.ilg body #chat .name_text { font-weight: 700; letter-spacing: 0.01em; }
 html.ilg body #chat :is(.timestamp, .mesIDDisplay, .mes_timer) { opacity: 0.6; font-variant-numeric: tabular-nums; }
 
@@ -775,10 +791,12 @@ html.ilg.ilg-fold body :is(#ilg-fold-button.ilg-alert .ilg-fold-icon, .ilg-fold-
 
 /* 弹出的玻璃菜单：四列图标 + 文字 */
 /* position 写在隐藏状态上也要生效：挂玻璃时会读 position，读到 static 就会被改成 relative */
-#ilg-fold-menu { display: none; position: fixed; z-index: 3010; }
+#ilg-fold-menu { --ilg-fold-menu-width: 336px; display: none; position: fixed; z-index: 3010; }
 html.ilg.ilg-fold body #ilg-fold-menu:not([hidden]) {
     display: grid;
-    grid-template-columns: repeat(4, 76px);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    box-sizing: border-box;
+    width: min(var(--ilg-fold-menu-width), calc(100vw - 16px));
     gap: 4px;
     padding: 10px;
     border-radius: 24px;
@@ -791,7 +809,7 @@ html.ilg.ilg-fold body #ilg-fold-menu:not([hidden]) {
 }
 html.ilg.ilg-fold.ilg-light body #ilg-fold-menu:not([hidden]) { background-color: rgba(255, 255, 255, 0.88); }
 @media screen and (max-width: 360px) {
-    html.ilg.ilg-fold body #ilg-fold-menu:not([hidden]) { grid-template-columns: repeat(4, 1fr); width: calc(100vw - 16px); }
+    html.ilg.ilg-fold body #ilg-fold-menu:not([hidden]) { --ilg-fold-menu-width: calc(100vw - 16px); grid-template-columns: repeat(4, 1fr); width: var(--ilg-fold-menu-width); }
 }
 /* 独立挂在 body 的自有菜单也必须自带明暗文字，不能继承主题中的白字和文字阴影。 */
 html.ilg body #ilg-fold-menu {
