@@ -2144,6 +2144,15 @@ html.ilg.ilg-icons body #nonQRFormItems #send_but { margin: 0; }
     html.ilg body #chat .mes .mes_reasoning_details .mes_reasoning_summary { margin-right: 0; }
     /* 消息卡片自己左右各 18px：手机上这是「不挤」最直观的一半，原来 10px 太贴边了 */
     html.ilg body #chat .mes:not(.smallSysMes) { padding-left: 18px; padding-right: 18px; }
+    /* 右边这一列必须跟左边一模一样。宿主把翻页箭头的留白记在 padding-right 上，
+       第三方预设（比如前端美化里的段落规则）还可能再补一层，两边一叠加，整段正文就往左歪。
+       这里把右内侧留白全部清零，并且加了 !important：谁的规则更靠后都盖不掉。
+       这样正文盒子左右各 18px，和自己的头像、名字行对得上。 */
+    html.ilg body #chat .mes .mes_text { padding-right: 0 !important; margin-right: 0 !important; }
+    html.ilg body #chat .mes .mes_text > p { padding-right: 0 !important; margin-right: 0 !important; }
+    /* 段落改回左对齐。两端对齐会把每一行都顶到盒子右边，右边只要多出一像素就成一条空列，
+       看着就是「整体偏左」；左对齐的参差边缘反而看不出这点偏差。 */
+    html.ilg body #chat .mes .mes_text > p { text-align: left; }
 }
 
 /* 3) 预设自带的时间栏（「凝嘤嘤」：两侧一串像素爱心）。大爱心故意画在 SVG 框外

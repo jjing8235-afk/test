@@ -1645,17 +1645,52 @@ iconLink.rel = 'stylesheet';
 iconLink.href = new URL('./icons.css', import.meta.url).href;
 document.head.appendChild(iconLink);
 
-// 滑块左边那段蓝色：CSS 读不到滑块当前值，所以把进度写进 --ilg-fill（按 20px 圆钮的中心算，蓝条正好止于圆钮下面）
+// 滑块左边那段蓝色：CSS 读不到滑块当前值，所以把进度写进 --ilg-fill（按圆钮的中心算，蓝条正好止于圆钮下面）
+const RANGE_THUMB = 20; // 和 CSS 里 ::-webkit-slider-thumb 的宽高一致
 function paintRange(el) {
     if (!el.closest(HOST_UI_SEL) || el.closest('dialog, .popup, [role="dialog"]:not(.ilg-recent)')) return;
     const min = Number(el.min || 0), max = Number(el.max || 100), v = Number(el.value);
     const p = max > min ? Math.min(1, Math.max(0, (v - min) / (max - min))) : 0;
-    const fill = `calc(${p.toFixed(4)} * (100% - 20px) + 10px)`;
+    const fill = `calc(${p.toFixed(4)} * (100% - ${RANGE_THUMB}px) + ${RANGE_THUMB / 2}px)`;
     if (el.style.getPropertyValue('--ilg-fill') !== fill) el.style.setProperty('--ilg-fill', fill);
 }
 const paintRanges = () => document.querySelectorAll('input[type="range"]').forEach(paintRange);
+
+// 手机上一扒拉就改值：原生滑块只要手指落在轨道任何位置就立刻跳值，滚动聊天/抽屉时蹭到就中招。
+// 改成「只有按在圆点附近才算拖动」：按在轨道别处、或者按在圆点上却是竖着划，值一律还原。
+// 电脑上用鼠标的不受影响（鼠标点轨道还是照常跳，那是精确调节的便利）。
+const coarsePointer = matchMedia('(pointer: coarse)');
+const rangeGuards = new WeakMap();
+const thumbCenter = el => {
+    const r = el.getBoundingClientRect();
+    const min = Number(el.min || 0), max = Number(el.max || 100);
+    const p = max > min ? Math.min(1, Math.max(0, (Number(el.value) - min) / (max - min))) : 0;
+    return r.left + RANGE_THUMB / 2 + p * (r.width - RANGE_THUMB);
+};
+document.addEventListener('pointerdown', e => {
+    const el = e.target;
+    if (!(el instanceof HTMLInputElement) || el.type !== 'range') return;
+    // 按下去这一刻 value 还没被浏览器改，用它算圆点位置
+    const nearThumb = Math.abs(e.clientX - thumbCenter(el)) <= RANGE_THUMB * 0.9;
+    rangeGuards.set(el, { value: el.value, skip: coarsePointer.matches && !nearThumb });
+}, true);
+['pointerup', 'pointercancel'].forEach(t => document.addEventListener(t, e => {
+    if (e.target instanceof HTMLInputElement && e.target.type === 'range') rangeGuards.delete(e.target);
+}, true));
 ['input', 'change'].forEach(t => document.addEventListener(t, e => {
-    if (e.target instanceof HTMLInputElement && e.target.type === 'range') paintRange(e.target);
+    const el = e.target;
+    if (!(el instanceof HTMLInputElement) || el.type !== 'range') return;
+    const guard = rangeGuards.get(el);
+    if (guard?.skip) {
+        // 还原成按下之前的值，并且在捕获阶段截住，别让设置面板把这次误触存进 S
+        if (el.value !== guard.value) {
+            el.value = guard.value;
+            paintRange(el);
+        }
+        e.stopPropagation();
+        return;
+    }
+    paintRange(el);
 }, true));
 // 酒馆读预设时是直接改 value（不发 input 事件），所以打开抽屉、切预设之后再统一刷一遍
 document.addEventListener('click', e => { if (e.target.closest?.('.drawer-toggle, .inline-drawer-toggle')) requestAnimationFrame(paintRanges); }, true);
