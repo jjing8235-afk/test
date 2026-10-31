@@ -1366,6 +1366,9 @@ function buildPanel() {
             document.getElementById(`ilg-opt-${k}`).value = S[k];
             document.getElementById(`ilg-opt-${k}-v`).textContent = fmt(step, unit, S[k]);
         });
+        // 这里的 .value 是脚本直接改的，不会触发 input 事件，所以蓝色进度条要自己重画一遍。
+        // 少了这一步，点“一键预设”或“恢复默认”之后圆点会跳到新位置，蓝条还停在上一次的进度上。
+        wrap.querySelectorAll('input[type="range"]').forEach(paintRange);
         document.getElementById('ilg-opt-tone').value = S.tone;
         document.getElementById('ilg-opt-dayStart').value = S.dayStart;
         document.getElementById('ilg-opt-dayEnd').value = S.dayEnd;
