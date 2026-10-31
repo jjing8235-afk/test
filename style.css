@@ -2151,8 +2151,27 @@ html.ilg.ilg-icons body #nonQRFormItems #send_but { margin: 0; }
     html.ilg body #chat .mes .mes_text { padding-right: 0 !important; margin-right: 0 !important; }
     html.ilg body #chat .mes .mes_text > p { padding-right: 0 !important; margin-right: 0 !important; }
     /* 段落改回左对齐。两端对齐会把每一行都顶到盒子右边，右边只要多出一像素就成一条空列，
-       看着就是「整体偏左」；左对齐的参差边缘反而看不出这点偏差。 */
+       看着就是「整体偏左」；左对齐的参差边缘反而看不出这点偏差。
+       想要它顶满盒子的人，可以在设置里打开「正文两端对齐」。 */
     html.ilg body #chat .mes .mes_text > p { text-align: left; }
+}
+
+/* 正文两端对齐（设置里可选）：每一行都顶到盒子两边，右边不再参差，
+   整段读起来是齐的矩形，也就不会显得「整体偏左」。最后一行仍然靠左，不拉长字距。 */
+html.ilg.ilg-justify body #chat .mes .mes_text > p,
+html.ilg.ilg-justify body #chat .mes .mes_text > li {
+    text-align: justify;
+    text-align-last: left;
+    text-justify: inter-character;
+}
+
+/* 正文里自带底色的卡片（角色卡的状态栏、模板面板）：它们的底色多半是半透明紫 / 半透明黑，
+   叠在亮壁纸上就「透」了，同一张卡上半实、下半虚。tagCard() 把卡片自己的颜色算出来写进
+   --ilg-card-solid，这里铺一层实色在它自己的渐变下面，壁纸就不再透上来。
+   设置里的「卡片都用不透明底」可以关掉，关掉后恢复原样。 */
+html.ilg body #chat .mes_text .ilg-card-surface.ilg-solid {
+    /* 卡片模板大多把底色写在 style 属性里，行内样式优先级比样式表高，这里必须 !important 才盖得住 */
+    background-color: var(--ilg-card-solid) !important;
 }
 
 /* 3) 预设自带的时间栏（「凝嘤嘤」：两侧一串像素爱心）。大爱心故意画在 SVG 框外

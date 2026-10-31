@@ -30,7 +30,7 @@ const PRESETS = {
 };
 
 const DEFAULTS = {
-    chatFontSize: 0, firstLineIndent: false, compatibilityMode: 'auto', androidWebViewRefract: false, iosSvgTrial: false,
+    chatFontSize: 0, firstLineIndent: false, cardSolid: true, justifyText: false, compatibilityMode: 'auto', androidWebViewRefract: false, iosSvgTrial: false,
     enabled: true, float: true, islands: true, fold: true, qrFold: true, home: true, toneBtn: true, homeName: 'NVWA 用户', icons: true, refract: true, refractMes: true, font: true, tone: 'time', dayStart: 7, dayEnd: 19, avatar: 'line', orb: true,
     engine: 'physical', follow: true, pLight: 135,
     // 自然弧度没写的参数（厚度、折射率等，只给物理折射截面用）沿用清透立体的
@@ -84,6 +84,8 @@ const TOGGLES = [
     ['refractMes', '消息卡片也折射（长聊天卡顿时关掉）'],
     ['font', '统一字体：思源黑体（苹果设备用苹方）'],
     ['firstLineIndent', '普通正文首行缩进两个汉字（不影响列表、代码和自带样式面板）'],
+    ['cardSolid', '正文里自带底色的卡片都用不透明底（关掉则透出壁纸，同一张卡可能上半实、下半虚）'],
+    ['justifyText', '正文两端对齐（右边不参差；关掉是左对齐，右边缘会自然留白）'],
     ['islands', '顶栏拆成三个分组的悬浮岛'],
     ['fold', '顶栏折叠：设置类图标收进左上角菜单'],
     ['qrFold', '快捷回复收进输入框左边的按钮'],
@@ -1061,6 +1063,7 @@ function applyRoot() {
     root.classList.toggle('ilg', S.enabled);
     root.classList.toggle('ilg-ios-experiment', S.enabled && isIOS);
     root.classList.toggle('ilg-indent', S.enabled && !!S.firstLineIndent);
+    root.classList.toggle('ilg-justify', S.enabled && !!S.justifyText);
     root.classList.toggle('ilg-float', S.enabled && S.float);
     root.classList.toggle('ilg-icons', S.enabled && S.icons);
     root.classList.toggle('ilg-font', S.enabled && S.font);
@@ -1449,6 +1452,17 @@ function buildPanel() {
             ctx.saveSettingsDebounced();
             return;
         }
+        // 这两个只影响正文排版和卡片底色，不必重建玻璃
+        if (k === 'justifyText') {
+            root.classList.toggle('ilg-justify', S.enabled && !!S.justifyText);
+            ctx.saveSettingsDebounced();
+            return;
+        }
+        if (k === 'cardSolid') {
+            queueCards(true);
+            ctx.saveSettingsDebounced();
+            return;
+        }
         if (!S.enabled || k === 'iosSvgTrial' || k === 'enabled' || k === 'refract' || k === 'refractMes' || k === 'islands' || k === 'fold') clearAll();
         applyRoot(); sync(); ctx.saveSettingsDebounced();
     }));
@@ -1811,12 +1825,26 @@ function tagCard(text) {
 
             let lum = base;
             if (c) lum = lumOf(c) * c.a + base * (1 - c.a);
-            updates.push({ element: k, surface, lit: !!c && lum > 0.62 && !light, dim: !!c && lum < 0.38 && light, lum });
+            // 半透明底色的卡片（模板的状态栏最常见）：算出它自己的颜色，供「不透明底」开关使用。
+            // 太淡的 tint（比如 6% 白）不算，那种补成实色会变成一块白板。
+            // 算过一次就沿用存下的值：我们自己那条 !important 会把渲染出来的背景色变成实色，
+            // 再按渲染值重算就会误判成“已经不透明了”，于是开关来回跳。
+            const kept = k.style.getPropertyValue('--ilg-card-solid');
+            const solid = kept || (c && c.a >= 0.35 && c.a < 0.995
+                ? `rgb(${Math.round(c.r)}, ${Math.round(c.g)}, ${Math.round(c.b)})` : '');
+            updates.push({ element: k, surface, lit: !!c && lum > 0.62 && !light, dim: !!c && lum < 0.38 && light, lum, solid });
         }
-        for (const { element, surface, lit, dim } of updates) {
+        for (const { element, surface, lit, dim, solid } of updates) {
             element.classList.toggle('ilg-card-surface', surface);
             element.classList.toggle('ilg-lit', lit);
             element.classList.toggle('ilg-dim', dim);
+            const wantSolid = !!solid && S.cardSolid;
+            if (wantSolid) {
+                if (element.style.getPropertyValue('--ilg-card-solid') !== solid) element.style.setProperty('--ilg-card-solid', solid);
+            } else if (element.style.getPropertyValue('--ilg-card-solid')) {
+                element.style.removeProperty('--ilg-card-solid');
+            }
+            element.classList.toggle('ilg-solid', wantSolid);
         }
         for (const { element, lum } of updates) if (element.children.length) walk(element, lum);
     };
