@@ -1857,8 +1857,11 @@ function tagCard(text) {
             const choice = k.matches('button, select, option, input[type="button"], input[type="submit"], [role="button"], [role="option"]');
             // 底色也可能画在 ::before / ::after 上（模板常用这招），这种情况元素自身读不到背景，得一起算进来
             const card = panel ? cardColors(k) : { best: null, translucent: false };
+            // 「自绘卡片」这个判定要保守：它会给整条消息撤掉玻璃（见 paint() 里的 ilg-card-renderer）。
+            // 只能按元素自身可见的背景来判；伪元素、渐变淡出这些常见情况不能算，否则普通消息也会被当成自绘卡，玻璃全没。
+            const renderer = choice || (panel && (!!c || cs.backgroundImage !== 'none' || cs.position === 'fixed'));
             const surface = choice || (panel && (!!c || cs.backgroundImage !== 'none' || !!card.best || cs.position === 'fixed'));
-            if (surface && cs.display !== 'none' && cs.visibility !== 'hidden' && k.getClientRects().length) cardRenderer = true;
+            if (renderer && cs.display !== 'none' && cs.visibility !== 'hidden' && k.getClientRects().length) cardRenderer = true;
 
             let lum = base;
             if (c) lum = lumOf(c) * c.a + base * (1 - c.a);
