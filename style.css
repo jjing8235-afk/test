@@ -3559,9 +3559,6 @@ html.ilg body.no-blur #chat .mes > .ilg-message-glass {
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
 }
-/* An opaque backing covers transparent frame regions without accessing the frame document. */
-html.ilg { --ilg-card-fallback: rgb(18, 20, 30); }
-html.ilg.ilg-light { --ilg-card-fallback: rgb(248, 249, 252); }
 html.ilg body .ilg-settings #ilg-card-report {
     width: 100%;
     max-height: 18rem;

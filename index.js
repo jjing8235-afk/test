@@ -84,7 +84,7 @@ const TOGGLES = [
     ['refractMes', '消息卡片也折射（长聊天卡顿时关掉）'],
     ['font', '统一字体：思源黑体（苹果设备用苹方）'],
     ['firstLineIndent', '普通正文首行缩进两个汉字（不影响列表、代码和自带样式面板）'],
-    ['cardSolid', '卡片使用不透明底（含内嵌页面和图片背景）'],
+    ['cardSolid', '卡片使用不透明底（沿用卡片自身颜色）'],
     ['justifyText', '正文两端对齐（右边不参差；关掉是左对齐，右边缘会自然留白）'],
     ['islands', '顶栏拆成三个分组的悬浮岛'],
     ['fold', '顶栏折叠：设置类图标收进左上角菜单'],
@@ -1902,7 +1902,7 @@ function cardDisplayReport() {
         return { message: describe(message), candidates: candidates.length, sampled: sampled.map(describe), truncated: sampled.length < candidates.length };
     });
     return JSON.stringify({
-        format: 'nvwa-card-display-1', version: '1.4.4-test.7',
+        format: 'nvwa-card-display-1', version: '1.4.4-test.8',
         viewport: [innerWidth, innerHeight, devicePixelRatio],
         userAgent: navigator.userAgent,
         enabled: !!S.enabled, chatBackground: S.chatBackground, cardSolid: !!S.cardSolid,
@@ -1935,10 +1935,9 @@ const cardColors = el => {
         if (ps.content === 'none' || ps.display === 'none') continue;
         layers.push([ps.backgroundColor, 'color'], [ps.backgroundImage, 'image']);
     }
-    let best = null, translucent = false, hasImage = false;
+    let best = null, translucent = false;
     for (const [src, kind] of layers) {
         if (!src || src === 'none') continue;
-        if (kind === 'image' && /url\(/i.test(src)) hasImage = true;
         const list = String(src).match(/rgba?\([^)]+\)/g);
         if (!list || !list.length) continue;
         let maxA = 0, minA = 1;
@@ -1952,7 +1951,7 @@ const cardColors = el => {
         // 渐变：只要有一段淡到几乎透明，这张卡就是「会透」的
         if (kind === 'image' ? minA < 0.995 : (maxA > 0.02 && maxA < 0.995)) translucent = true;
     }
-    return { best, translucent, hasImage };
+    return { best, translucent };
 };
 function tagCard(text) {
     // 以 <html> 上的 class 为准：CSS 也是按它配色的
@@ -1984,10 +1983,11 @@ function tagCard(text) {
             // 卡片里只要有一处是透的，就用它最实的那个颜色补一层底；全不透明的卡不补。
             // 算过一次就沿用存下的值：我们自己那条 !important 会把渲染出来的背景色变成实色，
             // 再按渲染值重算就会误判成“已经不透明了”，于是开关来回跳。
-            const kept = k.style.getPropertyValue('--ilg-card-solid');
+            const previousSolid = k.style.getPropertyValue('--ilg-card-solid');
+            // Drop the obsolete neutral backing; transparent frame margins belong to the authored card.
+            const kept = previousSolid === 'var(--ilg-card-fallback)' ? '' : previousSolid;
             const solid = kept || (card.translucent && card.best
-                ? `rgb(${Math.round(card.best.r)}, ${Math.round(card.best.g)}, ${Math.round(card.best.b)})`
-                : ((card.hasImage || frame) && (!c || c.a < 0.995) ? 'var(--ilg-card-fallback)' : ''));
+                ? `rgb(${Math.round(card.best.r)}, ${Math.round(card.best.g)}, ${Math.round(card.best.b)})` : '');
             updates.push({ element: k, surface, lit: !!c && lum > 0.62 && !light, dim: !!c && lum < 0.38 && light, lum, solid });
         }
         for (const { element, surface, lit, dim, solid } of updates) {
