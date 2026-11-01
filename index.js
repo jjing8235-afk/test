@@ -1804,6 +1804,41 @@ function blockBg(el, cs = getComputedStyle(el)) {
     if ((!c || c.a < 0.05) && cs.backgroundImage.includes('gradient')) c = parseRgba(cs.backgroundImage);
     return c && c.a >= 0.05 ? c : null;
 }
+// 卡片自己的「实色底」怎么取：
+// 卡片的底色可能写在 background-color、写在渐变里、甚至写在 ::before / ::after 上（模板爱这么干）。
+// 取所有候选里不透明度最高的那个颜色，当铺在下面的一层实色。
+// 还要判断这张卡到底有没有「透」的地方：颜色层看自身不透明度，渐变层看有没有淡到接近 0 的色标。
+const cardColors = el => {
+    const cs = getComputedStyle(el);
+    const layers = [
+        [el.style.backgroundColor, 'color'],
+        [cs.backgroundColor, 'color'],
+        [el.style.backgroundImage || el.style.background, 'image'],
+        [cs.backgroundImage, 'image'],
+    ];
+    for (const p of ['::before', '::after']) {
+        const ps = getComputedStyle(el, p);
+        if (ps.content === 'none' || ps.display === 'none') continue;
+        layers.push([ps.backgroundColor, 'color'], [ps.backgroundImage, 'image']);
+    }
+    let best = null, translucent = false;
+    for (const [src, kind] of layers) {
+        if (!src || src === 'none') continue;
+        const list = String(src).match(/rgba?\([^)]+\)/g);
+        if (!list || !list.length) continue;
+        let maxA = 0, minA = 1;
+        for (const s of list) {
+            const c = parseRgba(s);
+            if (!c) continue;
+            maxA = Math.max(maxA, c.a);
+            minA = Math.min(minA, c.a);
+            if (c.a >= 0.35 && (!best || c.a > best.a)) best = c;
+        }
+        // 渐变：只要有一段淡到几乎透明，这张卡就是「会透」的
+        if (kind === 'image' ? minA < 0.995 : (maxA > 0.02 && maxA < 0.995)) translucent = true;
+    }
+    return { best, translucent };
+};
 function tagCard(text) {
     // 以 <html> 上的 class 为准：CSS 也是按它配色的
     const light = root.classList.contains('ilg-light');
@@ -1820,18 +1855,19 @@ function tagCard(text) {
             const c = blockBg(k, cs);
             const panel = k.matches('div, section, article, aside, details, summary, dialog, button, [role="dialog"], [role="button"], [role="menu"], [role="listbox"], [role="option"]');
             const choice = k.matches('button, select, option, input[type="button"], input[type="submit"], [role="button"], [role="option"]');
-            const surface = choice || (panel && (!!c || cs.backgroundImage !== 'none' || cs.position === 'fixed'));
+            // 底色也可能画在 ::before / ::after 上（模板常用这招），这种情况元素自身读不到背景，得一起算进来
+            const card = panel ? cardColors(k) : { best: null, translucent: false };
+            const surface = choice || (panel && (!!c || cs.backgroundImage !== 'none' || !!card.best || cs.position === 'fixed'));
             if (surface && cs.display !== 'none' && cs.visibility !== 'hidden' && k.getClientRects().length) cardRenderer = true;
 
             let lum = base;
             if (c) lum = lumOf(c) * c.a + base * (1 - c.a);
-            // 半透明底色的卡片（模板的状态栏最常见）：算出它自己的颜色，供「不透明底」开关使用。
-            // 太淡的 tint（比如 6% 白）不算，那种补成实色会变成一块白板。
+            // 卡片里只要有一处是透的，就用它最实的那个颜色补一层底；全不透明的卡不补。
             // 算过一次就沿用存下的值：我们自己那条 !important 会把渲染出来的背景色变成实色，
             // 再按渲染值重算就会误判成“已经不透明了”，于是开关来回跳。
             const kept = k.style.getPropertyValue('--ilg-card-solid');
-            const solid = kept || (c && c.a >= 0.35 && c.a < 0.995
-                ? `rgb(${Math.round(c.r)}, ${Math.round(c.g)}, ${Math.round(c.b)})` : '');
+            const solid = kept || (card.translucent && card.best
+                ? `rgb(${Math.round(card.best.r)}, ${Math.round(card.best.g)}, ${Math.round(card.best.b)})` : '');
             updates.push({ element: k, surface, lit: !!c && lum > 0.62 && !light, dim: !!c && lum < 0.38 && light, lum, solid });
         }
         for (const { element, surface, lit, dim, solid } of updates) {
