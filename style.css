@@ -3522,3 +3522,55 @@ html.ilg body .ilg-floating-clarity *::after {
     html.ilg body #chat::-webkit-scrollbar,
     html.ilg body #sheld::-webkit-scrollbar { width: 0; height: 0; display: none; }
 }
+
+/* Message backdrop is separate from card content so fixed overlays keep viewport coordinates. */
+html.ilg body.bubblechat:not(.no-blur) #chat .mes.ilg-message-backdrop {
+    isolation: isolate;
+    background-color: transparent;
+}
+html.ilg body.bubblechat:not(.no-blur) #chat .mes.ilg-glass.ilg-message-backdrop:not(.smallSysMes)::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    padding: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background: var(--SmartThemeBotMesBlurTintColor);
+    -webkit-mask: none;
+    mask: none;
+    -webkit-backdrop-filter: var(--ilg-message-filter);
+    backdrop-filter: var(--ilg-message-filter);
+}
+html.ilg body.bubblechat:not(.no-blur) #chat .mes.ilg-message-backdrop[is_user="true"]::before {
+    background: var(--SmartThemeUserMesBlurTintColor);
+}
+html.ilg.ilg-chat-transparent body.bubblechat #chat .mes.ilg-glass {
+    background: transparent !important;
+    box-shadow: none !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+}
+html.ilg.ilg-chat-transparent body.bubblechat #chat .mes.ilg-glass::before,
+html.ilg.ilg-chat-transparent body.bubblechat #chat .mes.ilg-glass::after {
+    content: none !important;
+}
+/* An opaque backing covers transparent frame regions without accessing the frame document. */
+html.ilg { --ilg-card-fallback: rgb(18, 20, 30); }
+html.ilg.ilg-light { --ilg-card-fallback: rgb(248, 249, 252); }
+html.ilg body .ilg-settings #ilg-card-report {
+    width: 100%;
+    max-height: 18rem;
+    resize: vertical;
+}
+
+html.ilg body .ilg-settings #ilg-opt-chatBackground,
+html.ilg body .ilg-settings #ilg-card-report-copy {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 44px;
+}
+html.ilg body .ilg-settings #ilg-card-report-copy {
+    justify-content: center;
+    white-space: normal;
+}
