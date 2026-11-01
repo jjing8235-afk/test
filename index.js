@@ -277,7 +277,7 @@ function buildPhysical(it, el, w, h, r) {
     const kind = KIND[it.kind];
     const o = {
         profile: S.profile, ior: S.pIor, magnify: S.pMagnify, bezel: S.pBezel * kind.bezelK, thickness: S.pThickness * kind.thickK,
-        strength: S.pStrength * kind.k, aberration: S.pAberration, blur: kind.blur(),
+        strength: S.pStrength * kind.k, aberration: S.pAberration, blur: it.kind === 'mes' && S.chatBackground === 'transparent' ? 0 : kind.blur(),
         saturate: S.pSaturate, brightness: S.pBrightness, contrast: S.pContrast,
         specular: S.pSpecular, sharp: S.pSharp, edgeShade: S.pEdgeShade, fresnel: S.pFresnel, caustic: S.pCaustic,
     };
@@ -326,6 +326,28 @@ function refractAllowed(it) {
     return true;
 }
 
+// Cards keep their fixed-position descendants outside the filter's containing block.
+// The independent layer uses the same filter builder as ordinary message and input glass.
+function messageSurface(el, it) {
+    const separate = el.classList.contains('ilg-content-overlay') || el.classList.contains('ilg-card-renderer');
+    el.classList.toggle('ilg-message-backdrop', separate);
+    if (!separate) {
+        it.backdrop?.remove();
+        it.backdrop = null;
+        return el;
+    }
+    if (!it.backdrop) {
+        const layer = document.createElement('div');
+        layer.className = 'ilg-message-glass';
+        layer.setAttribute('aria-hidden', 'true');
+        el.prepend(layer);
+        it.backdrop = layer;
+    }
+    el.style.backdropFilter = 'none';
+    el.style.webkitBackdropFilter = 'none';
+    return it.backdrop;
+}
+
 function paint(el) {
     const it = items.get(el);
     if (!it) return;
@@ -336,39 +358,32 @@ function paint(el) {
         it.kind = panel ? 'clearPanel' : 'panel';
         el.classList.toggle('ilg-adapted', !!panel);
     }
-    if (it.kind === 'mes') el.classList.remove('ilg-message-backdrop');
-    if ((it.kind === 'mes' && S.chatBackground === 'transparent') || document.body.classList.contains('no-blur')) {
+    const surface = it.kind === 'mes' ? messageSurface(el, it) : el;
+    if (document.body.classList.contains('no-blur')) {
         setPhys(el, it, false);
-        el.style.backdropFilter = 'none';
-        el.style.webkitBackdropFilter = 'none';
+        surface.style.backdropFilter = 'none';
+        surface.style.webkitBackdropFilter = 'none';
         return;
     }
-    // Fixed overlays need viewport coordinates; self-rendered panels/frames must not pass through message SVG compositing.
-    if (it.kind === 'mes' && (el.classList.contains('ilg-content-overlay') || el.classList.contains('ilg-card-renderer'))) {
-        setPhys(el, it, false);
-        el.classList.add('ilg-message-backdrop');
-        el.style.backdropFilter = 'none';
-        el.style.webkitBackdropFilter = 'none';
-        return;
-    }
-    const tail = `blur(${KIND[it.kind].blur()}px) saturate(${S.saturate}) brightness(${S.brightness})`;
+    const blur = it.kind === 'mes' && S.chatBackground === 'transparent' ? 0 : KIND[it.kind].blur();
+    const tail = `blur(${blur}px) saturate(${S.saturate}) brightness(${S.brightness})`;
     const w = el.offsetWidth, h = el.offsetHeight;
     // A closed drawer has no pixels to update; retain its last valid filter for reopening.
     if (!w || !h) return;
-    const phys = refractAllowed(it) && w > 0 && h > 0 && S.engine === 'physical';
+    const phys = refractAllowed(it) && S.engine === 'physical';
     setPhys(el, it, phys);
-    if (canRefract() && !isIOS) el.style.webkitBackdropFilter = '';
+    if (canRefract() && !isIOS) surface.style.webkitBackdropFilter = '';
     if (phys) {
         buildPhysical(it, el, w, h, radiusOf(el, w, h));
-        el.style.backdropFilter = `url(#${it.id})`;
-        if (isIOS) el.style.webkitBackdropFilter = `url(#${it.id})`;
-    } else if (refractAllowed(it) && w > 0 && h > 0) {
+        surface.style.backdropFilter = `url(#${it.id})`;
+        if (isIOS) surface.style.webkitBackdropFilter = `url(#${it.id})`;
+    } else if (refractAllowed(it)) {
         buildFilter(it, w, h, radiusOf(el, w, h));
-        el.style.backdropFilter = `url(#${it.id}) ${tail}`;
-        if (isIOS) el.style.webkitBackdropFilter = `url(#${it.id}) ${tail}`;
+        surface.style.backdropFilter = `url(#${it.id}) ${tail}`;
+        if (isIOS) surface.style.webkitBackdropFilter = `url(#${it.id}) ${tail}`;
     } else {
-        el.style.backdropFilter = tail;
-        if (isIOS || !canRefract()) el.style.webkitBackdropFilter = tail;
+        surface.style.backdropFilter = tail;
+        if (isIOS || !canRefract()) surface.style.webkitBackdropFilter = tail;
     }
 }
 // .ilg-phys：高光已经在滤镜里画了，CSS 那套亮边/内阴影要让开（见 style.css 的新版引擎部分）
@@ -437,6 +452,7 @@ function untrack(el) {
     const it = items.get(el);
     if (!it) return;
     it.filter?.remove();
+    it.backdrop?.remove();
     ro.unobserve(el);
     io.unobserve(el);
     el.classList.remove('ilg-glass', 'ilg-sheen', 'ilg-clear', 'ilg-phys', 'ilg-adapted', 'ilg-message-backdrop');
@@ -1046,7 +1062,6 @@ function applySurfaceSettings() {
     root.style.setProperty('--ilg-shadow-k', S.pShadow);
     root.style.setProperty('--ilg-sheen-k', S.pSheen);
     root.style.setProperty('--ilg-mes-a', S.mesTint);
-    root.style.setProperty('--ilg-message-filter', `blur(${S.mesBlur}px) saturate(${S.saturate}) brightness(${S.brightness})`);
     root.classList.toggle('ilg-chat-transparent', S.enabled && S.chatBackground === 'transparent');
     root.style.setProperty('--ilg-scrim-a', S.scrim);
     root.style.setProperty('--ilg-tint', `rgba(255, 255, 255, ${lightBg ? Math.min(0.7, S.tint + 0.3) : S.tint})`);
@@ -1269,9 +1284,9 @@ function buildPanel() {
     <div class="ilg-row"><label for="ilg-opt-chatBackground"><span>聊天背景</span></label>
       <select id="ilg-opt-chatBackground" class="text_pole" aria-describedby="ilg-chat-background-hint">
         <option value="glass">模糊玻璃（原来的效果）</option>
-        <option value="transparent">透明（清楚透出壁纸）</option>
+        <option value="transparent">透明玻璃（保留边缘与圆角）</option>
       </select>
-      <p class="ilg-hint" id="ilg-chat-background-hint">只调整聊天消息背景，顶栏和输入框不变。卡片自带的底色由上方“不透明底”开关控制。</p>
+      <p class="ilg-hint" id="ilg-chat-background-hint">两档都保留玻璃轮廓。透明档去掉消息的磨砂和底色，保留边缘折射与阴影；卡片自身底色由上方“不透明底”开关控制。</p>
     </div>
     <div class="ilg-row">
       <button type="button" id="ilg-card-report-copy" class="menu_button">复制卡片显示诊断</button>
@@ -1861,6 +1876,7 @@ function cardDisplayReport() {
             after: style(win.getComputedStyle(el, '::after')),
             solid: el.classList.contains('ilg-solid'),
         };
+        if (el.matches('.mes')) result.glass = style(win.getComputedStyle(el.querySelector(':scope > .ilg-message-glass') || el));
         if (el.tagName === 'IFRAME') {
             try {
                 const doc = el.contentDocument;
@@ -1886,7 +1902,7 @@ function cardDisplayReport() {
         return { message: describe(message), candidates: candidates.length, sampled: sampled.map(describe), truncated: sampled.length < candidates.length };
     });
     return JSON.stringify({
-        format: 'nvwa-card-display-1', version: '1.4.4-test.6',
+        format: 'nvwa-card-display-1', version: '1.4.4-test.7',
         viewport: [innerWidth, innerHeight, devicePixelRatio],
         userAgent: navigator.userAgent,
         enabled: !!S.enabled, chatBackground: S.chatBackground, cardSolid: !!S.cardSolid,

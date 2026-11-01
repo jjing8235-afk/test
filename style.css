@@ -3523,37 +3523,41 @@ html.ilg body .ilg-floating-clarity *::after {
     html.ilg body #sheld::-webkit-scrollbar { width: 0; height: 0; display: none; }
 }
 
-/* Message backdrop is separate from card content so fixed overlays keep viewport coordinates. */
-html.ilg body.bubblechat:not(.no-blur) #chat .mes.ilg-message-backdrop {
+/* Card messages use the original glass engine on a sibling of their authored content. */
+html.ilg body.bubblechat #chat .mes.ilg-message-backdrop {
     isolation: isolate;
     background-color: transparent;
 }
-html.ilg body.bubblechat:not(.no-blur) #chat .mes.ilg-glass.ilg-message-backdrop:not(.smallSysMes)::before {
-    content: "";
+html.ilg body.bubblechat #chat .mes > .ilg-message-glass {
     position: absolute;
     inset: 0;
-    z-index: -1;
-    padding: 0;
+    z-index: -2;
     border-radius: inherit;
     pointer-events: none;
-    background: var(--SmartThemeBotMesBlurTintColor);
-    -webkit-mask: none;
-    mask: none;
-    -webkit-backdrop-filter: var(--ilg-message-filter);
-    backdrop-filter: var(--ilg-message-filter);
 }
-html.ilg body.bubblechat:not(.no-blur) #chat .mes.ilg-message-backdrop[is_user="true"]::before {
-    background: var(--SmartThemeUserMesBlurTintColor);
+html.ilg body.bubblechat #chat .mes.ilg-message-backdrop:not(.ilg-phys) > .ilg-message-glass {
+    background-color: var(--SmartThemeBotMesBlurTintColor);
 }
+html.ilg body.bubblechat #chat .mes.ilg-message-backdrop:not(.ilg-phys)[is_user="true"] > .ilg-message-glass {
+    background-color: var(--SmartThemeUserMesBlurTintColor);
+}
+/* Transparent means clear glass: keep the contour, refraction, sheen and elevation. */
 html.ilg.ilg-chat-transparent body.bubblechat #chat .mes.ilg-glass {
-    background: transparent !important;
-    box-shadow: none !important;
+    background-color: transparent;
+    outline: 1px solid rgba(255, 255, 255, 0.24);
+    outline-offset: -1px;
+}
+html.ilg.ilg-light.ilg-chat-transparent body.bubblechat #chat .mes.ilg-glass {
+    outline-color: rgba(45, 60, 85, 0.22);
+}
+html.ilg.ilg-chat-transparent body.bubblechat #chat .mes.ilg-phys::before,
+html.ilg.ilg-chat-transparent body.bubblechat #chat .mes.ilg-glass > .ilg-message-glass {
+    background: transparent;
+}
+/* The host preference applies immediately to layers outside the current viewport too. */
+html.ilg body.no-blur #chat .mes > .ilg-message-glass {
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
-}
-html.ilg.ilg-chat-transparent body.bubblechat #chat .mes.ilg-glass::before,
-html.ilg.ilg-chat-transparent body.bubblechat #chat .mes.ilg-glass::after {
-    content: none !important;
 }
 /* An opaque backing covers transparent frame regions without accessing the frame document. */
 html.ilg { --ilg-card-fallback: rgb(18, 20, 30); }
