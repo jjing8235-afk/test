@@ -1,789 +1,221 @@
 {
-  "date": "2026-10-30",
-  "version": "1.4.3-test.7",
-  "baseCommit": "43fb6dd4d6d5647c853eb27edd0865c16bdd5311",
-  "scope": "Message missing-avatar alignment and native home history caching, settings access and empty state",
-  "sourceChecks": [
-    {
-      "command": "--check index.js",
-      "passed": true
-    },
-    {
-      "command": "--check glass2.js",
-      "passed": true
-    },
-    {
-      "command": "--check card-clarity.js",
-      "passed": true
-    },
-    {
-      "command": "--check orb.js",
-      "passed": true
-    },
-    {
-      "command": "--check dev/verify/host-interaction-browser.mjs",
-      "passed": true
-    },
-    {
-      "command": "--check dev/verify/fold-menu-font-browser.mjs",
-      "passed": true
-    },
-    {
-      "command": "--check dev/verify/chat-font-regression.mjs",
-      "passed": true
-    },
-    {
-      "command": "--check dev/verify/shared-performance-browser.mjs",
-      "passed": true
-    },
-    {
-      "command": "--check dev/verify/panel-transitions-browser.mjs",
-      "passed": true
-    },
-    {
-      "command": "--check dev/verify/home-avatar-browser.mjs",
-      "passed": true
-    },
-    {
-      "command": "dev/verify/tt-compat-regression.mjs",
-      "passed": true
-    },
-    {
-      "command": "dev/verify/mobile-performance-regression.mjs",
-      "passed": true
-    },
-    {
-      "command": "dev/verify/form-scroll-regression.mjs",
-      "passed": true
-    },
-    {
-      "command": "dev/verify/first-line-indent-regression.mjs",
-      "passed": true
-    },
-    {
-      "command": "dev/verify/filter-reuse-regression.mjs",
-      "passed": true
-    },
-    {
-      "command": "dev/verify/popup-boundary-regression.mjs",
-      "passed": true
-    },
-    {
-      "command": "dev/verify/chat-font-regression.mjs",
-      "passed": true
-    },
-    {
-      "command": "validate-extension-manifest --root <extension>",
-      "passed": true
-    }
-  ],
-  "browserSuites": [
-    {
-      "suite": "run.mjs",
-      "passed": true
-    },
-    {
-      "suite": "checkbox.mjs",
-      "passed": true
-    },
-    {
-      "suite": "ui-regression.mjs",
-      "passed": true
-    },
-    {
-      "suite": "clarity-regression.mjs",
-      "passed": true
-    },
-    {
-      "suite": "frame-origin-regression.mjs",
-      "passed": true
-    },
-    {
-      "suite": "portal-regression.mjs",
-      "passed": true
-    }
-  ],
-  "extendedChecks": [
-    {
-      "output": "after-performance.json",
-      "passed": true
-    },
-    {
-      "output": "after-performance-webkit.json",
-      "passed": true
-    },
-    {
-      "output": "menu-font-chromium.json",
-      "passed": true
-    },
-    {
-      "output": "menu-font-webkit.json",
-      "passed": true
-    },
-    {
-      "output": "after-host.json",
-      "passed": true
-    },
-    {
-      "output": "after-host-webkit.json",
-      "passed": true
-    },
-    {
-      "output": "after-interaction.json",
-      "passed": true
-    },
-    {
-      "output": "after-transitions.json",
-      "passed": true
-    },
-    {
-      "output": "after-transitions-webkit.json",
-      "passed": true
-    }
-  ],
-  "homeEvidence": {
-    "baseline": [
+  "date": "2026-11-02",
+  "version": "1.4.4-test.9",
+  "baseCommit": "462a6dfabecdb7b85d8fef688bf66cd37fbd8d2c",
+  "scope": "Glass parameter work reduction, independent chat glass, custom wallpaper adaptation and transparent prose readability",
+  "automated": {
+    "total": 26,
+    "passed": 26,
+    "sourceRegressionSuites": 12,
+    "syntaxChecks": 7,
+    "isolatedBrowserSuites": 7,
+    "checks": [
       {
-        "records": 30,
-        "width": 390,
-        "hostRecentHidden": true,
-        "listVisible": true,
-        "repeatedOpen": [
-          {
-            "filtersCreated": 1,
-            "physicalBuilds": 2,
-            "layoutCount": 2
-          },
-          {
-            "filtersCreated": 1,
-            "physicalBuilds": 2,
-            "layoutCount": 2
-          }
-        ],
-        "repeatedClose": [
-          {
-            "untrackCalls": 1,
-            "layoutCount": 1
-          },
-          {
-            "untrackCalls": 1,
-            "layoutCount": 1
-          }
-        ],
-        "missingAvatar": [
-          {
-            "big": false,
-            "frameWidth": 36,
-            "contentWidth": 50,
-            "inside": false,
-            "centered": false
-          },
-          {
-            "big": true,
-            "frameWidth": 35.9783935546875,
-            "contentWidth": 74.95492553710938,
-            "inside": false,
-            "centered": true
-          }
-        ],
-        "lifecycle": {}
+        "name": "chat-font-regression.mjs",
+        "passed": true
       },
       {
-        "records": 600,
-        "width": 390,
-        "hostRecentHidden": false,
-        "listVisible": true,
-        "repeatedOpen": [
-          {
-            "filtersCreated": 1,
-            "physicalBuilds": 2,
-            "layoutCount": 2
-          },
-          {
-            "filtersCreated": 1,
-            "physicalBuilds": 2,
-            "layoutCount": 2
-          }
-        ],
-        "repeatedClose": [
-          {
-            "untrackCalls": 1,
-            "layoutCount": 1
-          },
-          {
-            "untrackCalls": 1,
-            "layoutCount": 1
-          }
-        ],
-        "missingAvatar": [
-          {
-            "big": false,
-            "frameWidth": 36,
-            "contentWidth": 50,
-            "inside": false,
-            "centered": false
-          },
-          {
-            "big": true,
-            "frameWidth": 35.978271484375,
-            "contentWidth": 74.95477294921875,
-            "inside": false,
-            "centered": true
-          }
-        ],
-        "lifecycle": {}
+        "name": "card-solid-regression.mjs",
+        "passed": true
       },
       {
-        "records": 600,
-        "width": 1280,
-        "hostRecentHidden": true,
-        "listVisible": true,
-        "repeatedOpen": [
-          {
-            "filtersCreated": 1,
-            "physicalBuilds": 2,
-            "layoutCount": 2
-          },
-          {
-            "filtersCreated": 1,
-            "physicalBuilds": 2,
-            "layoutCount": 2
-          }
-        ],
-        "repeatedClose": [
-          {
-            "untrackCalls": 1,
-            "layoutCount": 1
-          },
-          {
-            "untrackCalls": 1,
-            "layoutCount": 1
-          }
-        ],
-        "missingAvatar": [
-          {
-            "big": false,
-            "frameWidth": 40,
-            "contentWidth": 50,
-            "inside": false,
-            "centered": false
-          },
-          {
-            "big": true,
-            "frameWidth": 39.9903564453125,
-            "contentWidth": 74.98193359375,
-            "inside": false,
-            "centered": true
-          }
-        ],
-        "lifecycle": {}
+        "name": "filter-reuse-regression.mjs",
+        "passed": true
       },
       {
-        "records": 0,
-        "width": 390,
-        "hostRecentHidden": true,
-        "listVisible": true,
-        "repeatedOpen": [
-          {
-            "filtersCreated": 1,
-            "physicalBuilds": 2,
-            "layoutCount": 2
-          },
-          {
-            "filtersCreated": 1,
-            "physicalBuilds": 2,
-            "layoutCount": 2
-          }
-        ],
-        "repeatedClose": [
-          {
-            "untrackCalls": 1,
-            "layoutCount": 1
-          },
-          {
-            "untrackCalls": 1,
-            "layoutCount": 1
-          }
-        ],
-        "missingAvatar": [
-          {
-            "big": false,
-            "frameWidth": 36,
-            "contentWidth": 50,
-            "inside": false,
-            "centered": false
-          },
-          {
-            "big": true,
-            "frameWidth": 36,
-            "contentWidth": 75,
-            "inside": false,
-            "centered": true
-          }
-        ],
-        "lifecycle": {}
+        "name": "first-line-indent-regression.mjs",
+        "passed": true
+      },
+      {
+        "name": "glass-surfaces-regression.mjs",
+        "passed": true
+      },
+      {
+        "name": "chat-background-regression.mjs",
+        "passed": true
+      },
+      {
+        "name": "tilt-light-regression.mjs",
+        "passed": true
+      },
+      {
+        "name": "form-scroll-regression.mjs",
+        "passed": true
+      },
+      {
+        "name": "wallpaper-regression.mjs",
+        "passed": true
+      },
+      {
+        "name": "popup-boundary-regression.mjs",
+        "passed": true
+      },
+      {
+        "name": "tt-compat-regression.mjs",
+        "passed": true
+      },
+      {
+        "name": "mobile-performance-regression.mjs",
+        "passed": true
+      },
+      {
+        "name": "syntax-index.js",
+        "passed": true
+      },
+      {
+        "name": "syntax-glass2.js",
+        "passed": true
+      },
+      {
+        "name": "syntax-glass-light.js",
+        "passed": true
+      },
+      {
+        "name": "syntax-glass-wallpaper.js",
+        "passed": true
+      },
+      {
+        "name": "syntax-glass-surfaces.js",
+        "passed": true
+      },
+      {
+        "name": "syntax-card-clarity.js",
+        "passed": true
+      },
+      {
+        "name": "syntax-orb.js",
+        "passed": true
+      },
+      {
+        "name": "shared-performance-browser.mjs",
+        "passed": true
+      },
+      {
+        "name": "fold-menu-font-browser.mjs",
+        "passed": true
+      },
+      {
+        "name": "home-avatar-browser.mjs",
+        "passed": true
+      },
+      {
+        "name": "panel-transitions-browser.mjs",
+        "passed": true
+      },
+      {
+        "name": "interaction-scope-browser.mjs",
+        "passed": true
+      },
+      {
+        "name": "host-interaction-browser.mjs",
+        "passed": true
+      },
+      {
+        "name": "glass-parameters-browser.mjs",
+        "passed": true
+      }
+    ]
+  },
+  "performance": {
+    "method": "Same browser, deterministic operation counts, six presets; before was the authorized local development build before parameter optimization",
+    "results": [
+      {
+        "floors": 4,
+        "presetCount": 6,
+        "cssPaintCalls": {
+          "before": 78,
+          "after": 0
+        },
+        "lightingFilterRebuilds": {
+          "before": 48,
+          "after": 0
+        },
+        "lightingPatches": 48,
+        "naturalLightAngleReads": {
+          "before": 9,
+          "after": 0
+        },
+        "pairingCases": 72,
+        "filterEquivalence": true,
+        "topologyFallback": true
+      },
+      {
+        "floors": 240,
+        "presetCount": 6,
+        "cssPaintCalls": {
+          "before": 90,
+          "after": 0
+        },
+        "lightingFilterRebuilds": {
+          "before": 60,
+          "after": 0
+        },
+        "lightingPatches": 60,
+        "naturalLightAngleReads": {
+          "before": 11,
+          "after": 0
+        },
+        "pairingCases": 72,
+        "filterEquivalence": true,
+        "topologyFallback": true
       }
     ],
-    "candidate": [
-      {
-        "engine": "chromium",
-        "cases": [
-          {
-            "records": 30,
-            "width": 390,
-            "hostRecentHidden": true,
-            "listVisible": true,
-            "repeatedOpen": [
-              {
-                "filtersCreated": 0,
-                "physicalBuilds": 1,
-                "layoutCount": 1
-              },
-              {
-                "filtersCreated": 0,
-                "physicalBuilds": 1,
-                "layoutCount": 1
-              }
-            ],
-            "repeatedClose": [
-              {
-                "untrackCalls": 0,
-                "layoutCount": 1
-              },
-              {
-                "untrackCalls": 0,
-                "layoutCount": 1
-              }
-            ],
-            "missingAvatar": [
-              {
-                "big": false,
-                "frameWidth": 36,
-                "contentWidth": 29,
-                "inside": true,
-                "centered": true
-              },
-              {
-                "big": true,
-                "frameWidth": 35.978302001953125,
-                "contentWidth": 28.98248291015625,
-                "inside": true,
-                "centered": true
-              }
-            ],
-            "lifecycle": {
-              "nativeActions": true,
-              "panelReplacement": true,
-              "showMoreHiddenRows": true,
-              "openChatAndReturn": true,
-              "disableRestoresHostPreference": true,
-              "reEnableAndOutsideClose": true,
-              "nativeRecordSettingsForwarding": true
-            }
-          },
-          {
-            "records": 600,
-            "width": 390,
-            "hostRecentHidden": false,
-            "listVisible": true,
-            "repeatedOpen": [
-              {
-                "filtersCreated": 0,
-                "physicalBuilds": 1,
-                "layoutCount": 1
-              },
-              {
-                "filtersCreated": 0,
-                "physicalBuilds": 1,
-                "layoutCount": 1
-              }
-            ],
-            "repeatedClose": [
-              {
-                "untrackCalls": 0,
-                "layoutCount": 1
-              },
-              {
-                "untrackCalls": 0,
-                "layoutCount": 1
-              }
-            ],
-            "missingAvatar": [
-              {
-                "big": false,
-                "frameWidth": 36,
-                "contentWidth": 29,
-                "inside": true,
-                "centered": true
-              },
-              {
-                "big": true,
-                "frameWidth": 35.983001708984375,
-                "contentWidth": 28.986297607421875,
-                "inside": true,
-                "centered": true
-              }
-            ],
-            "lifecycle": {
-              "nativeRecordSettingsForwarding": true,
-              "offscreenRowNativeAction": true,
-              "closedReplacementAndResize": true
-            }
-          },
-          {
-            "records": 600,
-            "width": 1280,
-            "hostRecentHidden": true,
-            "listVisible": true,
-            "repeatedOpen": [
-              {
-                "filtersCreated": 0,
-                "physicalBuilds": 1,
-                "layoutCount": 1
-              },
-              {
-                "filtersCreated": 0,
-                "physicalBuilds": 1,
-                "layoutCount": 1
-              }
-            ],
-            "repeatedClose": [
-              {
-                "untrackCalls": 0,
-                "layoutCount": 1
-              },
-              {
-                "untrackCalls": 0,
-                "layoutCount": 1
-              }
-            ],
-            "missingAvatar": [
-              {
-                "big": false,
-                "frameWidth": 40,
-                "contentWidth": 33,
-                "inside": true,
-                "centered": true
-              },
-              {
-                "big": true,
-                "frameWidth": 39.990478515625,
-                "contentWidth": 32.9920654296875,
-                "inside": true,
-                "centered": true
-              }
-            ],
-            "lifecycle": {
-              "nativeRecordSettingsForwarding": true,
-              "offscreenRowNativeAction": true,
-              "closedReplacementAndResize": true
-            }
-          },
-          {
-            "records": 0,
-            "width": 390,
-            "hostRecentHidden": true,
-            "listVisible": true,
-            "repeatedOpen": [
-              {
-                "filtersCreated": 0,
-                "physicalBuilds": 1,
-                "layoutCount": 1
-              },
-              {
-                "filtersCreated": 0,
-                "physicalBuilds": 1,
-                "layoutCount": 1
-              }
-            ],
-            "repeatedClose": [
-              {
-                "untrackCalls": 0,
-                "layoutCount": 1
-              },
-              {
-                "untrackCalls": 0,
-                "layoutCount": 1
-              }
-            ],
-            "missingAvatar": [
-              {
-                "big": false,
-                "frameWidth": 36,
-                "contentWidth": 29,
-                "inside": true,
-                "centered": true
-              },
-              {
-                "big": true,
-                "frameWidth": 35.978363037109375,
-                "contentWidth": 28.9825439453125,
-                "inside": true,
-                "centered": true
-              }
-            ],
-            "lifecycle": {
-              "nativeRecordSettingsForwarding": true,
-              "emptyListAndLateNativeData": true
-            }
-          }
-        ]
-      },
-      {
-        "engine": "webkit",
-        "cases": [
-          {
-            "records": 30,
-            "width": 390,
-            "hostRecentHidden": true,
-            "listVisible": true,
-            "repeatedOpen": [
-              {
-                "filtersCreated": 0,
-                "physicalBuilds": 0,
-                "layoutCount": null
-              },
-              {
-                "filtersCreated": 0,
-                "physicalBuilds": 0,
-                "layoutCount": null
-              }
-            ],
-            "repeatedClose": [
-              {
-                "untrackCalls": 0,
-                "layoutCount": null
-              },
-              {
-                "untrackCalls": 0,
-                "layoutCount": null
-              }
-            ],
-            "missingAvatar": [
-              {
-                "big": false,
-                "frameWidth": 36,
-                "contentWidth": 29,
-                "inside": true,
-                "centered": true
-              },
-              {
-                "big": true,
-                "frameWidth": 36.019317626953125,
-                "contentWidth": 29.01556396484375,
-                "inside": true,
-                "centered": true
-              }
-            ],
-            "lifecycle": {
-              "nativeActions": true,
-              "panelReplacement": true,
-              "showMoreHiddenRows": true,
-              "openChatAndReturn": true,
-              "disableRestoresHostPreference": true,
-              "reEnableAndOutsideClose": true,
-              "nativeRecordSettingsForwarding": true
-            }
-          },
-          {
-            "records": 600,
-            "width": 390,
-            "hostRecentHidden": false,
-            "listVisible": true,
-            "repeatedOpen": [
-              {
-                "filtersCreated": 0,
-                "physicalBuilds": 0,
-                "layoutCount": null
-              },
-              {
-                "filtersCreated": 0,
-                "physicalBuilds": 0,
-                "layoutCount": null
-              }
-            ],
-            "repeatedClose": [
-              {
-                "untrackCalls": 0,
-                "layoutCount": null
-              },
-              {
-                "untrackCalls": 0,
-                "layoutCount": null
-              }
-            ],
-            "missingAvatar": [
-              {
-                "big": false,
-                "frameWidth": 36,
-                "contentWidth": 29,
-                "inside": true,
-                "centered": true
-              },
-              {
-                "big": true,
-                "frameWidth": 36.019989013671875,
-                "contentWidth": 29.01611328125,
-                "inside": true,
-                "centered": true
-              }
-            ],
-            "lifecycle": {
-              "nativeRecordSettingsForwarding": true,
-              "offscreenRowNativeAction": true,
-              "closedReplacementAndResize": true
-            }
-          },
-          {
-            "records": 600,
-            "width": 1280,
-            "hostRecentHidden": true,
-            "listVisible": true,
-            "repeatedOpen": [
-              {
-                "filtersCreated": 0,
-                "physicalBuilds": 0,
-                "layoutCount": null
-              },
-              {
-                "filtersCreated": 0,
-                "physicalBuilds": 0,
-                "layoutCount": null
-              }
-            ],
-            "repeatedClose": [
-              {
-                "untrackCalls": 0,
-                "layoutCount": null
-              },
-              {
-                "untrackCalls": 0,
-                "layoutCount": null
-              }
-            ],
-            "missingAvatar": [
-              {
-                "big": false,
-                "frameWidth": 40,
-                "contentWidth": 33,
-                "inside": true,
-                "centered": true
-              },
-              {
-                "big": true,
-                "frameWidth": 40,
-                "contentWidth": 33,
-                "inside": true,
-                "centered": true
-              }
-            ],
-            "lifecycle": {
-              "nativeRecordSettingsForwarding": true,
-              "offscreenRowNativeAction": true,
-              "closedReplacementAndResize": true
-            }
-          },
-          {
-            "records": 0,
-            "width": 390,
-            "hostRecentHidden": true,
-            "listVisible": true,
-            "repeatedOpen": [
-              {
-                "filtersCreated": 0,
-                "physicalBuilds": 0,
-                "layoutCount": null
-              },
-              {
-                "filtersCreated": 0,
-                "physicalBuilds": 0,
-                "layoutCount": null
-              }
-            ],
-            "repeatedClose": [
-              {
-                "untrackCalls": 0,
-                "layoutCount": null
-              },
-              {
-                "untrackCalls": 0,
-                "layoutCount": null
-              }
-            ],
-            "missingAvatar": [
-              {
-                "big": false,
-                "frameWidth": 36,
-                "contentWidth": 29,
-                "inside": true,
-                "centered": true
-              },
-              {
-                "big": true,
-                "frameWidth": 36.01983642578125,
-                "contentWidth": 29.0159912109375,
-                "inside": true,
-                "centered": true
-              }
-            ],
-            "lifecycle": {
-              "nativeRecordSettingsForwarding": true,
-              "emptyListAndLateNativeData": true
-            }
-          }
-        ]
-      }
-    ],
-    "metric": "Instrumented extension counts and Chromium layout counts, not phone latency",
-    "nativeListAndActionsRetained": true,
-    "hostHiddenPreferenceUnchanged": true,
-    "forcedHomeReload": false
+    "geometryAndAppearance": "Patch retains all SVG nodes and equals freshly generated filter; enabling/disabling a filter branch still rebuilds",
+    "notClaimed": [
+      "Phone FPS",
+      "Energy reduction percentage",
+      "All device rendering parity"
+    ]
   },
-  "productionScope": {
-    "files": [
-      "index.js",
-      "style.css"
+  "wallpaperBrowser": {
+    "widths": [
+      390,
+      1440
     ],
-    "patch": {
-      "index.js": {
-        "added": 38,
-        "removed": 14
-      },
-      "style.css": {
-        "added": 31,
-        "removed": 5
-      }
-    },
-    "byteIdentical": [
-      "glass2.js",
-      "card-clarity.js",
-      "orb.js"
+    "passed": true,
+    "coverage": [
+      "Custom/white/black/return",
+      "Locked background protection",
+      "Local bright tint instead of black slab",
+      "Transparent paragraph background and opaque text color",
+      "Card/iframe untouched; reading background ignored by card classification",
+      "Slow image race, missing image, off/on, blur alias"
     ],
-    "cardOrChatOrPresetChanged": false,
-    "newDependencyOrStorageFields": false,
-    "newHistoryAPI": false
+    "fixture": "Synthetic images, no private wallpaper or conversation export"
   },
-  "sourceAuthority": {
-    "host": "SillyTavern 1.18.0 local source, inspected read-only",
-    "sourceCommit": "8172dcd0ee672d3cd9a5e5f7af134f91a45cd2b8",
-    "contracts": [
-      "Image error replaces img with .missing-avatar",
-      "Native welcomePanel recentChatsSettings handler",
-      "Native list replacement and per-row action listeners"
-    ],
-    "userAndroidTTRuntimeIdentified": false
+  "realHost": {
+    "version": "1.4.4-test.9",
+    "servedRuntimeHashesMatch": true,
+    "settingsPanels": 1,
+    "chatSettingsFrames": 1,
+    "extraTopSettingsFrame": false,
+    "ordinaryInterfaceLiquidChat": true,
+    "liquidInterfaceOrdinaryChat": true,
+    "transparentProseReadability": true,
+    "saveRequestsBlockedBeforeNavigation": true,
+    "pageErrors": 0
   },
-  "acceptance": {
-    "syntheticMobileAndDesktop": true,
-    "originalTTAvatarAcceptance": false,
-    "originalTTEmptyListReproduced": false,
-    "originalPhoneTiming": false,
-    "originalHostInstalledCandidate": false
+  "compatibility": {
+    "namespace": "iosLiquidGlass",
+    "migrationVersion": 9,
+    "ordinaryModeStoredValue": "blur",
+    "chatDefault": "inherit",
+    "iosSvgDefault": false,
+    "tiltDefault": false
   },
-  "limitations": [
-    "Current test.6 already handles the ordinary recentHidden case; original Android TT missing-list root cause remains unverified",
-    "Existing native list is reused; first load, host list rebuilding and data retrieval still require original work",
-    "Desktop Chromium with Android UA and Windows WebKit with iPhone UA are not original phones",
-    "Focused fix, not a full repository/host audit"
-  ]
+  "limits": [
+    "New TT/Android/iOS real-device visual and sensor acceptance remains open.",
+    "Historical user acceptance of the test.8 TT black-frame fix is preserved; it is not new test.9 device acceptance.",
+    "Cross-origin unreadable and animated wallpapers use safe/static sampling; all custom transformations are not covered.",
+    "Long-term phone energy, latency and all authored card combinations are not verified."
+  ],
+  "scopeReview": {
+    "cumulativeAuthorizedWork": true,
+    "defaultSmallPatchBudgetExceeded": true,
+    "note": "Cumulative user-authorized high-light, wallpaper, performance and independent-chat work; no hidden source, install/theme, credentials or business-data changes"
+  },
+  "publication": {
+    "target": "https://github.com/jjing8235-afk/test",
+    "officialRepositoryChanged": false
+  }
 }

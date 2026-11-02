@@ -36,12 +36,12 @@ assert(body);
 let builds = 0, sizes = 0, bounds = 0, currentMap = tiled, angle = 135;
 const settings = { profile: 'lens', pIor: 1.5, pMagnify: 3, pBezel: 40, pThickness: 30,
     pStrength: 1, pAberration: 3, pSaturate: 1.15, pBrightness: 1.02, pContrast: 1,
-    pSpecular: 0, pSharp: 4, pEdgeShade: 0, pFresnel: 0, pCaustic: 0 };
+    pSpecular: 1, pSharp: 4, pEdgeShade: 0, pFresnel: 0, pCaustic: 0 };
 let lightWrites = 0;
 const lights = [{ dataset: { light: '1' }, setAttribute() { lightWrites++; } }];
 const it = { kind: 'panel' };
 const build = vm.runInNewContext('(function(it,el,w,h,r){' + body + '})', {
-    S: settings, KIND: { panel: { blur: () => 8, k: 0.7, bezelK: 1.1, thickK: 1.5 } },
+    S: settings, surfaceGlass: () => settings, wallpaperLightGain: 1, KIND: { panel: { blur: () => 8, k: 0.7, bezelK: 1.1, thickK: 1.5 } },
     getMaps: () => currentMap, lightAngle: () => angle, lightRow: () => 'matrix',
     physicalFilter() { builds++; return '<filter/>'; },
     resizePhysicalFilter() { sizes++; },
@@ -77,7 +77,7 @@ const hiddenItem = { kind: 'bar' };
 vm.runInNewContext('(function(el){' + paintBody + '})(el)', {
     el: element, items: new Map([[element, hiddenItem]]), trackable: () => true,
     document: { body: { classList: { contains: () => false } } },
-    KIND: { bar: { blur: () => 1 } }, S: { saturate: 1, brightness: 1 },
+    surfaceGlass: () => ({}), applySurfaceStyle() {}, KIND: { bar: { blur: () => 1 } }, S: { saturate: 1, brightness: 1 },
     setPhys() { painted++; },
 });
 assert.equal(painted, 0); assert.deepEqual(element.style, {});

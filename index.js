@@ -1,8 +1,11 @@
 /* NVWA 液态玻璃 · 边缘折射引擎 + 悬浮布局 + 设置面板
    完整折射依赖 backdrop-filter: url(#svg)；安卓 WebView 按能力自动选择兼容路径，iOS 实验独立保留，其他环境降级
    折射引擎有两套：新版物理折射（glass2.js，实验台 v2 移植）和旧版（本文件里的 makeMap / buildFilter） */
-import { getMaps, clearMaps, physicalFilter, resizePhysicalFilter, lightRow } from './glass2.js';
+import { getMaps, clearMaps, physicalFilter, resizePhysicalFilter, updatePhysicalLighting, lightRow } from './glass2.js';
 import { makeOrb } from './orb.js';
+import { normalizeGlassSurfaces, resolveSurfaceGlass } from './glass-surfaces.js';
+import { createTiltLight } from './glass-light.js';
+import { createWallpaperSampler, wallpaperHighlightGain, wallpaperLuminanceAt } from './glass-wallpaper.js';
 import { createCardTextClarity } from './card-clarity.js';
 
 // 同一个酒馆里装了两份（比如手动拷的一份 + 从 GitHub 装的一份）时只跑先加载的那份，不然顶栏、面板会出两套
@@ -30,9 +33,9 @@ const PRESETS = {
 };
 
 const DEFAULTS = {
-    chatBackground: 'glass', chatFontSize: 0, firstLineIndent: false, cardSolid: true, justifyText: false, compatibilityMode: 'auto', androidWebViewRefract: false, iosSvgTrial: false,
+    chatBackground: 'glass', transparentReadability: true, chatFontSize: 0, firstLineIndent: false, cardSolid: true, justifyText: false, compatibilityMode: 'auto', androidWebViewRefract: false, iosSvgTrial: false,
     enabled: true, float: true, islands: true, fold: true, qrFold: true, home: true, toneBtn: true, homeName: 'NVWA 用户', icons: true, refract: true, refractMes: true, font: true, tone: 'time', dayStart: 7, dayEnd: 19, avatar: 'line', orb: true,
-    engine: 'physical', follow: true, pLight: 135,
+    engine: 'physical', follow: true, tiltLight: false, wallpaperTone: 'auto', wallpaperAdapt: true, glassSurfaces: {}, pLight: 135,
     // 自然弧度没写的参数（厚度、折射率等，只给物理折射截面用）沿用清透立体的
     ...PRESETS.depth[1], ...PRESETS.natural[1],
     scale: 95, bevel: 30, curve: 2.2, aberration: 8,
@@ -81,6 +84,7 @@ const TOGGLES = [
     ['icons', 'iOS 风格图标'],
     ['refract', '边缘折射（取决于当前渲染环境）'],
     ['iosSvgTrial', 'iOS WebKit SVG 折射实验（可能无效；关闭可回退）'],
+    ['transparentReadability', '亮壁纸下增强透明聊天的文字可读性'],
     ['refractMes', '消息卡片也折射（长聊天卡顿时关掉）'],
     ['font', '统一字体：思源黑体（苹果设备用苹方）'],
     ['firstLineIndent', '普通正文首行缩进两个汉字（不影响列表、代码和自带样式面板）'],
@@ -89,7 +93,7 @@ const TOGGLES = [
     ['islands', '顶栏拆成三个分组的悬浮岛'],
     ['fold', '顶栏折叠：设置类图标收进左上角菜单'],
     ['qrFold', '快捷回复收进输入框左边的按钮'],
-    ['toneBtn', '顶栏显示白 / 黑壁纸切换键'],
+    ['toneBtn', '顶栏显示壁纸与玻璃明暗入口'],
     ['home', '首页只显示问候语（按手机时间：早上好 / 晚上好）'],
     ['orb', '模型思考时显示旋转的点阵小球'],
 ];
@@ -98,6 +102,12 @@ ctx.extensionSettings[MODULE] = Object.assign({}, DEFAULTS, ctx.extensionSetting
 const S = ctx.extensionSettings[MODULE];
 S.chatFontSize = normalizeChatFontSize(S.chatFontSize);
 S.chatBackground = S.chatBackground === 'transparent' ? 'transparent' : 'glass';
+S.tiltLight = S.tiltLight === true;
+S.transparentReadability = S.transparentReadability !== false;
+S.glassSurfaces = normalizeGlassSurfaces(S.glassSurfaces);
+const surfaceGlass = kind => resolveSurfaceGlass(S, kind);
+S.wallpaperTone = ['auto', 'light', 'dark'].includes(S.wallpaperTone) ? S.wallpaperTone : 'auto';
+S.wallpaperAdapt = S.wallpaperAdapt !== false;
 // v2：玻璃改得更厚、更透。只迁移还停在旧默认值的参数，用户自己调过的不动
 if (!S.v || S.v < 2) {
     const OLD = { scale: 70, bevel: 22, aberration: 6, barBlur: 2, mesBlur: 6, panelBlur: 18, tint: 0.08 };
@@ -150,14 +160,14 @@ const iosSvgEligible = isIOS
     && (supportsFilter('url(#ilg-capability-probe)') || supportsPrefixedFilter('url(#ilg-capability-probe)'));
 function iosTrialRequested() { return iosSvgEligible && S.iosSvgTrial === true; }
 // Auto selects a capability path; CSS syntax acceptance is not a rendering result.
-function canRefract() {
-    if (S.compatibilityMode === 'blur') return false;
+function canRefract(settings = S) {
+    if (settings.compatibilityMode === 'blur') return false;
     return canFull || androidWebViewEligible || iosTrialRequested();
 }
 function compatibilityHint() {
     const environment = isIOS ? 'iOS / iPadOS WebKit' : androidWebView ? '安卓 Chromium WebView（包括部分 TT 客户端）' : canFull ? 'Chromium 浏览器' : '其他浏览器';
-    const route = S.compatibilityMode === 'blur' ? '已手动选择仅模糊' : isIOS ? '自动使用兼容模糊；SVG 折射需在高级项单独试开' : androidWebViewEligible ? '自动选择安卓 WebView 折射路径' : canFull ? '自动选择浏览器折射路径' : '未通过折射门槛，自动保留模糊';
-    return '检测到：' + environment + '。' + route + '。识别内核不等于确认客户端名称或实际折射成功；显示异常可选“仅模糊”。';
+    const route = S.compatibilityMode === 'blur' ? '已手动选择通用普通玻璃' : isIOS ? '自动使用兼容模糊；SVG 折射需在高级项单独试开' : androidWebViewEligible ? '自动选择安卓 WebView 折射路径' : canFull ? '自动选择浏览器折射路径' : '未通过折射门槛，自动保留模糊';
+    return '检测到：' + environment + '。' + route + '。识别内核不等于确认客户端名称或实际折射成功；显示异常可选“通用普通玻璃”。';
 }
 
 // 每类表面的模糊来源和折射强度倍率；bezelK / thickK 是新版引擎在全局弧面宽度、厚度上乘的倍数（大块玻璃更厚，小块更薄）
@@ -274,17 +284,23 @@ function filterOf(it, w, h) {
 
 // 新版：模糊、调色、折射、高光全在一个 SVG 滤镜里，所以 backdrop-filter 只写 url()
 function buildPhysical(it, el, w, h, r) {
-    const kind = KIND[it.kind];
+    const kind = KIND[it.kind], G = surfaceGlass(it.kind);
     const o = {
-        profile: S.profile, ior: S.pIor, magnify: S.pMagnify, bezel: S.pBezel * kind.bezelK, thickness: S.pThickness * kind.thickK,
-        strength: S.pStrength * kind.k, aberration: S.pAberration, blur: it.kind === 'mes' && S.chatBackground === 'transparent' ? 0 : kind.blur(),
-        saturate: S.pSaturate, brightness: S.pBrightness, contrast: S.pContrast,
-        specular: S.pSpecular, sharp: S.pSharp, edgeShade: S.pEdgeShade, fresnel: S.pFresnel, caustic: S.pCaustic,
+        profile: G.profile, ior: G.pIor, magnify: G.pMagnify, bezel: G.pBezel * kind.bezelK, thickness: G.pThickness * kind.thickK,
+        strength: G.pStrength * kind.k, aberration: G.pAberration, blur: it.kind === 'mes' && G.chatBackground === 'transparent' ? 0 : G.surfaceBlur ?? kind.blur(),
+        saturate: G.pSaturate, brightness: G.pBrightness, contrast: G.pContrast,
+        specular: G.pSpecular * wallpaperLightGain, sharp: G.pSharp, edgeShade: G.pEdgeShade, fresnel: G.pFresnel * wallpaperLightGain, caustic: G.pCaustic * wallpaperLightGain,
     };
-    const maps = getMaps(w, h, r, o), key = JSON.stringify(o), angle = lightAngle(el);
+    const { specular, sharp, edgeShade, fresnel, caustic, ...material } = o;
+    const maps = getMaps(w, h, r, o);
+    const key = JSON.stringify([material, specular > 0, edgeShade > 0, fresnel > 0, caustic > 0]);
+    const lightingKey = [specular, sharp, edgeShade, fresnel, caustic].join('|');
+    const angle = specular > 0 || caustic > 0 ? lightAngle(el) : G.pLight;
     const previous = it.physical;
     // Nine-slice maps already share their pixels. Keep the filter nodes too when only its bounds change.
-    if (previous?.maps === maps && previous.key === key && it.filter) {
+    if (previous?.maps === maps && previous.key === key && it.filter
+        && (previous.lightingKey === lightingKey || updatePhysicalLighting(it.filter, o))) {
+        previous.lightingKey = lightingKey;
         if (previous.w !== w || previous.h !== h) {
             filterOf(it, w, h);
             resizePhysicalFilter(it.filter, maps, w, h);
@@ -296,17 +312,18 @@ function buildPhysical(it, el, w, h, r) {
         const f = filterOf(it, w, h);
         f.innerHTML = physicalFilter(maps, o, w, h, angle);
         it.lights = f.querySelectorAll('[data-light]');
-        it.physical = { maps, key, w, h };
+        it.physical = { maps, key, lightingKey, w, h };
     }
     it.angle = angle;
 }
 
 function buildFilter(it, w, h, r) {
+    const G = surfaceGlass(it.kind);
     it.physical = null;
-    const sc = S.scale * KIND[it.kind].k, a = S.aberration * KIND[it.kind].k;
+    const sc = G.scale * KIND[it.kind].k, a = G.aberration * KIND[it.kind].k;
     const f = filterOf(it, w, h);
     let html = `<feFlood flood-color="rgb(128,128,128)" result="neutral"/>` +
-        `<feImage href="${makeMap(w, h, r, S.bevel * (it.kind === 'bar' ? 1.3 : 1))}" x="0" y="0" width="${w}" height="${h}" preserveAspectRatio="none" result="img"/>` +
+        `<feImage href="${makeMap(w, h, r, G.bevel * (it.kind === 'bar' ? 1.3 : 1))}" x="0" y="0" width="${w}" height="${h}" preserveAspectRatio="none" result="img"/>` +
         `<feComposite in="img" in2="neutral" operator="over" result="map"/>`;
     if (a > 0.5) {
         html += disp(sc + a, 'dr') + disp(sc, 'dg') + disp(Math.max(0, sc - a), 'db') +
@@ -321,7 +338,7 @@ function buildFilter(it, w, h, r) {
 }
 
 function refractAllowed(it) {
-    if (!S.enabled || !S.refract || !canRefract() || document.body.classList.contains('no-blur')) return false;
+    if (!S.enabled || !S.refract || !canRefract(surfaceGlass(it.kind)) || document.body.classList.contains('no-blur')) return false;
     if (it.kind === 'mes') return S.refractMes && it.visible;
     return true;
 }
@@ -348,6 +365,17 @@ function messageSurface(el, it) {
     return it.backdrop;
 }
 
+const SURFACE_STYLE_KEYS = ['--ilg-shadow-k','--ilg-sheen-k','--ilg-hl'];
+function applySurfaceStyle(el, it) {
+    const configured = ['liquid','ordinary'].includes(S.glassSurfaces?.[it.kind]?.mode);
+    const G = configured ? surfaceGlass(it.kind) : null;
+    SURFACE_STYLE_KEYS.forEach((key,i) => {
+        if (configured) {
+            const value = String([G.pShadow, G.pSheen, G.highlight][i]);
+            if (el.style.getPropertyValue(key) !== value) el.style.setProperty(key,value);
+        } else if (el.style.getPropertyValue(key)) el.style.removeProperty(key);
+    });
+}
 function paint(el) {
     const it = items.get(el);
     if (!it) return;
@@ -365,14 +393,16 @@ function paint(el) {
         surface.style.webkitBackdropFilter = 'none';
         return;
     }
-    const blur = it.kind === 'mes' && S.chatBackground === 'transparent' ? 0 : KIND[it.kind].blur();
-    const tail = `blur(${blur}px) saturate(${S.saturate}) brightness(${S.brightness})`;
+    const G = surfaceGlass(it.kind);
+    const blur = it.kind === 'mes' && S.chatBackground === 'transparent' ? 0 : G.surfaceBlur ?? KIND[it.kind].blur();
+    const tail = `blur(${blur}px) saturate(${G.saturate}) brightness(${G.brightness})`;
     const w = el.offsetWidth, h = el.offsetHeight;
     // A closed drawer has no pixels to update; retain its last valid filter for reopening.
     if (!w || !h) return;
-    const phys = refractAllowed(it) && S.engine === 'physical';
+    applySurfaceStyle(el, it);
+    const phys = refractAllowed(it) && G.engine === 'physical';
     setPhys(el, it, phys);
-    if (canRefract() && !isIOS) surface.style.webkitBackdropFilter = '';
+    if (canRefract(G) && !isIOS) surface.style.webkitBackdropFilter = '';
     if (phys) {
         buildPhysical(it, el, w, h, radiusOf(el, w, h));
         surface.style.backdropFilter = `url(#${it.id})`;
@@ -383,7 +413,7 @@ function paint(el) {
         if (isIOS) surface.style.webkitBackdropFilter = `url(#${it.id}) ${tail}`;
     } else {
         surface.style.backdropFilter = tail;
-        if (isIOS || !canRefract()) surface.style.webkitBackdropFilter = tail;
+        if (isIOS || !canRefract(G)) surface.style.webkitBackdropFilter = tail;
     }
 }
 // .ilg-phys：高光已经在滤镜里画了，CSS 那套亮边/内阴影要让开（见 style.css 的新版引擎部分）
@@ -395,30 +425,58 @@ function setPhys(el, it, on) {
 // 高光跟随鼠标：鼠标当作光源，每块玻璃朝着鼠标的那段边最亮。只改滤镜里几行颜色矩阵，不重画贴图
 let pointer = null, lightRaf = 0;
 const reducedMotion = () => document.body.classList.contains('reduced-motion') || matchMedia('(prefers-reduced-motion: reduce)').matches;
+const tiltLight = createTiltLight({
+    active: () => S.enabled && S.tiltLight && hasDynamicLight(),
+    changed: scheduleLights,
+    status(message, retry) {
+        const hint = document.getElementById('ilg-tilt-status');
+        const button = document.getElementById('ilg-tilt-permission');
+        if (hint) hint.textContent = message;
+        if (button) button.hidden = !retry;
+    },
+});
+function hasDynamicLight() {
+    return [S, surfaceGlass('mes')].some(G =>
+        G.engine !== 'physical' || !canRefract(G) ? G.highlight > 0 : G.pSpecular > 0 || G.pCaustic > 0 || G.pSheen > 0);
+}
 function lightAngle(el) {
-    if (!S.follow || !pointer || reducedMotion()) return S.pLight;
+    const G = surfaceGlass(items.get(el)?.kind);
+    const tilt = tiltLight.offset();
+    if (tilt !== null) return G.pLight + tilt;
+    if (!S.follow || !pointer || reducedMotion()) return G.pLight;
     const r = el.getBoundingClientRect();
     return Math.atan2(r.top + r.height / 2 - pointer.y, pointer.x - (r.left + r.width / 2)) * 180 / Math.PI;
 }
 function updateLights() {
     lightRaf = 0;
+    if (!S.enabled || document.hidden || !hasDynamicLight()) return;
+    const tilt = tiltLight.offset();
+    const angle = tilt !== null ? S.pLight + tilt : S.follow && pointer && !reducedMotion() ? lightAngle(document.documentElement) : S.pLight;
+    root.style.setProperty('--ilg-light-angle', `${270 - angle}deg`);
+    root.style.setProperty('--ilg-light-x', `${50 + 50 * Math.cos(angle * Math.PI / 180)}%`);
+    root.style.setProperty('--ilg-light-y', `${50 - 50 * Math.sin(angle * Math.PI / 180)}%`);
+    const sharedRows = new Map();
     visibleItems.forEach(el => {
         const it = items.get(el);
-        if (!it?.lights) return;
+        if (!it?.lights?.length) return;
         const a = lightAngle(el);
         // 角度变化不到 1.5° 不动，免得鼠标一动所有玻璃都重绘
         if (Math.abs(((a - it.angle) % 360 + 540) % 360 - 180) < 1.5) return;
         it.angle = a;
-        it.lights.forEach(n => n.setAttribute('values', lightRow(a, Number(n.dataset.light))));
+        it.lights.forEach(n => {
+            const sign = Number(n.dataset.light), key = `${a}|${sign}`;
+            if (!sharedRows.has(key)) sharedRows.set(key, lightRow(a, sign));
+            n.setAttribute('values', sharedRows.get(key));
+        });
     });
 }
 function scheduleLights() {
-    if (!lightRaf && pointer && S.follow && S.engine === 'physical') lightRaf = requestAnimationFrame(updateLights);
+    if (!lightRaf && S.enabled && !document.hidden && hasDynamicLight()) lightRaf = requestAnimationFrame(updateLights);
 }
 window.addEventListener('pointermove', e => {
     if (e.pointerType !== 'mouse') return;
     pointer = { x: e.clientX, y: e.clientY };
-    scheduleLights();
+    if (S.follow && !reducedMotion()) scheduleLights();
 }, { passive: true });
 // 尺寸变化在绘制前同步重建滤镜，避免一帧错位
 const ro = new ResizeObserver(entries => entries.forEach(e => paint(e.target)));
@@ -458,6 +516,7 @@ function untrack(el) {
     el.classList.remove('ilg-glass', 'ilg-sheen', 'ilg-clear', 'ilg-phys', 'ilg-adapted', 'ilg-message-backdrop');
     el.style.backdropFilter = '';
     el.style.webkitBackdropFilter = '';
+    SURFACE_STYLE_KEYS.forEach(key => el.style.removeProperty(key));
     if (it.posFixed) el.style.position = '';
     visibleItems.delete(el);
     items.delete(el);
@@ -728,39 +787,116 @@ for (const pos of ['top', 'bottom']) {
     sheld.insertBefore(s, document.getElementById('form_sheld'));
 }
 
-// 白 / 黑切换：顶栏右边一个太阳 / 月亮键，一键换成瓷白或墨黑壁纸（gen-wallpapers.mjs 生成）。
-// 换壁纸走酒馆自己的背景缩略图点击，所以“锁定到本聊天”的背景规则照旧；明暗模式在“自动”下会按新壁纸自己切
+// Wallpaper actions preserve custom images unless the user explicitly selects a companion wallpaper.
 const TONE_WALLS = { light: 'liquid glass porcelain.png', dark: 'liquid glass ink.png' };
 const toneBtn = document.createElement('div');
 toneBtn.id = 'ilg-tone-button';
 toneBtn.className = 'ilg-tone-holder';
-toneBtn.innerHTML = '<div class="drawer-icon ilg-tone-icon" role="button" tabindex="0"></div>';
+toneBtn.innerHTML = '<div class="drawer-icon ilg-tone-icon" role="button" tabindex="0" aria-haspopup="dialog" aria-expanded="false" aria-controls="ilg-wallpaper-menu"></div>';
 const toneIcon = toneBtn.firstChild;
+const wallpaperMenu = document.createElement('section');
+wallpaperMenu.id = 'ilg-wallpaper-menu';
+wallpaperMenu.hidden = true;
+wallpaperMenu.setAttribute('role', 'dialog');
+wallpaperMenu.setAttribute('aria-label', '壁纸与玻璃');
+wallpaperMenu.innerHTML = '<div class="ilg-wallpaper-heading"><strong>壁纸与玻璃</strong><button type="button" class="ilg-wallpaper-close" aria-label="关闭壁纸与玻璃面板">×</button></div><p id="ilg-wallpaper-state" role="status"></p><div class="ilg-wallpaper-custom"><label for="ilg-wallpaper-tone">自定义壁纸上的玻璃</label><select id="ilg-wallpaper-tone"><option value="auto">自动适配壁纸明暗</option><option value="dark">深色玻璃 · 浅色文字</option><option value="light">浅色玻璃 · 深色文字</option></select><label class="ilg-wallpaper-adapt"><input type="checkbox" id="ilg-wallpaper-adapt">按壁纸亮区收敛高光</label></div><div class="ilg-wallpaper-actions"><button type="button" data-wall="light">瓷白壁纸</button><button type="button" data-wall="dark">墨黑壁纸</button></div><button type="button" id="ilg-wallpaper-return">选择自定义壁纸</button><p class="ilg-wallpaper-hint">调玻璃不换图片；点瓷白或墨黑才切换壁纸。</p>';
+toneBtn.append(wallpaperMenu);
+let lastCustomWallpaper = null;
+const backgroundCssUrl = node => node.getAttribute('data-url') || (typeof window.$ === 'function' ? window.$(node).data('url') : '') || '';
+const unwrapWallpaperUrl = value => /url\(["']?(.*?)["']?\)/.exec(value)?.[1] || value;
+function rememberCustomWallpaper() {
+    if (!wallpaperUrl() || onToneWall()) return;
+    const url = wallpaperUrl();
+    const thumbs = [...document.querySelectorAll('.bg_example')];
+    const selected = document.querySelector('.bg_example.selected-background');
+    const thumb = thumbs.find(node => unwrapWallpaperUrl(backgroundCssUrl(node)) === url)
+        || (!chatBgLocked() && selected && !Object.values(TONE_WALLS).includes(selected.getAttribute('bgfile')) ? selected : null);
+    lastCustomWallpaper = { url, thumb, file: thumb?.getAttribute('bgfile') || '' };
+}
+function closeWallpaperMenu(refocus = false) {
+    if (wallpaperMenu.hidden) return;
+    wallpaperMenu.hidden = true;
+    toneIcon.setAttribute('aria-expanded', 'false');
+    if (refocus && toneBtn.isConnected) toneIcon.focus({ preventScroll: true });
+}
+function syncWallpaperControls() {
+    const custom = !!wallpaperUrl() && !onToneWall();
+    wallpaperMenu.querySelector('.ilg-wallpaper-custom').hidden = !custom;
+    wallpaperMenu.querySelector('#ilg-wallpaper-tone').value = S.wallpaperTone;
+    wallpaperMenu.querySelector('#ilg-wallpaper-adapt').checked = S.wallpaperAdapt;
+    const state = wallpaperMenu.querySelector('#ilg-wallpaper-state');
+    state.textContent = custom ? '自定义壁纸已保留，仅调整玻璃与文字。' : lightBg ? '当前使用瓷白壁纸。' : '当前使用墨黑壁纸。';
+    const locked = chatBgLocked();
+    wallpaperMenu.querySelectorAll('[data-wall]').forEach(button => {
+        button.disabled = locked;
+        button.title = locked ? '当前聊天已锁定背景，请先在背景库解锁。' : '';
+    });
+    const back = wallpaperMenu.querySelector('#ilg-wallpaper-return');
+    back.textContent = !custom && lastCustomWallpaper ? '返回刚才的自定义壁纸' : '选择自定义壁纸';
+    back.disabled = locked;
+    if (locked) state.textContent += ' 当前聊天背景已锁定，切换壁纸前需在背景库解锁。';
+    const setting = document.getElementById('ilg-opt-wallpaperTone');
+    if (setting) setting.value = S.wallpaperTone;
+    const adapt = document.getElementById('ilg-opt-wallpaperAdapt');
+    if (adapt) adapt.checked = S.wallpaperAdapt;
+}
 function syncToneBtn() {
+    const custom = !!wallpaperUrl() && !onToneWall();
     toneBtn.classList.toggle('ilg-is-light', lightBg);
-    const label = lightBg ? '切换到墨黑壁纸' : '切换到瓷白壁纸';
+    toneBtn.classList.toggle('ilg-custom-wallpaper', custom);
+    const label = custom ? '自定义壁纸 · 调整玻璃明暗或切换黑白壁纸' : '壁纸与玻璃 · 切换瓷白、墨黑或自定义壁纸';
     toneIcon.title = label;
     toneIcon.setAttribute('aria-label', label);
+    syncWallpaperControls();
 }
 function applyToneBtn() {
-    if (!S.enabled || !S.toneBtn) { toneBtn.remove(); return; }
+    if (!S.enabled || !S.toneBtn) { closeWallpaperMenu(); toneBtn.remove(); return; }
     const before = document.getElementById('persona-management-button');
     if (toneBtn.nextElementSibling !== before) holder.insertBefore(toneBtn, before);
     syncToneBtn();
 }
 const wallThumb = tone => [...document.querySelectorAll('#bg_menu_content .bg_example, .bg_example')]
     .find(n => n.getAttribute('bgfile') === TONE_WALLS[tone]);
-function switchTone() {
-    const target = lightBg ? 'dark' : 'light';
+function selectToneWallpaper(target) {
+    if (chatBgLocked()) { toastr.info('当前聊天已锁定背景，请先在背景库解锁。'); return; }
     const thumb = wallThumb(target);
-    if (!thumb) { toastr.warning(`没找到壁纸“${TONE_WALLS[target]}”，刷新一下酒馆再试。`); return; }
+    if (!thumb) { toastr.warning('背景库尚未提供这张壁纸，请打开背景库后重试。'); return; }
+    rememberCustomWallpaper();
     thumb.click();
-    // 按时间 / 跟随系统时，手动点一下只算“临时换一下”，到下一个白天 / 黑夜交界再自动接管；手动指定了浅 / 深时跟着改设置
     if (S.tone === 'time' || S.tone === 'system') toneOverride = { tone: target, base: wantTone() };
-    else if (S.tone !== 'auto') { S.tone = target; ctx.saveSettingsDebounced(); applyTone(); }
+    else if (S.tone !== 'auto') { S.tone = target; ctx.saveSettingsDebounced(); }
+    void applyTone(); closeWallpaperMenu(true);
 }
-toneIcon.addEventListener('click', switchTone);
-toneIcon.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); switchTone(); } });
+function saveWallpaperAppearance(key, value) {
+    S[key] = value;
+    syncWallpaperControls();
+    void applyTone(); ctx.saveSettingsDebounced();
+}
+function openWallpaperMenu() {
+    if (!wallpaperMenu.hidden) { closeWallpaperMenu(true); return; }
+    closeFoldMenu(); syncWallpaperControls();
+    wallpaperMenu.hidden = false; toneIcon.setAttribute('aria-expanded', 'true');
+    wallpaperMenu.querySelector('button').focus({ preventScroll: true });
+}
+toneIcon.addEventListener('click', openWallpaperMenu);
+toneIcon.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openWallpaperMenu(); } });
+wallpaperMenu.querySelector('.ilg-wallpaper-close').addEventListener('click', () => closeWallpaperMenu(true));
+wallpaperMenu.querySelectorAll('[data-wall]').forEach(button => button.addEventListener('click', () => selectToneWallpaper(button.dataset.wall)));
+wallpaperMenu.querySelector('#ilg-wallpaper-tone').addEventListener('change', event => saveWallpaperAppearance('wallpaperTone', event.target.value));
+wallpaperMenu.querySelector('#ilg-wallpaper-adapt').addEventListener('change', event => saveWallpaperAppearance('wallpaperAdapt', event.target.checked));
+wallpaperMenu.querySelector('#ilg-wallpaper-return').addEventListener('click', () => {
+    if (chatBgLocked()) return;
+    if (onToneWall() && lastCustomWallpaper) {
+        const previous = lastCustomWallpaper;
+        const thumb = previous.thumb?.isConnected ? previous.thumb : [...document.querySelectorAll('.bg_example')]
+            .find(node => unwrapWallpaperUrl(backgroundCssUrl(node)) === previous.url || (previous.file && node.getAttribute('bgfile') === previous.file));
+        if (thumb) { thumb.click(); void applyTone(); closeWallpaperMenu(true); return; }
+        toastr.info('刚才的背景暂不在背景库中，请重新选择。');
+    }
+    closeWallpaperMenu(); document.querySelector('#backgrounds-button .drawer-toggle')?.click();
+});
+document.addEventListener('pointerdown', event => { if (!toneBtn.contains(event.target)) closeWallpaperMenu(); }, true);
+document.addEventListener('keydown', event => { if (event.key === 'Escape' && !wallpaperMenu.hidden) { event.preventDefault(); closeWallpaperMenu(true); } });
 
 // 快捷回复折叠：输入框左边一个按钮，点开后快捷回复按钮浮在输入胶囊上方的一块玻璃里，点了某个按钮就收起
 const qrBar = () => document.getElementById('qr--bar');
@@ -959,26 +1095,13 @@ document.addEventListener('pointerdown', e => {
 new ResizeObserver(() => requestAnimationFrame(layoutIslands)).observe(holder);
 window.addEventListener('resize', () => requestAnimationFrame(layoutIslands));
 
-// 明暗判定：浅色壁纸配白字会看不清，所以按壁纸平均亮度切换
-let lightBg = false, cardTone = null;
-function sampleLuminance(url) {
-    return new Promise(resolve => {
-        const img = new Image();
-        img.onload = () => {
-            try {
-                const c = document.createElement('canvas');
-                c.width = 32; c.height = 32;
-                const g = c.getContext('2d', { willReadFrequently: true });
-                g.drawImage(img, 0, 0, 32, 32);
-                const d = g.getImageData(0, 0, 32, 32).data;
-                let sum = 0;
-                for (let i = 0; i < d.length; i += 4) sum += (0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]) / 255;
-                resolve(sum / (d.length / 4));
-            } catch { resolve(0); }
-        };
-        img.onerror = () => resolve(0);
-        img.src = url;
-    });
+// Sample once per wallpaper; reuse pixels for bars and light intensity.
+let lightBg = false, cardTone = null, wallpaperLightGain = 1, wallpaperBright = false;
+let wallpaperSample = null, wallpaperSampleUrl = '', wallpaperFitting = 'cover', toneRequest = 0;
+const sampleWallpaper = createWallpaperSampler();
+function customWallpaperLuminance(x, y) {
+    if (!S.wallpaperAdapt || onToneWall() || wallpaperSampleUrl !== wallpaperUrl()) return null;
+    return wallpaperLuminanceAt(wallpaperSample, x, y, innerWidth, innerHeight, wallpaperFitting);
 }
 function wallpaperUrl() {
     for (const id of ['bg_custom', 'bg1']) {
@@ -1002,8 +1125,12 @@ function wantTone() {
     return null;
 }
 function onToneWall() {
-    let name = wallpaperUrl().split('/').pop() || '';
-    try { name = decodeURIComponent(name); } catch { /* 文件名里有怪字符就按原样比 */ }
+    const url = wallpaperUrl();
+    let name = url.split('?')[0].split('/').pop() || '';
+    try {
+        const parsed = new URL(url, location.href);
+        name = parsed.searchParams.get('file') || decodeURIComponent(name);
+    } catch { /* Keep unknown / revoked URLs in custom-wallpaper mode. */ }
     return Object.values(TONE_WALLS).includes(name);
 }
 // 酒馆每次换聊天都会换一个新的 chat_metadata 对象，开头缓存的 ctx 里那份是旧的，所以每次现取
@@ -1019,12 +1146,25 @@ function followTone() {
     wallThumb(want)?.click();
 }
 async function applyTone() {
-    if (S.tone === 'light' || S.tone === 'dark') {
-        lightBg = S.tone === 'light';
-    } else {
-        const url = wallpaperUrl();
-        lightBg = url ? (await sampleLuminance(url)) > 0.6 : false;
-    }
+    const request = ++toneRequest, url = wallpaperUrl(), custom = !!url && !onToneWall();
+    const sample = url ? await sampleWallpaper(url) : null;
+    // A slow previous image must not repaint a newer wallpaper or re-enable a stopped extension.
+    if (request !== toneRequest || url !== wallpaperUrl()) return;
+    wallpaperSample = sample; wallpaperSampleUrl = url;
+    const bg = document.getElementById('bg_custom')?.style.backgroundImage ? document.getElementById('bg_custom') : document.getElementById('bg1');
+    wallpaperFitting = bg ? getComputedStyle(bg).backgroundSize : 'cover';
+    const tone = custom ? S.wallpaperTone : S.tone;
+    if (tone === 'light' || tone === 'dark') lightBg = tone === 'light';
+    else if (sample) lightBg = sample.luminance > 0.6;
+    const previousGain = wallpaperLightGain, previousBright = wallpaperBright;
+    wallpaperBright = custom && !!sample && (sample.luminance > 0.52 || sample.bright > 0.68);
+    root.classList.toggle('ilg-wallpaper-bright', S.enabled && wallpaperBright);
+    wallpaperLightGain = custom && S.wallpaperAdapt ? wallpaperHighlightGain(sample) : 1;
+    root.style.setProperty('--ilg-wallpaper-hl-k', wallpaperLightGain);
+    root.classList.toggle('ilg-custom-wallpaper', S.enabled && custom);
+    if (custom) rememberCustomWallpaper();
+    if (S.enabled && (Math.abs(previousGain - wallpaperLightGain) > 0.005 || previousBright !== wallpaperBright))
+        queueGlassSettings(Math.abs(previousGain - wallpaperLightGain) > 0.005);
     root.classList.toggle('ilg-light', S.enabled && lightBg);
     syncToneBtn();
     root.style.setProperty('--ilg-tint', `rgba(255, 255, 255, ${lightBg ? Math.min(0.7, S.tint + 0.3) : S.tint})`);
@@ -1055,30 +1195,46 @@ function applyChatFontSize() {
     else chatEl.style.removeProperty('--ilg-chat-font-size');
 }
 
-let glassSettingsRaf = 0;
+let glassSettingsRaf = 0, glassSettingsPaint = false, glassSettingsAll = false;
+const glassSettingsKinds = new Set();
+const CSS_GLASS_PARAMETERS = new Set(['highlight', 'pShadow', 'pSheen', 'mesTint', 'scrim', 'tint', 'pLight']);
 function applySurfaceSettings() {
+    tiltLight.sync();
+    visibleItems.forEach(el => { const it = items.get(el); if (it) applySurfaceStyle(el, it); });
+    scheduleLights();
     root.style.setProperty('--ilg-hl', S.highlight);
     root.style.setProperty('--ilg-radius', `${S.radius}px`);
     root.style.setProperty('--ilg-shadow-k', S.pShadow);
     root.style.setProperty('--ilg-sheen-k', S.pSheen);
     root.style.setProperty('--ilg-mes-a', S.mesTint);
     root.classList.toggle('ilg-chat-transparent', S.enabled && S.chatBackground === 'transparent');
-    root.style.setProperty('--ilg-scrim-a', S.scrim);
+    root.style.setProperty('--ilg-scrim-a', S.scrim * (wallpaperBright ? 0.45 : 1));
+    root.classList.toggle('ilg-readable-chat', S.enabled && S.transparentReadability && S.chatBackground === 'transparent' && wallpaperBright);
     root.style.setProperty('--ilg-tint', `rgba(255, 255, 255, ${lightBg ? Math.min(0.7, S.tint + 0.3) : S.tint})`);
 }
-function queueGlassSettings() {
-    if (!S.enabled || glassSettingsRaf) return;
+function queueGlassSettings(repaint = true, kind = null) {
+    if (!S.enabled) return;
+    glassSettingsPaint ||= repaint;
+    if (repaint) { if (kind) glassSettingsKinds.add(kind); else glassSettingsAll = true; }
+    if (glassSettingsRaf) return;
     glassSettingsRaf = requestAnimationFrame(() => {
         glassSettingsRaf = 0;
         if (!S.enabled) return;
+        const repaint = glassSettingsPaint, all = glassSettingsAll, kinds = new Set(glassSettingsKinds);
+        glassSettingsPaint = glassSettingsAll = false; glassSettingsKinds.clear();
         applySurfaceSettings();
-        repaintVisible();
+        if (repaint) {
+            if (all) repaintVisible();
+            else visibleItems.forEach(el => { if (kinds.has(items.get(el)?.kind)) paint(el); });
+        }
     });
 }
 
 function applyRoot() {
     if (glassSettingsRaf) { cancelAnimationFrame(glassSettingsRaf); glassSettingsRaf = 0; }
-    if (!S.enabled) cardTone = null;
+    glassSettingsPaint = glassSettingsAll = false; glassSettingsKinds.clear();
+    if (!S.enabled) { cardTone = null; closeWallpaperMenu(); root.classList.remove('ilg-custom-wallpaper'); }
+    tiltLight.sync();
     applyChatFontSize();
     root.classList.toggle('ilg', S.enabled);
     root.classList.toggle('ilg-ios-experiment', S.enabled && isIOS);
@@ -1218,7 +1374,7 @@ function statusText() {
     if (!S.enabled) return '美化已关闭。';
     if (document.body.classList.contains('no-blur')) return '你开了酒馆的“关闭模糊”，所以玻璃和折射都暂停了。';
     if (!S.refract) return '边缘折射已关闭，现在只有模糊。';
-    if (S.compatibilityMode === 'blur') return '已选择仅模糊；切回自动适配可恢复当前环境的折射路径。';
+    if (S.compatibilityMode === 'blur') return '已选择通用普通玻璃；切回自动适配可恢复当前环境的折射路径。';
     if (isIOS && iosTrialRequested()) return 'iOS SVG 折射实验已请求；不代表背景位移已显示，请对比画面确认。关闭实验开关即可恢复模糊。';
     if (!canRefract()) {
         if (isIOS && S.iosSvgTrial === true) return 'iOS 模糊或 SVG URL 语法门槛未通过，保留模糊回退。';
@@ -1234,11 +1390,11 @@ function statusText() {
 
 function iosTrialReport() {
     const rows = [
-        'NVWA ST / TT 通用测试 1.4.2-tt.6',
+        'NVWA 液态玻璃 1.4.4-test.9 · iOS 诊断',
         'UA: ' + navigator.userAgent,
         '平台 / 触摸点: ' + navigator.platform + ' / ' + navigator.maxTouchPoints,
         '视口 / DPR: ' + innerWidth + ' × ' + innerHeight + ' / ' + devicePixelRatio,
-        '环境适配: ' + (S.compatibilityMode === 'blur' ? '仅模糊' : '自动'),
+        '环境适配: ' + (S.compatibilityMode === 'blur' ? '通用普通玻璃' : '自动'),
         'iOS 识别: ' + isIOS,
         '标准 / WebKit SVG URL 语法: ' + CSS.supports('backdrop-filter', 'url(#ilg-ios-probe)') + ' / ' + CSS.supports('-webkit-backdrop-filter', 'url(#ilg-ios-probe)'),
         '美化 / 折射 / iOS 实验: ' + !!S.enabled + ' / ' + !!S.refract + ' / ' + !!S.iosSvgTrial,
@@ -1278,15 +1434,23 @@ function buildPanel() {
     <div class="ilg-row"><label for="ilg-opt-compatibilityMode"><span>环境适配</span></label>
       <select id="ilg-opt-compatibilityMode" class="text_pole" aria-describedby="ilg-compat-hint">
         <option value="auto">自动适配 ST / TT（推荐）</option>
-        <option value="blur">仅模糊（折射异常时选择）</option>
+        <option value="blur">通用普通玻璃（折射异常时选择）</option>
       </select></div>
-    ${TOGGLES.filter(([k]) => k !== 'iosSvgTrial').map(([k, label]) => `<label class="checkbox_label" for="ilg-opt-${k}"><input type="checkbox" id="ilg-opt-${k}"><span>${label}</span></label>`).join('')}
+    ${TOGGLES.filter(([k]) => !['iosSvgTrial','transparentReadability'].includes(k)).map(([k, label]) => `<label class="checkbox_label" for="ilg-opt-${k}"><input type="checkbox" id="ilg-opt-${k}"><span>${label}</span></label>`).join('')}
+    <div class="ilg-row ilg-custom-wallpaper-settings">
+      <label for="ilg-opt-wallpaperTone"><span>自定义壁纸上的玻璃</span></label>
+      <select id="ilg-opt-wallpaperTone" class="text_pole" aria-describedby="ilg-wallpaper-hint">
+        <option value="auto">自动适配壁纸明暗</option><option value="dark">深色玻璃 · 浅色文字</option><option value="light">浅色玻璃 · 深色文字</option>
+      </select>
+      <label class="checkbox_label" for="ilg-opt-wallpaperAdapt"><input type="checkbox" id="ilg-opt-wallpaperAdapt"><span>按壁纸亮区收敛高光</span></label>
+      <p class="ilg-hint" id="ilg-wallpaper-hint">自定义壁纸单独适配，不受黑白壁纸的时间设置影响。顶栏入口可切换瓷白、墨黑，也可返回本轮使用的自定义壁纸。</p>
+    </div>
     <div class="ilg-row"><label for="ilg-opt-chatBackground"><span>聊天背景</span></label>
       <select id="ilg-opt-chatBackground" class="text_pole" aria-describedby="ilg-chat-background-hint">
         <option value="glass">模糊玻璃（原来的效果）</option>
         <option value="transparent">透明玻璃（保留边缘与圆角）</option>
       </select>
-      <p class="ilg-hint" id="ilg-chat-background-hint">两档都保留玻璃轮廓。透明档去掉消息的磨砂和底色，保留边缘折射与阴影；卡片自身底色由上方“不透明底”开关控制。</p>
+      <p class="ilg-hint" id="ilg-chat-background-hint">两档都保留玻璃轮廓。透明档去掉消息的磨砂和底色，保留边缘折射与阴影；开启可读性增强时，亮壁纸下仅普通正文增加轻薄阅读底；卡片自身底色由上方“不透明底”开关控制。</p>
     </div>
     <div class="ilg-row">
       <button type="button" id="ilg-card-report-copy" class="menu_button">复制卡片显示诊断</button>
@@ -1325,6 +1489,12 @@ function buildPanel() {
         <option value="physical">新版：物理折射 + 动态高光（实验）</option>
         <option value="legacy">旧版：之前一直用的这套</option>
       </select></div>
+    <div class="ilg-glass-pairing">
+      <div class="ilg-sub">聊天内容玻璃</div>
+      <label class="checkbox_label" for="ilg-opt-transparentReadability"><input type="checkbox" id="ilg-opt-transparentReadability"><span>亮壁纸下增强透明正文可读性（卡片原样）</span></label>
+      <p class="ilg-hint">单独选择聊天内容的效果；顶栏、状态栏和输入框继续用原设置。默认跟随全局，不支持折射时自动兼容。</p>
+      ${['mes'].map(group => '<div class="ilg-surface-choice"><label for="ilg-surface-'+group+'">'+'聊天内容效果'+'</label><select id="ilg-surface-'+group+'" class="text_pole"><option value="inherit">跟随全局设置</option><option value="ordinary">通用普通玻璃</option>'+Object.entries(PRESETS).map(([key,[name]])=>'<option value="'+key+'">'+name+'</option>').join('')+'<option value="custom">自定义液态玻璃</option></select><details id="ilg-surface-'+group+'-tuning" hidden><summary>单独细调这一侧</summary><label for="ilg-surface-'+group+'-surfaceBlur">模糊程度 <output id="ilg-surface-'+group+'-surfaceBlur-v"></output></label><input type="range" id="ilg-surface-'+group+'-surfaceBlur" min="0" max="40" step=".5">'+SLIDERS.filter(([key])=>/^p[A-Z]/.test(key)||['saturate','brightness','highlight'].includes(key)).map(([key,name,min,max,step,unit])=>'<div class="ilg-row" data-surface-'+(/^p[A-Z]/.test(key)?'liquid':'ordinary')+'="'+group+'"><label for="ilg-surface-'+group+'-'+key+'"><span>'+name+'</span><output id="ilg-surface-'+group+'-'+key+'-v"></output></label><input type="range" id="ilg-surface-'+group+'-'+key+'" min="'+min+'" max="'+max+'" step="'+step+'"></div>').join('')+'</details></div>').join('')}
+    </div>
     <details class="ilg-fine-tuning" id="ilg-fine-tuning">
       <summary>玻璃细调参数<span class="ilg-hint">需要调整或试用 iOS 折射时展开</span></summary>
       <label class="checkbox_label" for="ilg-opt-iosSvgTrial"><input type="checkbox" id="ilg-opt-iosSvgTrial"><span>iOS WebKit SVG 折射实验（可能无效；关闭可回退）</span></label>
@@ -1340,6 +1510,9 @@ function buildPanel() {
         </select></div>
       <label class="checkbox_label" for="ilg-opt-follow"><input type="checkbox" id="ilg-opt-follow"><span>高光跟随鼠标</span></label>
     </div>
+    <label class="checkbox_label" for="ilg-opt-tiltLight"><input type="checkbox" id="ilg-opt-tiltLight" aria-describedby="ilg-tilt-status"><span>高光跟随手机姿态</span></label>
+    <p class="ilg-hint" id="ilg-tilt-status" role="status"></p>
+    <button type="button" class="menu_button" id="ilg-tilt-permission" hidden>授权姿态感应</button>
     ${SLIDERS.map(([k, label, min, max, step, , engine, prof]) => `<div class="ilg-row"${engine ? ` data-engine="${engine}"` : ''}${prof ? ` data-profile="${prof}"` : ''}><label for="ilg-opt-${k}"><span>${label}</span><output id="ilg-opt-${k}-v"></output></label><input type="range" id="ilg-opt-${k}" min="${min}" max="${max}" step="${step}"></div>`).join('')}
     <div class="ilg-hint">参数自动保存。新旧两套引擎的参数分开存，切回旧版就是原来的样子。关掉“启用液态玻璃美化”会撤去插件效果；恢复旧主题请手动选择安装前备份的主题。</div>
 
@@ -1379,6 +1552,54 @@ function buildPanel() {
         }
     });
 
+    const surfaceSliders = SLIDERS.filter(([key]) => /^p[A-Z]/.test(key) || ['saturate','brightness','highlight'].includes(key));
+    const syncSurfaceControls = () => {
+        for (const group of ['mes']) {
+            const own = S.glassSurfaces[group] || {}, G = surfaceGlass(group);
+            const choice = own.mode === 'ordinary' ? 'ordinary' : own.mode === 'liquid' ? (PRESETS[own.preset] ? own.preset : 'custom') : 'inherit';
+            document.getElementById('ilg-surface-'+group).value = choice;
+            document.getElementById('ilg-surface-'+group+'-tuning').hidden = choice === 'inherit';
+            if (choice === 'inherit') continue;
+            wrap.querySelectorAll('[data-surface-liquid="'+group+'"]').forEach(row => { row.hidden = choice === 'ordinary'; });
+            wrap.querySelectorAll('[data-surface-ordinary="'+group+'"]').forEach(row => { row.hidden = choice !== 'ordinary'; });
+            const blur = G.surfaceBlur ?? S.mesBlur;
+            const controls = [['surfaceBlur','模糊程度',0,40,.5,'px'],...surfaceSliders];
+            for (const [key,,min,max,step,unit] of controls) {
+                const input = document.getElementById('ilg-surface-'+group+'-'+key);
+                const value = key === 'surfaceBlur' ? blur : G[key];
+                input.value = value;
+                document.getElementById('ilg-surface-'+group+'-'+key+'-v').textContent = fmt(step,unit,value);
+                paintRange(input);
+            }
+        }
+    };
+    for (const group of ['mes']) {
+        document.getElementById('ilg-surface-'+group).addEventListener('change', event => {
+            const choice = event.target.value;
+            if (!['inherit','ordinary','custom',...Object.keys(PRESETS)].includes(choice)) { syncSurfaceControls(); return; }
+            const previous = S.glassSurfaces[group] || {}, G = surfaceGlass(group);
+            const captured = Object.fromEntries(surfaceSliders.map(([key]) => [key,G[key]]));
+            S.glassSurfaces[group] = choice === 'inherit' ? {...previous,mode:'inherit'} : {
+                ...previous,...captured,profile:G.profile,surfaceBlur:G.surfaceBlur ?? S.mesBlur,
+                ...(PRESETS[choice]?.[1] || {}), mode:choice==='ordinary'?'ordinary':'liquid',preset:choice,
+            };
+            syncSurfaceControls(); queueGlassSettings(true, group); ctx.saveSettingsDebounced();
+        });
+        for (const [key,,min,max,step,unit] of [['surfaceBlur','模糊程度',0,40,.5,'px'],...surfaceSliders]) {
+            const input = document.getElementById('ilg-surface-'+group+'-'+key);
+            input.addEventListener('input', () => {
+                const value = Number(input.value);
+                if (!Number.isFinite(value)) return;
+                const own = S.glassSurfaces[group];
+                if (!own || own.mode === 'inherit') return;
+                own[key] = Math.min(max,Math.max(min,value));
+                if (own.mode === 'liquid') { own.preset = 'custom'; document.getElementById('ilg-surface-'+group).value = 'custom'; }
+                document.getElementById('ilg-surface-'+group+'-'+key+'-v').textContent = fmt(step,unit,own[key]);
+                queueGlassSettings(!CSS_GLASS_PARAMETERS.has(key), group); ctx.saveSettingsDebounced();
+            });
+        }
+    }
+
     // 当前数值正好等于某一档预设时，那个按钮显示为按下
     const markPresets = () => wrap.querySelectorAll('[data-preset]').forEach(b => {
         const p = PRESETS[b.dataset.preset][1];
@@ -1410,7 +1631,9 @@ function buildPanel() {
     });
     document.getElementById('ilg-chat-font-reset').addEventListener('click', () => saveChatFont(0));
     const sync = () => {
+        syncSurfaceControls();
         syncChatFont();
+        syncWallpaperControls();
         document.getElementById('ilg-opt-chatBackground').value = S.chatBackground;
         TOGGLES.forEach(([k]) => { document.getElementById(`ilg-opt-${k}`).checked = !!S[k]; });
         SLIDERS.forEach(([k, , , , step, unit]) => {
@@ -1428,6 +1651,8 @@ function buildPanel() {
         document.getElementById('ilg-opt-avatar').value = S.avatar;
         document.getElementById('ilg-opt-profile').value = S.profile;
         document.getElementById('ilg-opt-follow').checked = !!S.follow;
+        document.getElementById('ilg-opt-tiltLight').checked = !!S.tiltLight;
+        tiltLight.sync();
         document.getElementById('ilg-opt-homeName').value = S.homeName || '';
         wrap.querySelectorAll('[data-engine]').forEach(n => { n.hidden = n.dataset.engine !== S.engine; });
         // 放大镜截面不用厚度、折射率；物理折射截面不用放大倍数
@@ -1493,8 +1718,17 @@ function buildPanel() {
     });
     document.getElementById('ilg-opt-follow').addEventListener('change', e => {
         S.follow = e.target.checked;
-        queueGlassSettings(); ctx.saveSettingsDebounced();
+        queueGlassSettings(false); ctx.saveSettingsDebounced();
     });
+    document.getElementById('ilg-opt-wallpaperTone').addEventListener('change', e => saveWallpaperAppearance('wallpaperTone', e.target.value));
+    document.getElementById('ilg-opt-wallpaperAdapt').addEventListener('change', e => saveWallpaperAppearance('wallpaperAdapt', e.target.checked));
+    document.getElementById('ilg-opt-tiltLight').addEventListener('change', e => {
+        S.tiltLight = e.target.checked;
+        // Permission requests must start synchronously inside this user gesture.
+        if (S.tiltLight) void tiltLight.enable(); else tiltLight.sync();
+        queueGlassSettings(false); ctx.saveSettingsDebounced();
+    });
+    document.getElementById('ilg-tilt-permission').addEventListener('click', () => { void tiltLight.enable(); });
     wrap.querySelectorAll('[data-preset]').forEach(b => b.addEventListener('click', () => {
         Object.assign(S, PRESETS[b.dataset.preset][1]);
         queueGlassSettings(); sync(); ctx.saveSettingsDebounced();
@@ -1524,13 +1758,13 @@ function buildPanel() {
     SLIDERS.forEach(([k, , , , step, unit]) => document.getElementById(`ilg-opt-${k}`).addEventListener('input', e => {
         S[k] = parseFloat(e.target.value);
         document.getElementById(`ilg-opt-${k}-v`).textContent = fmt(step, unit, S[k]);
-        queueGlassSettings(); markPresets(); ctx.saveSettingsDebounced();
+        queueGlassSettings(!CSS_GLASS_PARAMETERS.has(k)); syncSurfaceControls(); markPresets(); ctx.saveSettingsDebounced();
     }));
     const reset = () => {
         // 只重置本扩展的外观参数，保留原主题备份和首次清理记录。
         const retained = Object.fromEntries(['cssReset', 'cssCleaned', 'cssBackup', 'cssBackupAt', 'lookBackup', 'themeBackup']
             .map(k => [k, S[k]]));
-        Object.assign(S, DEFAULTS, retained);
+        Object.assign(S, DEFAULTS, retained, { glassSurfaces: {} });
         clearAll(); applyRoot(); sync(); ctx.saveSettingsDebounced();
     };
     const btn = document.getElementById('ilg-reset');
@@ -1565,9 +1799,9 @@ function lumAt(x, y, bar) {
             } catch { /* 跨域 iframe 读不到，跳过 */ }
             return null;
         }
-        return surfaceLuminance(el);
+        return surfaceLuminance(el) ?? customWallpaperLuminance(x, y);
     }
-    return null;
+    return customWallpaperLuminance(x, y);
 }
 function adaptBar(bar) {
     if (!bar || bar.hidden) return null;
@@ -1902,11 +2136,12 @@ function cardDisplayReport() {
         return { message: describe(message), candidates: candidates.length, sampled: sampled.map(describe), truncated: sampled.length < candidates.length };
     });
     return JSON.stringify({
-        format: 'nvwa-card-display-1', version: '1.4.4-test.8',
+        format: 'nvwa-card-display-1', version: '1.4.4-test.9',
         viewport: [innerWidth, innerHeight, devicePixelRatio],
         userAgent: navigator.userAgent,
         enabled: !!S.enabled, chatBackground: S.chatBackground, cardSolid: !!S.cardSolid,
         compatibilityMode: S.compatibilityMode, engine: S.engine,
+        chatGlass: { mode: S.glassSurfaces.mes?.mode || 'inherit', preset: PRESETS[S.glassSurfaces.mes?.preset] ? S.glassSurfaces.mes.preset : 'custom' },
         bubble: document.body.classList.contains('bubblechat'), noBlur: document.body.classList.contains('no-blur'),
         messageCount: messages.length, sampledMessages: details,
     }, null, 2);
@@ -1966,7 +2201,10 @@ function tagCard(text) {
             if (cs.position === 'fixed' && cs.display !== 'none' && cs.visibility !== 'hidden' && k.getClientRects().length) fixedOverlay = true;
             if (k.matches('iframe') && cs.display !== 'none' && cs.visibility !== 'hidden' && k.getBoundingClientRect().width > 0 && k.getBoundingClientRect().height > 0) cardRenderer = true;
             if (k.matches('img, video, svg, canvas, q, em, i, b, strong, br')) continue;
-            const c = blockBg(k, cs);
+            // Our temporary reading veil is not an authored card background.
+            const readingProse = root.classList.contains('ilg-readable-chat') && el === text
+                && k.matches('p, ul, ol, blockquote') && !text.closest('.mes')?.classList.contains('ilg-card-renderer');
+            const c = readingProse ? null : blockBg(k, cs);
             const frame = k.matches('iframe');
             const panel = frame || k.matches('div, section, article, aside, details, summary, dialog, button, [role="dialog"], [role="button"], [role="menu"], [role="listbox"], [role="option"]');
             const choice = k.matches('button, select, option, input[type="button"], input[type="submit"], [role="button"], [role="option"]');
@@ -2129,5 +2367,5 @@ ctx.eventSource.on(ctx.eventTypes.CHAT_CHANGED, () => {
 window.addEventListener('resize', () => requestAnimationFrame(repaintAll));
 ['bg1', 'bg_custom'].forEach(id => {
     const el = document.getElementById(id);
-    if (el) new MutationObserver(() => S.enabled && applyTone()).observe(el, { attributes: true, attributeFilter: ['style'] });
+    if (el) new MutationObserver(() => S.enabled && applyTone()).observe(el, { attributes: true, attributeFilter: ['style', 'class'] });
 });

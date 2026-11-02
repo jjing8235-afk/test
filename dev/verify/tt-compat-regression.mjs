@@ -46,11 +46,11 @@ passed.push('Reset restores auto adaptation and keeps iOS trial off while preser
 const refract=source.match(/function refractAllowed\(it\) \{([\s\S]*?)\n\}/)[1];
 for(const[changes,kind,visible,noBlur,allowed]of [[{},'bar',true,false,true],[{enabled:false},'bar',true,false,false],[{refract:false},'bar',true,false,false],[{},'bar',true,true,false],[{refractMes:false},'mes',true,false,false],[{},'mes',false,false,false],[{},'mes',true,false,true]]){
  const e=env({settings:{androidWebViewRefract:true,...changes}});
- assert.equal(vm.runInNewContext('(function(it){'+refract+'})(it)',{S:e.S,canRefract:e.canRefract,it:{kind,visible},document:{body:{classList:{contains:()=>noBlur}}}}),allowed);
+ assert.equal(vm.runInNewContext('(function(it){'+refract+'})(it)',{S:e.S,surfaceGlass:()=>e.S,canRefract:e.canRefract,it:{kind,visible},document:{body:{classList:{contains:()=>noBlur}}}}),allowed);
 }
 passed.push('Enabled, no-blur, message preference and message visibility still gate refraction');
 const status=source.match(/function statusText\(\) \{([\s\S]*?)\n\}/)[1];
-for(const mode of ['auto','blur']){const e=env({settings:{compatibilityMode:mode}});const text=vm.runInNewContext(cap+'\n(function(){'+status+'})()', {...e.sandbox,lightBg:false,document:{body:{classList:{contains:n=>n==='bubblechat'}}}});assert(text.includes(mode==='auto'?'已请求折射':'仅模糊'));assert(!text.includes('完整折射已开启'))}
+for(const mode of ['auto','blur']){const e=env({settings:{compatibilityMode:mode}});const text=vm.runInNewContext(cap+'\n(function(){'+status+'})()', {...e.sandbox,lightBg:false,document:{body:{classList:{contains:n=>n==='bubblechat'}}}});assert(text.includes(mode==='auto'?'已请求折射':'通用普通玻璃'));assert(!text.includes('完整折射已开启'))}
 passed.push('Status distinguishes requested compatibility from claimed rendering success');
 const toggle=source.match(/TOGGLES\.forEach\(\(\[k\]\) => document.getElementById\(`ilg-opt-\$\{k\}`\).addEventListener\('change', e => \{([\s\S]*?)\n    \}\)\);/)[1];
 const modeHandler=source.match(/document.getElementById\('ilg-opt-compatibilityMode'\).addEventListener\('change', e => \{([\s\S]*?)\n    \}\);/)[1];

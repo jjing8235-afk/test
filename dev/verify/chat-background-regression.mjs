@@ -63,7 +63,7 @@ for (const mode of ['glass', 'transparent']) {
                         document: { createElement: () => element(), body: { classList: { contains: () => noBlur } } },
                         items: new Map([[el, it]]), trackable: () => true,
                         KIND: { mes: { blur: () => 3 } }, refractAllowed: () => allowed,
-                        canRefract: () => allowed, isIOS: false, radiusOf: () => 22,
+                        surfaceGlass: () => ({chatBackground:mode,engine,saturate:1.6,brightness:1.05}), applySurfaceStyle() {}, canRefract: () => allowed, isIOS: false, radiusOf: () => 22,
                         setPhys(node, _item, on) { node.classList.toggle('ilg-phys', on); },
                         buildPhysical() { calls.push('physical'); }, buildFilter() { calls.push('legacy'); },
                     };
@@ -103,7 +103,7 @@ const physical = bodyOf('buildPhysical');
 const settings = { chatBackground: 'glass', mesBlur: 3, profile: 'lens' };
 const builds = [];
 const build = vm.runInNewContext(physical + '\n buildPhysical', {
-    S: settings,
+    S: settings, surfaceGlass: () => settings, wallpaperLightGain: 1,
     KIND: { mes: { blur: () => settings.mesBlur }, bar: { blur: () => 1 } },
     getMaps: () => ({}), lightAngle: () => 135,
     filterOf: it => it.filter ||= { querySelectorAll: () => [] },
