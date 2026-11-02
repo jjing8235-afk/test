@@ -3655,30 +3655,35 @@ html.ilg.ilg-custom-wallpaper body #top-bar.ilg-over-light ~ #top-settings-holde
 }
 html.ilg.ilg-custom-wallpaper body #nonQRFormItems.ilg-over-light #send_textarea { color: #19232f; }
 html.ilg.ilg-custom-wallpaper body #nonQRFormItems.ilg-over-light #send_textarea::placeholder { color: #485566; opacity: 1; }
-/* Protect plain prose only. Authored cards, iframe margins and fixed overlays stay untouched. */
-html.ilg.ilg-readable-chat body.bubblechat #chat .mes.ilg-glass:not(.ilg-card-renderer):not(.ilg-content-overlay):not(.smallSysMes) .mes_text {
-    color: #19232f;
-    --SmartThemeBodyColor: #19232f;
-    --SmartThemeEmColor: #465366;
-    --SmartThemeQuoteColor: #864013;
-    --SmartThemeUnderlineColor: #075ba5;
-    text-shadow: none;
+/* Wallpaper-aware foreground only: retain original prose geometry and clear background. */
+html.ilg body .ilg-text-dark {
+    --ilg-readable-ink: #182431;
+    --ilg-readable-edge: rgba(255,255,255,.65);
+    --ilg-narr: #182431;
+    --ilg-say: #783400;
+    --ilg-think: #394b62;
+    --SmartThemeBodyColor: #182431;
+    --SmartThemeEmColor: #394b62;
+    --SmartThemeQuoteColor: #783400;
+    --SmartThemeUnderlineColor: #075392;
 }
-html.ilg.ilg-readable-chat body.bubblechat #chat .mes.ilg-glass:not(.ilg-card-renderer):not(.ilg-content-overlay):not(.smallSysMes) .mes_text :is(p,em,strong,blockquote,li) { text-shadow: none; }
-html.ilg.ilg-readable-chat body.bubblechat #chat .mes.ilg-glass:not(.ilg-card-renderer):not(.ilg-content-overlay):not(.smallSysMes) .mes_text > :is(p,ul,ol,blockquote) {
-    width: fit-content;
-    max-width: 100%;
-    color: #19232f;
-    box-sizing: border-box;
-    padding: .3em .6em;
-    border-radius: 7px;
-    background: rgba(248,250,253,.68);
+html.ilg body .ilg-text-light {
+    --ilg-readable-ink: #f4f6fa;
+    --ilg-readable-edge: rgba(12,18,28,.85);
+    --ilg-narr: #f4f6fa;
+    --ilg-say: #ffd08b;
+    --ilg-think: #d6e3f4;
+    --SmartThemeBodyColor: #f4f6fa;
+    --SmartThemeEmColor: #d6e3f4;
+    --SmartThemeQuoteColor: #ffd08b;
+    --SmartThemeUnderlineColor: #9ed4ff;
 }
-html.ilg.ilg-readable-chat body.bubblechat #chat .mes.ilg-glass:not(.ilg-card-renderer):not(.ilg-content-overlay):not(.smallSysMes) .mes_text > :is(ul,ol) { padding-inline-start: 1.8em; }
-html.ilg.ilg-wallpaper-bright body #ilg-home :is(.ilg-home-title,.ilg-home-sub) {
-    padding: 5px 12px;
-    border-radius: 10px;
-    color: #19232f;
-    background: rgba(248,250,253,.68);
-    text-shadow: none;
+html.ilg.ilg-readable-chat body.bubblechat #chat .mes:not(.ilg-card-renderer):not(.ilg-content-overlay):not(.smallSysMes) .mes_text > :is(.ilg-text-dark,.ilg-text-light) {
+    --ilg-say-bg: transparent;
+    color: var(--ilg-readable-ink);
+    text-shadow: 0 .6px .7px var(--ilg-readable-edge);
+}
+html.ilg body #ilg-home :is(.ilg-home-title,.ilg-home-sub,.ilg-home-logo):is(.ilg-text-dark,.ilg-text-light) {
+    color: var(--ilg-readable-ink);
+    text-shadow: 0 .6px .7px var(--ilg-readable-edge);
 }

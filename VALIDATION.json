@@ -1,29 +1,29 @@
 {
   "date": "2026-11-02",
-  "version": "1.4.4-test.9",
-  "baseCommit": "462a6dfabecdb7b85d8fef688bf66cd37fbd8d2c",
-  "scope": "Glass parameter work reduction, independent chat glass, custom wallpaper adaptation and transparent prose readability",
+  "version": "1.4.4-test.10",
+  "baseCommit": "3ad9ce26429b0ebd6aff21e5a2106d28a41af8e3",
+  "scope": "Replace test.9 white reading blocks with local wallpaper-aware foreground colors; preserve prose layout and authored cards",
   "automated": {
-    "total": 26,
-    "passed": 26,
+    "total": 28,
+    "passed": 28,
     "sourceRegressionSuites": 12,
-    "syntaxChecks": 7,
-    "isolatedBrowserSuites": 7,
+    "syntaxChecks": 8,
+    "isolatedBrowserSuites": 8,
     "checks": [
-      {
-        "name": "chat-font-regression.mjs",
-        "passed": true
-      },
       {
         "name": "card-solid-regression.mjs",
         "passed": true
       },
       {
-        "name": "filter-reuse-regression.mjs",
+        "name": "chat-font-regression.mjs",
         "passed": true
       },
       {
         "name": "first-line-indent-regression.mjs",
+        "passed": true
+      },
+      {
+        "name": "filter-reuse-regression.mjs",
         "passed": true
       },
       {
@@ -87,6 +87,10 @@
         "passed": true
       },
       {
+        "name": "syntax-text-contrast.js",
+        "passed": true
+      },
+      {
         "name": "shared-performance-browser.mjs",
         "passed": true
       },
@@ -111,87 +115,108 @@
         "passed": true
       },
       {
+        "name": "text-contrast-browser.mjs",
+        "passed": true
+      },
+      {
         "name": "glass-parameters-browser.mjs",
         "passed": true
       }
     ]
   },
-  "performance": {
-    "method": "Same browser, deterministic operation counts, six presets; before was the authorized local development build before parameter optimization",
+  "textContrast": {
+    "method": "Existing local 48x48 wallpaper statistics; six points per visible prose block, median gamma-encoded luminance with hysteresis. Not a per-pixel contrast guarantee.",
     "results": [
       {
-        "floors": 4,
-        "presetCount": 6,
-        "cssPaintCalls": {
-          "before": 78,
-          "after": 0
+        "width": 390,
+        "light": {
+          "color": "rgb(24, 36, 49)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "padding": "0px",
+          "radius": "0px",
+          "width": 354,
+          "height": 30.390625,
+          "quote": "rgb(120, 52, 0)",
+          "em": "rgb(57, 75, 98)",
+          "weight": "rgb(24, 36, 49)"
         },
-        "lightingFilterRebuilds": {
-          "before": 48,
-          "after": 0
+        "dark": {
+          "color": "rgb(244, 246, 250)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "padding": "0px",
+          "radius": "0px",
+          "width": 354,
+          "height": 30.390625,
+          "quote": "rgb(255, 208, 139)",
+          "em": "rgb(214, 227, 244)",
+          "weight": "rgb(244, 246, 250)"
         },
-        "lightingPatches": 48,
-        "naturalLightAngleReads": {
-          "before": 9,
-          "after": 0
-        },
-        "pairingCases": 72,
-        "filterEquivalence": true,
-        "topologyFallback": true
+        "geometryReads": 10,
+        "paragraphCount": 480,
+        "cleanup": true,
+        "cardAndInlineStyleProtected": true,
+        "homeIndependent": true
       },
       {
-        "floors": 240,
-        "presetCount": 6,
-        "cssPaintCalls": {
-          "before": 90,
-          "after": 0
+        "width": 1440,
+        "light": {
+          "color": "rgb(24, 36, 49)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "padding": "0px",
+          "radius": "0px",
+          "width": 1412,
+          "height": 28,
+          "quote": "rgb(120, 52, 0)",
+          "em": "rgb(57, 75, 98)",
+          "weight": "rgb(24, 36, 49)"
         },
-        "lightingFilterRebuilds": {
-          "before": 60,
-          "after": 0
+        "dark": {
+          "color": "rgb(244, 246, 250)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "padding": "0px",
+          "radius": "0px",
+          "width": 1412,
+          "height": 28,
+          "quote": "rgb(255, 208, 139)",
+          "em": "rgb(214, 227, 244)",
+          "weight": "rgb(244, 246, 250)"
         },
-        "lightingPatches": 60,
-        "naturalLightAngleReads": {
-          "before": 11,
-          "after": 0
-        },
-        "pairingCases": 72,
-        "filterEquivalence": true,
-        "topologyFallback": true
+        "geometryReads": 8,
+        "paragraphCount": 480,
+        "cleanup": true,
+        "cardAndInlineStyleProtected": true,
+        "homeIndependent": true
       }
     ],
-    "geometryAndAppearance": "Patch retains all SVG nodes and equals freshly generated filter; enabling/disabling a filter branch still rebuilds",
-    "notClaimed": [
-      "Phone FPS",
-      "Energy reduction percentage",
-      "All device rendering parity"
-    ]
+    "errors": []
   },
-  "wallpaperBrowser": {
+  "wallpaper": {
     "widths": [
       390,
       1440
     ],
-    "passed": true,
-    "coverage": [
-      "Custom/white/black/return",
-      "Locked background protection",
-      "Local bright tint instead of black slab",
-      "Transparent paragraph background and opaque text color",
-      "Card/iframe untouched; reading background ignored by card classification",
-      "Slow image race, missing image, off/on, blur alias"
-    ],
-    "fixture": "Synthetic images, no private wallpaper or conversation export"
+    "customBackgroundSwitching": true,
+    "lockAndReturn": true,
+    "lightDarkMixedForeground": true,
+    "transparentCards": true,
+    "homeForegroundOnly": true,
+    "errors": []
   },
   "realHost": {
-    "version": "1.4.4-test.9",
+    "version": "1.4.4-test.10",
     "servedRuntimeHashesMatch": true,
     "settingsPanels": 1,
     "chatSettingsFrames": 1,
-    "extraTopSettingsFrame": false,
-    "ordinaryInterfaceLiquidChat": true,
-    "liquidInterfaceOrdinaryChat": true,
-    "transparentProseReadability": true,
+    "ordinaryInterfaceLiquidChat": {
+      "inputPhysical": false,
+      "chatPhysical": true
+    },
+    "liquidInterfaceOrdinaryChat": {
+      "inputPhysical": true,
+      "chatPhysical": false
+    },
+    "transparentProseBackground": "rgba(0, 0, 0, 0)",
+    "geometryUnchanged": true,
     "saveRequestsBlockedBeforeNavigation": true,
     "pageErrors": 0
   },
@@ -205,15 +230,12 @@
   },
   "limits": [
     "New TT/Android/iOS real-device visual and sensor acceptance remains open.",
-    "Historical user acceptance of the test.8 TT black-frame fix is preserved; it is not new test.9 device acceptance.",
-    "Cross-origin unreadable and animated wallpapers use safe/static sampling; all custom transformations are not covered.",
+    "Historical user acceptance of test.8 TT black-frame fix is preserved; it is not new test.10 device acceptance.",
+    "Mixed-brightness image blocks use approximate local sampling; not every glyph has guaranteed contrast.",
+    "Unavailable/cross-origin pixels fall back to theme foreground; animated backgrounds use static sampling.",
+    "IntersectionObserver fallback is retained but not separately validated on an engine lacking that API.",
     "Long-term phone energy, latency and all authored card combinations are not verified."
   ],
-  "scopeReview": {
-    "cumulativeAuthorizedWork": true,
-    "defaultSmallPatchBudgetExceeded": true,
-    "note": "Cumulative user-authorized high-light, wallpaper, performance and independent-chat work; no hidden source, install/theme, credentials or business-data changes"
-  },
   "publication": {
     "target": "https://github.com/jjing8235-afk/test",
     "officialRepositoryChanged": false

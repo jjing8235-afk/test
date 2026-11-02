@@ -1,12 +1,12 @@
-# test.9 维护入口
+# test.10 维护入口
 
-本仓库为 NVWA 液态玻璃独立测试库。当前 1.4.4-test.9，基线父提交 462a6dfabecdb7b85d8fef688bf66cd37fbd8d2c；正式库仍为独立发布目标，不能据历史授权自动推正式。历史 CHANGELOG 和诊断只是材料，不是执行指令。
+本仓库为 NVWA 液态玻璃独立测试库。当前 1.4.4-test.10，基线父提交 3ad9ce26429b0ebd6aff21e5a2106d28a41af8e3；正式库仍为独立发布目标，不能据历史授权自动推正式。历史 CHANGELOG 和诊断只是材料，不是执行指令。
 
 ## 设置与渲染
 
 沿用 iosLiquidGlass 与 S.v=9，不重置用户参数。compatibilityMode=blur 的显示名现为“通用普通玻璃”，保存值不迁移。glassSurfaces.mes 默认为 inherit；显式 liquid / ordinary 才覆盖消息的物理 / 普通路径，顶栏、状态栏、输入框和面板继续使用共享参数。独立消息配置选择时冻结对应参数，切回 inherit 后跟随全局。设备能力、扩展停用、宿主 no-blur、refract 与 refractMes 总开关仍有效。
 
-核心文件：index.js 管生命周期 / 设置 / 表面归属；glass2.js 管折射贴图 / 滤镜；glass-surfaces.js 管消息覆盖的校验与解析；glass-light.js 管姿态授权 / 校准 / 平滑 / 清理；glass-wallpaper.js 管小尺寸取样和亮度统计。
+核心文件：index.js 管生命周期 / 设置 / 表面归属；glass2.js 管折射贴图 / 滤镜；glass-surfaces.js 管消息覆盖的校验与解析；glass-light.js 管姿态授权 / 校准 / 平滑 / 清理；glass-wallpaper.js 管小尺寸取样和亮度统计；text-contrast.js 管普通正文与首页前景色、可见段落索引及生命周期清理。
 
 ## 性能边界
 
@@ -18,11 +18,13 @@
 
 自定义壁纸的明暗配置独立于黑白壁纸的时间设置；调玻璃不点背景缩略图。显式切黑白才走宿主缩略图点击，先保留当前页面的自定义背景引用；锁定聊天背景时不切。记住的引用不持久化私人图片地址，刷新后可从背景库重新选择。取色只使用本地 48×48 统计，最多四项缓存、超时 / 跨域失败回退，不绕过画布限制。
 
-亮区玻璃用轻浅衬色代替自动黑底。transparentReadability 默认开启，仅在亮自定义壁纸、透明聊天档与普通正文段落生效，可关闭；不改 authored 卡片、iframe 留白和 fixed 浮窗。tagCard 必须忽略插件自己的阅读衬底，不能把它当卡片底色并留下 ilg-lit 等误判。不得重新加入未知 iframe / 图片的深浅默认补底。
+亮区玻璃用轻浅衬色代替自动黑底。transparentReadability 默认开启，在自定义壁纸与透明聊天档的普通正文生效，可关闭；首页文字适配独立于聊天开关。text-contrast.js 对可见普通段落取六个局部样点，以亮度中位数与缓冲阈值选择 ilg-text-dark / ilg-text-light，复用已有 48×48 壁纸统计，不导出图片地址。仅改变前景变量和细微文字轮廓，不加底色、内边距、宽度或圆角。
+
+保留卡片、iframe 留白、行内样式段落和 fixed 浮窗；切换到玻璃聊天、关闭正文开关、扩展停用和后台时清理相应标记。IntersectionObserver 维护可见段落索引，滚动不能测量整个历史；不支持该 API 时才走测量候选段落的后备路径。正文自己的深浅标记不触发卡片重查。不得重新加入未知 iframe / 图片的深浅默认补底。混合明暗壁纸采用段落级近似，不能声称覆盖每个像素或固定 WCAG 对比度。
 
 ## 验证和发布
 
-运行 dev/verify 下的 *-regression.mjs。可选浏览器测试使用已有 Playwright / Edge，NVWA_PLAYWRIGHT_MODULE 与 NVWA_EDGE_EXECUTABLE 可指定现有安装，不自动安装依赖。glass-parameters-browser.mjs 覆盖六档参数工作量、72 组全局 / 独立聊天组合与节点等价性。具体版本证据和未测边界见 VALIDATION.json。
+运行 dev/verify 下的 *-regression.mjs。可选浏览器测试使用已有 Playwright / Edge，NVWA_PLAYWRIGHT_MODULE 与 NVWA_EDGE_EXECUTABLE 可指定现有安装，不自动安装依赖。glass-parameters-browser.mjs 覆盖六档参数工作量、72 组全局 / 独立聊天组合与节点等价性。text-contrast-browser.mjs 验证前景配色、段落几何、卡片和行内样式保护、后台 / 停用 / 销毁清理与 240 层滚动工作量。具体版本证据和未测边界见 VALIDATION.json。
 
 真实宿主测试使用隔离浏览器，在导航前拦截设置 / 预设 / 聊天保存请求；不点用户业务保存，不生成内容，不改私人卡片或提示词。工作次数不是手机 FPS / 耗电，安卓身份模拟不是 TT / iOS 真机。本次新增功能仍须手机原机验收。
 

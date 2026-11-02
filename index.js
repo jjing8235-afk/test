@@ -3,6 +3,7 @@
    折射引擎有两套：新版物理折射（glass2.js，实验台 v2 移植）和旧版（本文件里的 makeMap / buildFilter） */
 import { getMaps, clearMaps, physicalFilter, resizePhysicalFilter, updatePhysicalLighting, lightRow } from './glass2.js';
 import { makeOrb } from './orb.js';
+import { createTextContrast } from './text-contrast.js';
 import { normalizeGlassSurfaces, resolveSurfaceGlass } from './glass-surfaces.js';
 import { createTiltLight } from './glass-light.js';
 import { createWallpaperSampler, wallpaperHighlightGain, wallpaperLuminanceAt } from './glass-wallpaper.js';
@@ -84,7 +85,7 @@ const TOGGLES = [
     ['icons', 'iOS 风格图标'],
     ['refract', '边缘折射（取决于当前渲染环境）'],
     ['iosSvgTrial', 'iOS WebKit SVG 折射实验（可能无效；关闭可回退）'],
-    ['transparentReadability', '亮壁纸下增强透明聊天的文字可读性'],
+    ['transparentReadability', '按壁纸明暗调整透明正文字色'],
     ['refractMes', '消息卡片也折射（长聊天卡顿时关掉）'],
     ['font', '统一字体：思源黑体（苹果设备用苹方）'],
     ['firstLineIndent', '普通正文首行缩进两个汉字（不影响列表、代码和自带样式面板）'],
@@ -1097,6 +1098,7 @@ window.addEventListener('resize', () => requestAnimationFrame(layoutIslands));
 
 // Sample once per wallpaper; reuse pixels for bars and light intensity.
 let lightBg = false, cardTone = null, wallpaperLightGain = 1, wallpaperBright = false;
+let textContrast = null;
 let wallpaperSample = null, wallpaperSampleUrl = '', wallpaperFitting = 'cover', toneRequest = 0;
 const sampleWallpaper = createWallpaperSampler();
 function customWallpaperLuminance(x, y) {
@@ -1159,6 +1161,7 @@ async function applyTone() {
     const previousGain = wallpaperLightGain, previousBright = wallpaperBright;
     wallpaperBright = custom && !!sample && (sample.luminance > 0.52 || sample.bright > 0.68);
     root.classList.toggle('ilg-wallpaper-bright', S.enabled && wallpaperBright);
+    textContrast?.schedule(true);
     wallpaperLightGain = custom && S.wallpaperAdapt ? wallpaperHighlightGain(sample) : 1;
     root.style.setProperty('--ilg-wallpaper-hl-k', wallpaperLightGain);
     root.classList.toggle('ilg-custom-wallpaper', S.enabled && custom);
@@ -1209,7 +1212,8 @@ function applySurfaceSettings() {
     root.style.setProperty('--ilg-mes-a', S.mesTint);
     root.classList.toggle('ilg-chat-transparent', S.enabled && S.chatBackground === 'transparent');
     root.style.setProperty('--ilg-scrim-a', S.scrim * (wallpaperBright ? 0.45 : 1));
-    root.classList.toggle('ilg-readable-chat', S.enabled && S.transparentReadability && S.chatBackground === 'transparent' && wallpaperBright);
+    root.classList.toggle('ilg-readable-chat', S.enabled && S.transparentReadability && S.chatBackground === 'transparent' && !onToneWall());
+    textContrast?.schedule(true);
     root.style.setProperty('--ilg-tint', `rgba(255, 255, 255, ${lightBg ? Math.min(0.7, S.tint + 0.3) : S.tint})`);
 }
 function queueGlassSettings(repaint = true, kind = null) {
@@ -1390,7 +1394,7 @@ function statusText() {
 
 function iosTrialReport() {
     const rows = [
-        'NVWA 液态玻璃 1.4.4-test.9 · iOS 诊断',
+        'NVWA 液态玻璃 1.4.4-test.10 · iOS 诊断',
         'UA: ' + navigator.userAgent,
         '平台 / 触摸点: ' + navigator.platform + ' / ' + navigator.maxTouchPoints,
         '视口 / DPR: ' + innerWidth + ' × ' + innerHeight + ' / ' + devicePixelRatio,
@@ -1450,7 +1454,7 @@ function buildPanel() {
         <option value="glass">模糊玻璃（原来的效果）</option>
         <option value="transparent">透明玻璃（保留边缘与圆角）</option>
       </select>
-      <p class="ilg-hint" id="ilg-chat-background-hint">两档都保留玻璃轮廓。透明档去掉消息的磨砂和底色，保留边缘折射与阴影；开启可读性增强时，亮壁纸下仅普通正文增加轻薄阅读底；卡片自身底色由上方“不透明底”开关控制。</p>
+      <p class="ilg-hint" id="ilg-chat-background-hint">两档都保留玻璃轮廓。透明档去掉消息的磨砂和底色，保留边缘折射与阴影；开启字色适配时，仅调整普通正文颜色和细微轮廓，不增加背景；卡片自身底色由上方“不透明底”开关控制。</p>
     </div>
     <div class="ilg-row">
       <button type="button" id="ilg-card-report-copy" class="menu_button">复制卡片显示诊断</button>
@@ -1491,7 +1495,7 @@ function buildPanel() {
       </select></div>
     <div class="ilg-glass-pairing">
       <div class="ilg-sub">聊天内容玻璃</div>
-      <label class="checkbox_label" for="ilg-opt-transparentReadability"><input type="checkbox" id="ilg-opt-transparentReadability"><span>亮壁纸下增强透明正文可读性（卡片原样）</span></label>
+      <label class="checkbox_label" for="ilg-opt-transparentReadability"><input type="checkbox" id="ilg-opt-transparentReadability"><span>按壁纸明暗调整透明正文字色（不加底色）</span></label>
       <p class="ilg-hint">单独选择聊天内容的效果；顶栏、状态栏和输入框继续用原设置。默认跟随全局，不支持折射时自动兼容。</p>
       ${['mes'].map(group => '<div class="ilg-surface-choice"><label for="ilg-surface-'+group+'">'+'聊天内容效果'+'</label><select id="ilg-surface-'+group+'" class="text_pole"><option value="inherit">跟随全局设置</option><option value="ordinary">通用普通玻璃</option>'+Object.entries(PRESETS).map(([key,[name]])=>'<option value="'+key+'">'+name+'</option>').join('')+'<option value="custom">自定义液态玻璃</option></select><details id="ilg-surface-'+group+'-tuning" hidden><summary>单独细调这一侧</summary><label for="ilg-surface-'+group+'-surfaceBlur">模糊程度 <output id="ilg-surface-'+group+'-surfaceBlur-v"></output></label><input type="range" id="ilg-surface-'+group+'-surfaceBlur" min="0" max="40" step=".5">'+SLIDERS.filter(([key])=>/^p[A-Z]/.test(key)||['saturate','brightness','highlight'].includes(key)).map(([key,name,min,max,step,unit])=>'<div class="ilg-row" data-surface-'+(/^p[A-Z]/.test(key)?'liquid':'ordinary')+'="'+group+'"><label for="ilg-surface-'+group+'-'+key+'"><span>'+name+'</span><output id="ilg-surface-'+group+'-'+key+'-v"></output></label><input type="range" id="ilg-surface-'+group+'-'+key+'" min="'+min+'" max="'+max+'" step="'+step+'"></div>').join('')+'</details></div>').join('')}
     </div>
@@ -2136,7 +2140,7 @@ function cardDisplayReport() {
         return { message: describe(message), candidates: candidates.length, sampled: sampled.map(describe), truncated: sampled.length < candidates.length };
     });
     return JSON.stringify({
-        format: 'nvwa-card-display-1', version: '1.4.4-test.9',
+        format: 'nvwa-card-display-1', version: '1.4.4-test.10',
         viewport: [innerWidth, innerHeight, devicePixelRatio],
         userAgent: navigator.userAgent,
         enabled: !!S.enabled, chatBackground: S.chatBackground, cardSolid: !!S.cardSolid,
@@ -2201,10 +2205,7 @@ function tagCard(text) {
             if (cs.position === 'fixed' && cs.display !== 'none' && cs.visibility !== 'hidden' && k.getClientRects().length) fixedOverlay = true;
             if (k.matches('iframe') && cs.display !== 'none' && cs.visibility !== 'hidden' && k.getBoundingClientRect().width > 0 && k.getBoundingClientRect().height > 0) cardRenderer = true;
             if (k.matches('img, video, svg, canvas, q, em, i, b, strong, br')) continue;
-            // Our temporary reading veil is not an authored card background.
-            const readingProse = root.classList.contains('ilg-readable-chat') && el === text
-                && k.matches('p, ul, ol, blockquote') && !text.closest('.mes')?.classList.contains('ilg-card-renderer');
-            const c = readingProse ? null : blockBg(k, cs);
+            const c = blockBg(k, cs);
             const frame = k.matches('iframe');
             const panel = frame || k.matches('div, section, article, aside, details, summary, dialog, button, [role="dialog"], [role="button"], [role="menu"], [role="listbox"], [role="option"]');
             const choice = k.matches('button, select, option, input[type="button"], input[type="submit"], [role="button"], [role="option"]');
@@ -2248,6 +2249,7 @@ function tagCard(text) {
         message.classList.toggle('ilg-content-overlay', fixedOverlay);
         message.classList.toggle('ilg-card-renderer', cardRenderer);
         paint(message);
+        textContrast?.schedule(true);
     }
 }
 function queueCards(all) {
@@ -2265,7 +2267,7 @@ new MutationObserver(muts => {
     for (const m of muts) {
         // Ignore our luminance markers; host/card style and visibility changes still rescan the message.
         if (m.type === 'attributes' && m.attributeName === 'class') {
-            const clean = value => (value || '').split(/\s+/).filter(c => c && !['ilg-lit', 'ilg-dim', 'ilg-card-surface'].includes(c)).sort().join(' ');
+            const clean = value => (value || '').split(/\s+/).filter(c => c && !['ilg-lit', 'ilg-dim', 'ilg-card-surface', 'ilg-text-dark', 'ilg-text-light'].includes(c)).sort().join(' ');
             if (clean(m.oldValue) === clean(m.target.className)) continue;
         }
         // Only message content and its visibility changes belong to this pass.
@@ -2276,6 +2278,12 @@ new MutationObserver(muts => {
     if (hit) queueCards(false);
 }).observe(chatEl, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['style', 'class', 'hidden', 'open'], attributeOldValue: true });
 
+textContrast = createTextContrast({
+    enabled: () => S.enabled && !onToneWall(),
+    chatEnabled: () => S.transparentReadability && S.chatBackground === 'transparent',
+    sample: (x,y) => wallpaperSampleUrl === wallpaperUrl()
+        ? wallpaperLuminanceAt(wallpaperSample,x,y,innerWidth,innerHeight,wallpaperFitting) : null,
+});
 buildPanel();
 refreshCompanionTheme();
 /* ---------- 角色卡上的「世界书」小标 ----------
