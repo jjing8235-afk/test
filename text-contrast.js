@@ -1,9 +1,17 @@
 // Readability changes only foreground color. No wrapper, fill, image or message mutation.
-export function chooseTextTone(samples, previous = null) {
+export function chooseTextTone(samples, previous = null, home = false) {
     const values = samples.filter(v => typeof v === 'number' && Number.isFinite(v));
     if (!values.length) return null;
     values.sort((a,b) => a-b);
     const median = values[Math.floor(values.length / 2)];
+    // The home mark keeps its original light identity across textured midtones.
+    // Switch to dark only on a consistently pale patch, not a median roof color.
+    if (home) {
+        const low = values[Math.floor((values.length - 1) * .2)];
+        if (previous === 'dark' && low >= .60 && median >= .68) return 'dark';
+        if (previous === 'light' && (low <= .68 || median <= .78)) return 'light';
+        return low > .64 && median > .72 ? 'dark' : 'light';
+    }
     // Hysteresis avoids flicker while a line crosses textured wallpaper.
     if (previous === 'dark' && median >= .40) return 'dark';
     if (previous === 'light' && median <= .50) return 'light';
@@ -28,9 +36,10 @@ export function createTextContrast({ view = window, doc = document, enabled, cha
     function allowed(node) {
         const message = node.closest('.mes');
         if (!message) return !!node.closest('#ilg-home');
-        return chatEnabled() && !message.matches('.ilg-card-renderer,.ilg-content-overlay,.smallSysMes')
+        return chatEnabled() && !message.matches('.smallSysMes')
             && !node.closest('.ilg-card-surface,iframe')
-            && !node.hasAttribute('style');
+            && !node.hasAttribute('style')
+            && !node.querySelector('iframe, .ilg-card-surface, [style], input, button, canvas, svg');
     }
     function update() {
         raf = 0;
@@ -53,7 +62,7 @@ export function createTextContrast({ view = window, doc = document, enabled, cha
             const values=[];
             for (const y of [.25,.75]) for (const x of [.15,.5,.85]) values.push(sample(left+(right-left)*x,top+(bottom-top)*y));
             const previous=node.classList.contains('ilg-text-dark')?'dark':node.classList.contains('ilg-text-light')?'light':null;
-            updates.push([node,chooseTextTone(values,previous)]);
+            updates.push([node,chooseTextTone(values,previous,!node.closest('.mes'))]);
         }
         // Read all geometries before changing any styles.
         for (const [node,tone] of updates) {

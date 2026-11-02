@@ -1099,11 +1099,19 @@ window.addEventListener('resize', () => requestAnimationFrame(layoutIslands));
 // Sample once per wallpaper; reuse pixels for bars and light intensity.
 let lightBg = false, cardTone = null, wallpaperLightGain = 1, wallpaperBright = false;
 let textContrast = null;
-let wallpaperSample = null, wallpaperSampleUrl = '', wallpaperFitting = 'cover', toneRequest = 0;
+let wallpaperSample = null, wallpaperSampleUrl = '', wallpaperFitting = 'cover', wallpaperPlacement = {}, toneRequest = 0;
 const sampleWallpaper = createWallpaperSampler();
+function readWallpaperPlacement() {
+    const bg = document.getElementById('bg_custom')?.style.backgroundImage ? document.getElementById('bg_custom') : document.getElementById('bg1');
+    if (!bg) { wallpaperPlacement = {}; wallpaperFitting = 'cover'; return; }
+    const style = getComputedStyle(bg), rect = bg.getBoundingClientRect();
+    wallpaperFitting = style.backgroundSize;
+    wallpaperPlacement = { left: rect.left, top: rect.top, width: rect.width, height: rect.height, positionX: style.backgroundPositionX, positionY: style.backgroundPositionY };
+}
+window.addEventListener('resize', () => { readWallpaperPlacement(); textContrast?.schedule(); }, { passive: true });
 function customWallpaperLuminance(x, y) {
     if (!S.wallpaperAdapt || onToneWall() || wallpaperSampleUrl !== wallpaperUrl()) return null;
-    return wallpaperLuminanceAt(wallpaperSample, x, y, innerWidth, innerHeight, wallpaperFitting);
+    return wallpaperLuminanceAt(wallpaperSample, x, y, innerWidth, innerHeight, wallpaperFitting, wallpaperPlacement);
 }
 function wallpaperUrl() {
     for (const id of ['bg_custom', 'bg1']) {
@@ -1153,8 +1161,7 @@ async function applyTone() {
     // A slow previous image must not repaint a newer wallpaper or re-enable a stopped extension.
     if (request !== toneRequest || url !== wallpaperUrl()) return;
     wallpaperSample = sample; wallpaperSampleUrl = url;
-    const bg = document.getElementById('bg_custom')?.style.backgroundImage ? document.getElementById('bg_custom') : document.getElementById('bg1');
-    wallpaperFitting = bg ? getComputedStyle(bg).backgroundSize : 'cover';
+    readWallpaperPlacement();
     const tone = custom ? S.wallpaperTone : S.tone;
     if (tone === 'light' || tone === 'dark') lightBg = tone === 'light';
     else if (sample) lightBg = sample.luminance > 0.6;
@@ -1394,7 +1401,7 @@ function statusText() {
 
 function iosTrialReport() {
     const rows = [
-        'NVWA 液态玻璃 1.4.4-test.10 · iOS 诊断',
+        'NVWA 液态玻璃 1.4.4-test.11 · iOS 诊断',
         'UA: ' + navigator.userAgent,
         '平台 / 触摸点: ' + navigator.platform + ' / ' + navigator.maxTouchPoints,
         '视口 / DPR: ' + innerWidth + ' × ' + innerHeight + ' / ' + devicePixelRatio,
@@ -2140,7 +2147,7 @@ function cardDisplayReport() {
         return { message: describe(message), candidates: candidates.length, sampled: sampled.map(describe), truncated: sampled.length < candidates.length };
     });
     return JSON.stringify({
-        format: 'nvwa-card-display-1', version: '1.4.4-test.10',
+        format: 'nvwa-card-display-1', version: '1.4.4-test.11',
         viewport: [innerWidth, innerHeight, devicePixelRatio],
         userAgent: navigator.userAgent,
         enabled: !!S.enabled, chatBackground: S.chatBackground, cardSolid: !!S.cardSolid,
@@ -2282,7 +2289,7 @@ textContrast = createTextContrast({
     enabled: () => S.enabled && !onToneWall(),
     chatEnabled: () => S.transparentReadability && S.chatBackground === 'transparent',
     sample: (x,y) => wallpaperSampleUrl === wallpaperUrl()
-        ? wallpaperLuminanceAt(wallpaperSample,x,y,innerWidth,innerHeight,wallpaperFitting) : null,
+        ? wallpaperLuminanceAt(wallpaperSample,x,y,innerWidth,innerHeight,wallpaperFitting,wallpaperPlacement) : null,
 });
 buildPanel();
 refreshCompanionTheme();

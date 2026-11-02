@@ -9,6 +9,11 @@ const split=analyzeWallpaper(pixels,4,4,400,200);assert(split.bright>.9);assert(
 assert.equal(wallpaperLuminanceAt(split,1,1,400,400,'contain'),null);assert(wallpaperLuminanceAt(split,300,200,400,400,'contain')>.9);
 assert(wallpaperLuminanceAt(split,30,100,50,200,'cover')>.9);assert(wallpaperLuminanceAt(split,30,100,50,200,'stretch')>.9);
 assert.equal(wallpaperLuminanceAt(null,0,0,0,0),null);assert.equal(analyzeWallpaper(new Uint8ClampedArray(64),4,4),null);
+assert(wallpaperLuminanceAt(split,30,100,50,200,'cover',{positionX:'0%',positionY:'0%'})<.1);
+assert(wallpaperLuminanceAt(split,30,100,50,200,'cover',{positionX:'100%',positionY:'0%'})>.9);
+assert(wallpaperLuminanceAt(split,130,108,500,500,'cover',{left:100,top:8,width:50,height:200,positionX:'0%',positionY:'0%'})<.1);
+assert(wallpaperLuminanceAt(split,130,108,500,500,'cover',{left:100,top:8,width:50,height:200,positionX:'calc(100% - 0px)',positionY:'0px'})>.9);
+passed.push('Actual background origin, cover crop left/right position, pixel offsets and calc positioning');
 passed.push('Dark/bright/mixed image analysis, bounded highlight gain, transparent images and cover/contain/stretch crop mapping');
 let images=[],timers=new Map(),seq=0,reads=0;
 const view={setTimeout(fn){timers.set(++seq,fn);return seq},clearTimeout(id){timers.delete(id)},Image:class{constructor(){images.push(this);this.naturalWidth=400;this.naturalHeight=200}},document:{createElement(){return{getContext(){return{drawImage(){},getImageData(){reads++;return{data:new Uint8ClampedArray(48*48*4).fill(255)}}}}}}}};

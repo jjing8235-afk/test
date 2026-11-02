@@ -3657,33 +3657,41 @@ html.ilg.ilg-custom-wallpaper body #nonQRFormItems.ilg-over-light #send_textarea
 html.ilg.ilg-custom-wallpaper body #nonQRFormItems.ilg-over-light #send_textarea::placeholder { color: #485566; opacity: 1; }
 /* Wallpaper-aware foreground only: retain original prose geometry and clear background. */
 html.ilg body .ilg-text-dark {
-    --ilg-readable-ink: #182431;
-    --ilg-readable-edge: rgba(255,255,255,.65);
-    --ilg-narr: #182431;
-    --ilg-say: #783400;
-    --ilg-think: #394b62;
-    --SmartThemeBodyColor: #182431;
-    --SmartThemeEmColor: #394b62;
-    --SmartThemeQuoteColor: #783400;
-    --SmartThemeUnderlineColor: #075392;
+    --ilg-readable-ink: #1b2229;
+    --ilg-readable-shadow: 0 1px 1px rgba(255,255,255,.32);
+    --ilg-narr: #1b2229;
+    --ilg-say: #763810;
+    --ilg-think: #3c4958;
+    --SmartThemeBodyColor: #1b2229;
+    --SmartThemeEmColor: #3c4958;
+    --SmartThemeQuoteColor: #763810;
+    --SmartThemeUnderlineColor: #084e82;
 }
 html.ilg body .ilg-text-light {
-    --ilg-readable-ink: #f4f6fa;
-    --ilg-readable-edge: rgba(12,18,28,.85);
-    --ilg-narr: #f4f6fa;
-    --ilg-say: #ffd08b;
-    --ilg-think: #d6e3f4;
-    --SmartThemeBodyColor: #f4f6fa;
-    --SmartThemeEmColor: #d6e3f4;
-    --SmartThemeQuoteColor: #ffd08b;
-    --SmartThemeUnderlineColor: #9ed4ff;
+    --ilg-readable-ink: #f5f5f2;
+    --ilg-readable-shadow: 0 1px 2px rgba(12,15,20,.85), 0 2px 5px rgba(12,15,20,.22);
+    --ilg-narr: #f5f5f2;
+    --ilg-say: #ffd49f;
+    --ilg-think: #dce5ee;
+    --SmartThemeBodyColor: #f5f5f2;
+    --SmartThemeEmColor: #dce5ee;
+    --SmartThemeQuoteColor: #ffd49f;
+    --SmartThemeUnderlineColor: #a7d8ff;
 }
-html.ilg.ilg-readable-chat body.bubblechat #chat .mes:not(.ilg-card-renderer):not(.ilg-content-overlay):not(.smallSysMes) .mes_text > :is(.ilg-text-dark,.ilg-text-light) {
+/* An embedded card protects its subtree, not the ordinary prose beside it. */
+html.ilg.ilg-readable-chat body.bubblechat #chat .mes:not(.smallSysMes) .mes_text > :is(.ilg-text-dark,.ilg-text-light) {
     --ilg-say-bg: transparent;
     color: var(--ilg-readable-ink);
-    text-shadow: 0 .6px .7px var(--ilg-readable-edge);
+    text-shadow: var(--ilg-readable-shadow);
 }
-html.ilg body #ilg-home :is(.ilg-home-title,.ilg-home-sub,.ilg-home-logo):is(.ilg-text-dark,.ilg-text-light) {
+html.ilg body #ilg-home :is(.ilg-home-title,.ilg-home-sub):is(.ilg-text-dark,.ilg-text-light) {
     color: var(--ilg-readable-ink);
-    text-shadow: 0 .6px .7px var(--ilg-readable-edge);
+    text-shadow: var(--ilg-readable-shadow);
+}
+html.ilg body #ilg-home :is(.ilg-home-title,.ilg-home-sub).ilg-text-light {
+    text-shadow: 0 1px 3px rgba(12,15,20,.8), 0 3px 10px rgba(12,15,20,.3);
+}
+html.ilg body #ilg-home .ilg-home-logo:is(.ilg-text-dark,.ilg-text-light) {
+    color: var(--ilg-readable-ink);
+    filter: drop-shadow(0 1px 2px rgba(12,15,20,.35));
 }

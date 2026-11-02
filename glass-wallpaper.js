@@ -19,17 +19,29 @@ export function wallpaperHighlightGain(sample) {
     return Math.max(0.45, 1 - Math.max(0, Math.min(1, (energy - 0.22) / 0.68)) * 0.55);
 }
 
-export function wallpaperLuminanceAt(sample, x, y, viewportWidth, viewportHeight, fitting = 'cover') {
+export function wallpaperLuminanceAt(sample, x, y, viewportWidth, viewportHeight, fitting = 'cover', placement = {}) {
     if (!sample || viewportWidth <= 0 || viewportHeight <= 0) return null;
     const iw = sample.naturalWidth, ih = sample.naturalHeight;
+    const width = placement.width || viewportWidth, height = placement.height || viewportHeight;
+    x -= placement.left || 0; y -= placement.top || 0;
+    function offset(position = '50%', free) {
+        if (position === 'left' || position === 'top') return 0;
+        if (position === 'right' || position === 'bottom') return free;
+        if (position === 'center') return free / 2;
+        const simple = /^(-?[\d.]+)(%|px)?$/.exec(position);
+        if (simple) return simple[2] === '%' ? free * Number(simple[1]) / 100 : Number(simple[1]);
+        const calc = /^calc\(\s*(-?[\d.]+)%\s*([+-])\s*([\d.]+)px\s*\)$/.exec(position);
+        if (calc) return free * Number(calc[1]) / 100 + (calc[2] === '-' ? -1 : 1) * Number(calc[3]);
+        return free / 2;
+    }
     let sx, sy;
     if (fitting === '100% 100%' || fitting === 'stretch') {
-        sx = x / viewportWidth; sy = y / viewportHeight;
+        sx = x / width; sy = y / height;
     } else {
         const scale = fitting === 'auto' || fitting === 'center' ? 1 : fitting === 'contain'
-            ? Math.min(viewportWidth / iw, viewportHeight / ih) : Math.max(viewportWidth / iw, viewportHeight / ih);
+            ? Math.min(width / iw, height / ih) : Math.max(width / iw, height / ih);
         const w = iw * scale, h = ih * scale;
-        sx = (x - (viewportWidth - w) / 2) / w; sy = (y - (viewportHeight - h) / 2) / h;
+        sx = (x - offset(placement.positionX, width - w)) / w; sy = (y - offset(placement.positionY, height - h)) / h;
     }
     if (sx < 0 || sx > 1 || sy < 0 || sy > 1) return null;
     const col = Math.min(sample.width - 1, Math.floor(sx * sample.width));

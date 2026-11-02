@@ -1,8 +1,8 @@
 {
   "date": "2026-11-02",
-  "version": "1.4.4-test.10",
-  "baseCommit": "3ad9ce26429b0ebd6aff21e5a2106d28a41af8e3",
-  "scope": "Replace test.9 white reading blocks with local wallpaper-aware foreground colors; preserve prose layout and authored cards",
+  "version": "1.4.4-test.11",
+  "baseCommit": "46486ae9ac82898c04b7fda61bedd491b86fff86",
+  "scope": "Restore prose adaptation beside authored cards, map actual wallpaper position/crop, and refine home/prose foregrounds without fills",
   "automated": {
     "total": 28,
     "passed": 28,
@@ -19,11 +19,11 @@
         "passed": true
       },
       {
-        "name": "first-line-indent-regression.mjs",
+        "name": "filter-reuse-regression.mjs",
         "passed": true
       },
       {
-        "name": "filter-reuse-regression.mjs",
+        "name": "first-line-indent-regression.mjs",
         "passed": true
       },
       {
@@ -43,11 +43,11 @@
         "passed": true
       },
       {
-        "name": "wallpaper-regression.mjs",
+        "name": "popup-boundary-regression.mjs",
         "passed": true
       },
       {
-        "name": "popup-boundary-regression.mjs",
+        "name": "wallpaper-regression.mjs",
         "passed": true
       },
       {
@@ -125,65 +125,67 @@
     ]
   },
   "textContrast": {
-    "method": "Existing local 48x48 wallpaper statistics; six points per visible prose block, median gamma-encoded luminance with hysteresis. Not a per-pixel contrast guarantee.",
+    "method": "Existing local 48x48 wallpaper statistics; six points per visible prose block, median gamma-encoded luminance with hysteresis; home uses conservative dark-foreground thresholds. Actual background rect and positioning are mapped. Not a per-pixel contrast guarantee.",
     "results": [
       {
         "width": 390,
         "light": {
-          "color": "rgb(24, 36, 49)",
+          "color": "rgb(27, 34, 41)",
           "bg": "rgba(0, 0, 0, 0)",
           "padding": "0px",
           "radius": "0px",
           "width": 354,
           "height": 30.390625,
-          "quote": "rgb(120, 52, 0)",
-          "em": "rgb(57, 75, 98)",
-          "weight": "rgb(24, 36, 49)"
+          "quote": "rgb(118, 56, 16)",
+          "em": "rgb(60, 73, 88)",
+          "weight": "rgb(27, 34, 41)"
         },
         "dark": {
-          "color": "rgb(244, 246, 250)",
+          "color": "rgb(245, 245, 242)",
           "bg": "rgba(0, 0, 0, 0)",
           "padding": "0px",
           "radius": "0px",
           "width": 354,
           "height": 30.390625,
-          "quote": "rgb(255, 208, 139)",
-          "em": "rgb(214, 227, 244)",
-          "weight": "rgb(244, 246, 250)"
+          "quote": "rgb(255, 212, 159)",
+          "em": "rgb(220, 229, 238)",
+          "weight": "rgb(245, 245, 242)"
         },
         "geometryReads": 10,
         "paragraphCount": 480,
         "cleanup": true,
+        "ordinaryProseBesideCardAdapts": true,
         "cardAndInlineStyleProtected": true,
         "homeIndependent": true
       },
       {
         "width": 1440,
         "light": {
-          "color": "rgb(24, 36, 49)",
+          "color": "rgb(27, 34, 41)",
           "bg": "rgba(0, 0, 0, 0)",
           "padding": "0px",
           "radius": "0px",
           "width": 1412,
           "height": 28,
-          "quote": "rgb(120, 52, 0)",
-          "em": "rgb(57, 75, 98)",
-          "weight": "rgb(24, 36, 49)"
+          "quote": "rgb(118, 56, 16)",
+          "em": "rgb(60, 73, 88)",
+          "weight": "rgb(27, 34, 41)"
         },
         "dark": {
-          "color": "rgb(244, 246, 250)",
+          "color": "rgb(245, 245, 242)",
           "bg": "rgba(0, 0, 0, 0)",
           "padding": "0px",
           "radius": "0px",
           "width": 1412,
           "height": 28,
-          "quote": "rgb(255, 208, 139)",
-          "em": "rgb(214, 227, 244)",
-          "weight": "rgb(244, 246, 250)"
+          "quote": "rgb(255, 212, 159)",
+          "em": "rgb(220, 229, 238)",
+          "weight": "rgb(245, 245, 242)"
         },
         "geometryReads": 8,
         "paragraphCount": 480,
         "cleanup": true,
+        "ordinaryProseBesideCardAdapts": true,
         "cardAndInlineStyleProtected": true,
         "homeIndependent": true
       }
@@ -198,12 +200,13 @@
     "customBackgroundSwitching": true,
     "lockAndReturn": true,
     "lightDarkMixedForeground": true,
+    "leftRightWallpaperCrop": true,
     "transparentCards": true,
     "homeForegroundOnly": true,
     "errors": []
   },
   "realHost": {
-    "version": "1.4.4-test.10",
+    "version": "1.4.4-test.11",
     "servedRuntimeHashesMatch": true,
     "settingsPanels": 1,
     "chatSettingsFrames": 1,
@@ -217,6 +220,7 @@
     },
     "transparentProseBackground": "rgba(0, 0, 0, 0)",
     "geometryUnchanged": true,
+    "proseBesideIframeCard": true,
     "saveRequestsBlockedBeforeNavigation": true,
     "pageErrors": 0
   },
@@ -230,14 +234,27 @@
   },
   "limits": [
     "New TT/Android/iOS real-device visual and sensor acceptance remains open.",
-    "Historical user acceptance of test.8 TT black-frame fix is preserved; it is not new test.10 device acceptance.",
+    "Historical user acceptance of test.8 TT black-frame fix is preserved; it is not new test.11 device acceptance.",
     "Mixed-brightness image blocks use approximate local sampling; not every glyph has guaranteed contrast.",
     "Unavailable/cross-origin pixels fall back to theme foreground; animated backgrounds use static sampling.",
+    "Four-value edge background positioning and arbitrary CSS transforms are not fully covered.",
     "IntersectionObserver fallback is retained but not separately validated on an engine lacking that API.",
     "Long-term phone energy, latency and all authored card combinations are not verified."
   ],
   "publication": {
     "target": "https://github.com/jjing8235-afk/test",
     "officialRepositoryChanged": false
+  },
+  "attachedUserPage": {
+    "sameMessageContainsOrdinaryProseAndIframe": true,
+    "visibleProseMarkers": 21,
+    "observedAfter": {
+      "firstSevenProseTone": "dark",
+      "proseColor": "rgb(27, 34, 41)",
+      "quoteColor": "rgb(118, 56, 16)",
+      "proseBackground": "rgba(0, 0, 0, 0)"
+    },
+    "homeLightIdentityVisuallyObserved": true,
+    "privateTextAndWallpaperFilesExported": false
   }
 }
