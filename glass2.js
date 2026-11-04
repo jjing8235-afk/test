@@ -204,30 +204,10 @@ function mapLayer(m, ch, w, h, neutral, res) {
     return html + `<feMerge result="${res}"><feMergeNode in="${res}0"/>${parts.map((_, i) => `<feMergeNode in="${res}${i + 1}"/>`).join('')}</feMerge>`;
 }
 
-// Only update light scalars when the enabled filter branches have not changed.
-export function updatePhysicalLighting(filter, o) {
-    const sp = 0.64 * o.specular / (1 + 0.65 * o.specular), g = Math.max(1, o.sharp * 1.25);
-    const updates = [];
-    if (o.specular > 0) updates.push(
-        ['[result="s1"] feFuncA', { amplitude: num(sp), exponent: num(g) }],
-        ['[result="s2"] feFuncA', { amplitude: num(sp * 0.22), exponent: num(g + 1) }],
-        ['[result="s3"] feFuncA', { amplitude: num(sp * 0.035) }]);
-    if (o.edgeShade > 0) updates.push(['[result="shd"] feFuncA', { amplitude: num(o.edgeShade) }]);
-    if (o.fresnel > 0) updates.push(['[result="s4"] feFuncA', { amplitude: num(0.24 * o.fresnel / (1 + o.fresnel)) }]);
-    if (o.caustic > 0) updates.push(['[result="s5"]', { k1: num(0.32 * o.caustic / (1 + o.caustic)) }]);
-    const nodes = updates.map(([selector]) => filter.querySelector(selector));
-    if (nodes.some(node => !node)) return false;
-    updates.forEach(([, values], i) => {
-        for (const [key, value] of Object.entries(values)) if (nodes[i].getAttribute(key) !== value) nodes[i].setAttribute(key, value);
-    });
-    return true;
-}
-
 export function physicalFilter(m, o, w, h, angle) {
     // 放大镜截面再乘折射强度时，超过 1/(1 − 1/放大倍数) 边缘就会折叠成镜像，所以封顶在它的 95%
     const k = o.profile === 'lens' ? Math.min(o.strength, 0.95 / (1 - 1 / Math.max(1.01, o.magnify))) : o.strength;
-    // Compress intensity before compositing so overlapping reflections retain tonal detail.
-    const sc = m.scale * k, sp = 0.64 * o.specular / (1 + 0.65 * o.specular), g = Math.max(1, o.sharp * 1.25);
+    const sc = m.scale * k, sp = o.specular, g = o.sharp;
     let out = 'refr', src = 'SourceGraphic';
     let html = mapLayer(m, 'd', w, h, 'rgb(128,128,128)', 'dmap');
     if (needsNormals(o)) {
@@ -253,28 +233,29 @@ export function physicalFilter(m, o, w, h, angle) {
     }
     const hl = [];
     if (sp > 0) {
-        // One dominant reflection, a restrained return, and a fine contour.
+        // 迎光边 + 对面一条弱反光 + 不分方向的细亮边
+        // 细亮边在实验台是 0.22：酒馆的深色壁纸上它会变成一圈均匀的白描边，看着像 CSS border，所以压到 0.06 只留轮廓
         html += lightNode('l1', angle, 1) + gammaA('s1', 'l1', sp, g) +
-            lightNode('l2', angle, -1) + gammaA('s2', 'l2', sp * 0.22, g + 1) +
-            gammaA('s3', 'tb', sp * 0.035, 12);
+            lightNode('l2', angle, -1) + gammaA('s2', 'l2', sp * 0.45, g) +
+            gammaA('s3', 'tb', sp * 0.06, 10);
         hl.push('s1', 's2', 's3');
     }
     if (o.fresnel > 0) {
         // 边缘反光（菲涅尔效应）：整圈弧边微微发亮，不分光源方向
-        html += gammaA('s4', 'tb', 0.24 * o.fresnel / (1 + o.fresnel), 6);
+        html += gammaA('s4', 'tb', o.fresnel, 3);
         hl.push('s4');
     }
     if (o.caustic > 0) {
         // 内部聚光：光穿过弧边后汇聚到背光那一侧的里面，形成一道柔和的亮带
         html += lightNode('l4', angle, -1) +
             `<feComponentTransfer in="tb" result="cb"><feFuncA type="table" tableValues="${CAUSTIC_TABLE}"/></feComponentTransfer>` +
-            `<feComposite in="l4" in2="cb" operator="arithmetic" k1="${num(0.32 * o.caustic / (1 + o.caustic))}" result="s5"/>`;
+            `<feComposite in="l4" in2="cb" operator="arithmetic" k1="${num(o.caustic)}" result="s5"/>`;
         hl.push('s5');
     }
     if (hl.length) {
         let acc = hl[0];
         for (let i = 1; i < hl.length; i++) {
-            html += `<feComposite in="${acc}" in2="${hl[i]}" operator="over" result="sum${i}"/>`;
+            html += `<feComposite in="${acc}" in2="${hl[i]}" operator="arithmetic" k2="1" k3="1" result="sum${i}"/>`;
             acc = `sum${i}`;
         }
         html += `<feBlend in="${acc}" in2="${out}" mode="screen"/>`;

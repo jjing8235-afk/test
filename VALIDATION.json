@@ -1,260 +1,137 @@
 {
-  "date": "2026-11-02",
-  "version": "1.4.4-test.11",
-  "baseCommit": "46486ae9ac82898c04b7fda61bedd491b86fff86",
-  "scope": "Restore prose adaptation beside authored cards, map actual wallpaper position/crop, and refine home/prose foregrounds without fills",
-  "automated": {
-    "total": 28,
-    "passed": 28,
-    "sourceRegressionSuites": 12,
-    "syntaxChecks": 8,
-    "isolatedBrowserSuites": 8,
-    "checks": [
+  "date": "2026-11-04",
+  "version": "1.4.4-test.12",
+  "repository": "https://github.com/jjing8235-afk/test",
+  "branch": "main",
+  "source": {
+    "snapshotVersion": "1.4.4-local.5",
+    "officialBaselineVersion": "1.4.4",
+    "officialBaselineCommit": "b9aa19d815ac633eda9f27970c418be42858a370",
+    "replacementOf": "1.4.4-test.11",
+    "mergeOldTestArchitecture": false
+  },
+  "scope": "Publish validated local.5 snapshot as test.12, preserving approved typography/homepage and iOS compatibility material.",
+  "settings": {
+    "namespace": "iosLiquidGlass",
+    "version": 9,
+    "newField": "iosMaterial",
+    "resetExisting": false
+  },
+  "inheritedEvidence": {
+    "sourceVersion": "1.4.4-local.5",
+    "automated": {
+      "browser": "headless Microsoft Edge",
+      "iosIdentityScenarios": 9,
+      "appearanceWidths": [
+        390,
+        1280
+      ],
+      "readingStyles": [
+        "warm",
+        "classic"
+      ],
+      "tones": [
+        "light",
+        "dark"
+      ],
+      "sourceRegressions": [
+        "TT capability (26)",
+        "chat background (48)",
+        "filter reuse",
+        "settings and host contract",
+        "chat font",
+        "first-line indent",
+        "card solid",
+        "manifest",
+        "JS syntax",
+        "typography detector"
+      ]
+    },
+    "live": {
+      "host": "SillyTavern 1.18.0 on Windows",
+      "sourceVersion": "1.4.4-local.5",
+      "homepagePreserved": true,
+      "iphoneVerified": false
+    }
+  },
+  "publicationChecks": {
+    "status": "passed",
+    "date": "2026-11-04",
+    "results": [
       {
-        "name": "card-solid-regression.mjs",
+        "name": "manifest",
         "passed": true
       },
       {
-        "name": "chat-font-regression.mjs",
+        "name": "settings",
         "passed": true
       },
       {
-        "name": "filter-reuse-regression.mjs",
+        "name": "tt-compat",
         "passed": true
       },
       {
-        "name": "first-line-indent-regression.mjs",
+        "name": "chat-background",
         "passed": true
       },
       {
-        "name": "glass-surfaces-regression.mjs",
+        "name": "filter-reuse",
         "passed": true
       },
       {
-        "name": "chat-background-regression.mjs",
+        "name": "chat-font",
         "passed": true
       },
       {
-        "name": "tilt-light-regression.mjs",
+        "name": "first-line-indent",
         "passed": true
       },
       {
-        "name": "form-scroll-regression.mjs",
+        "name": "card-solid",
         "passed": true
       },
       {
-        "name": "popup-boundary-regression.mjs",
+        "name": "ios-material",
         "passed": true
       },
       {
-        "name": "wallpaper-regression.mjs",
+        "name": "syntax:card-clarity.js",
         "passed": true
       },
       {
-        "name": "tt-compat-regression.mjs",
+        "name": "syntax:glass2.js",
         "passed": true
       },
       {
-        "name": "mobile-performance-regression.mjs",
+        "name": "syntax:index.js",
         "passed": true
       },
       {
-        "name": "syntax-index.js",
+        "name": "syntax:orb.js",
         "passed": true
       },
       {
-        "name": "syntax-glass2.js",
+        "name": "syntax:install/installer.js",
         "passed": true
       },
       {
-        "name": "syntax-glass-light.js",
+        "name": "syntax:install/build.mjs",
         "passed": true
       },
       {
-        "name": "syntax-glass-wallpaper.js",
+        "name": "syntax:dev/verify/ios-material-browser.mjs",
         "passed": true
       },
       {
-        "name": "syntax-glass-surfaces.js",
-        "passed": true
-      },
-      {
-        "name": "syntax-card-clarity.js",
-        "passed": true
-      },
-      {
-        "name": "syntax-orb.js",
-        "passed": true
-      },
-      {
-        "name": "syntax-text-contrast.js",
-        "passed": true
-      },
-      {
-        "name": "shared-performance-browser.mjs",
-        "passed": true
-      },
-      {
-        "name": "fold-menu-font-browser.mjs",
-        "passed": true
-      },
-      {
-        "name": "home-avatar-browser.mjs",
-        "passed": true
-      },
-      {
-        "name": "panel-transitions-browser.mjs",
-        "passed": true
-      },
-      {
-        "name": "interaction-scope-browser.mjs",
-        "passed": true
-      },
-      {
-        "name": "host-interaction-browser.mjs",
-        "passed": true
-      },
-      {
-        "name": "text-contrast-browser.mjs",
-        "passed": true
-      },
-      {
-        "name": "glass-parameters-browser.mjs",
+        "name": "test-repository-installer-target",
         "passed": true
       }
     ]
   },
-  "textContrast": {
-    "method": "Existing local 48x48 wallpaper statistics; six points per visible prose block, median gamma-encoded luminance with hysteresis; home uses conservative dark-foreground thresholds. Actual background rect and positioning are mapped. Not a per-pixel contrast guarantee.",
-    "results": [
-      {
-        "width": 390,
-        "light": {
-          "color": "rgb(27, 34, 41)",
-          "bg": "rgba(0, 0, 0, 0)",
-          "padding": "0px",
-          "radius": "0px",
-          "width": 354,
-          "height": 30.390625,
-          "quote": "rgb(118, 56, 16)",
-          "em": "rgb(60, 73, 88)",
-          "weight": "rgb(27, 34, 41)"
-        },
-        "dark": {
-          "color": "rgb(245, 245, 242)",
-          "bg": "rgba(0, 0, 0, 0)",
-          "padding": "0px",
-          "radius": "0px",
-          "width": 354,
-          "height": 30.390625,
-          "quote": "rgb(255, 212, 159)",
-          "em": "rgb(220, 229, 238)",
-          "weight": "rgb(245, 245, 242)"
-        },
-        "geometryReads": 10,
-        "paragraphCount": 480,
-        "cleanup": true,
-        "ordinaryProseBesideCardAdapts": true,
-        "cardAndInlineStyleProtected": true,
-        "homeIndependent": true
-      },
-      {
-        "width": 1440,
-        "light": {
-          "color": "rgb(27, 34, 41)",
-          "bg": "rgba(0, 0, 0, 0)",
-          "padding": "0px",
-          "radius": "0px",
-          "width": 1412,
-          "height": 28,
-          "quote": "rgb(118, 56, 16)",
-          "em": "rgb(60, 73, 88)",
-          "weight": "rgb(27, 34, 41)"
-        },
-        "dark": {
-          "color": "rgb(245, 245, 242)",
-          "bg": "rgba(0, 0, 0, 0)",
-          "padding": "0px",
-          "radius": "0px",
-          "width": 1412,
-          "height": 28,
-          "quote": "rgb(255, 212, 159)",
-          "em": "rgb(220, 229, 238)",
-          "weight": "rgb(245, 245, 242)"
-        },
-        "geometryReads": 8,
-        "paragraphCount": 480,
-        "cleanup": true,
-        "ordinaryProseBesideCardAdapts": true,
-        "cardAndInlineStyleProtected": true,
-        "homeIndependent": true
-      }
-    ],
-    "errors": []
-  },
-  "wallpaper": {
-    "widths": [
-      390,
-      1440
-    ],
-    "customBackgroundSwitching": true,
-    "lockAndReturn": true,
-    "lightDarkMixedForeground": true,
-    "leftRightWallpaperCrop": true,
-    "transparentCards": true,
-    "homeForegroundOnly": true,
-    "errors": []
-  },
-  "realHost": {
-    "version": "1.4.4-test.11",
-    "servedRuntimeHashesMatch": true,
-    "settingsPanels": 1,
-    "chatSettingsFrames": 1,
-    "ordinaryInterfaceLiquidChat": {
-      "inputPhysical": false,
-      "chatPhysical": true
-    },
-    "liquidInterfaceOrdinaryChat": {
-      "inputPhysical": true,
-      "chatPhysical": false
-    },
-    "transparentProseBackground": "rgba(0, 0, 0, 0)",
-    "geometryUnchanged": true,
-    "proseBesideIframeCard": true,
-    "saveRequestsBlockedBeforeNavigation": true,
-    "pageErrors": 0
-  },
-  "compatibility": {
-    "namespace": "iosLiquidGlass",
-    "migrationVersion": 9,
-    "ordinaryModeStoredValue": "blur",
-    "chatDefault": "inherit",
-    "iosSvgDefault": false,
-    "tiltDefault": false
-  },
   "limits": [
-    "New TT/Android/iOS real-device visual and sensor acceptance remains open.",
-    "Historical user acceptance of test.8 TT black-frame fix is preserved; it is not new test.11 device acceptance.",
-    "Mixed-brightness image blocks use approximate local sampling; not every glyph has guaranteed contrast.",
-    "Unavailable/cross-origin pixels fall back to theme foreground; animated backgrounds use static sampling.",
-    "Four-value edge background positioning and arbitrary CSS transforms are not fully covered.",
-    "IntersectionObserver fallback is retained but not separately validated on an engine lacking that API.",
-    "Long-term phone energy, latency and all authored card combinations are not verified."
-  ],
-  "publication": {
-    "target": "https://github.com/jjing8235-afk/test",
-    "officialRepositoryChanged": false
-  },
-  "attachedUserPage": {
-    "sameMessageContainsOrdinaryProseAndIframe": true,
-    "visibleProseMarkers": 21,
-    "observedAfter": {
-      "firstSevenProseTone": "dark",
-      "proseColor": "rgb(27, 34, 41)",
-      "quoteColor": "rgb(118, 56, 16)",
-      "proseBackground": "rgba(0, 0, 0, 0)"
-    },
-    "homeLightIdentityVisuallyObserved": true,
-    "privateTextAndWallpaperFilesExported": false
-  }
+    "Desktop simulated iOS identity does not prove Apple WebKit/iPhone rendering.",
+    "No physical iPhone installation, keyboard, safe-area or sustained-performance acceptance.",
+    "Compatibility material does not displace background pixels.",
+    "No universal ST/TT version compatibility claim."
+  ]
 }

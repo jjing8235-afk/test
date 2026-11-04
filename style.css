@@ -152,7 +152,7 @@ html.ilg body .fillRight:where(#top-bar, #top-bar *, #top-settings-holder, #top-
     border-radius: 20px 0 0 20px;
 }
 
-/* ---------- Shared glass: one fine reflection, gentle contact shading and elevation ---------- */
+/* ---------- 玻璃通用：立体感 = 双层亮边 + 底部内阴影 + 内侧光晕 + 按悬浮高度分层的投影 ---------- */
 html.ilg body {
     --ilg-k: 1;          /* 高光整体倍率，浅色模式调高 */
     --ilg-drop: 0.34;    /* 投影浓度，浅色模式调淡 */
@@ -167,7 +167,13 @@ html.ilg body .ilg-clear:where(#top-bar, #top-bar *, #top-settings-holder, #top-
 html.ilg body #chat .mes.ilg-glass { --ilg-lift-y: 8px; --ilg-lift-b: 22px; }
 html.ilg body :is(#top-bar, #nonQRFormItems, .ilg-glass) {
     box-shadow:
-        inset 0 -1px 2px rgba(0, 0, 0, calc(var(--ilg-drop) * 0.28)),
+        inset 0 1.5px 0 rgba(255, 255, 255, calc(var(--ilg-hl) * 1.15 * var(--ilg-k))),
+        inset 0 3px 0 -1.5px rgba(255, 255, 255, calc(var(--ilg-hl) * 0.35 * var(--ilg-k))),
+        inset 1px 0 0 rgba(255, 255, 255, calc(var(--ilg-hl) * 0.3 * var(--ilg-k))),
+        inset -1px 0 0 rgba(255, 255, 255, calc(var(--ilg-hl) * 0.2 * var(--ilg-k))),
+        inset 0 -2px 4px rgba(0, 0, 0, calc(var(--ilg-drop) * 0.75)),
+        inset 0 -1px 0 rgba(255, 255, 255, calc(var(--ilg-hl) * 0.25 * var(--ilg-k))),
+        inset 0 14px 28px -16px rgba(255, 255, 255, calc(var(--ilg-hl) * 0.4 * var(--ilg-k))),
         0 var(--ilg-lift-y) var(--ilg-lift-b) rgba(var(--ilg-drop-rgb), var(--ilg-drop)),
         0 2px 6px rgba(var(--ilg-drop-rgb), calc(var(--ilg-drop) * 0.55)),
         0 0 0 0.5px rgba(var(--ilg-drop-rgb), calc(var(--ilg-drop) * 0.6));
@@ -183,20 +189,22 @@ html.ilg body .ilg-sheen:where(#top-bar, #top-bar *, #top-settings-holder, #top-
     border-bottom-right-radius: 0;
     pointer-events: none;
     background:
-        radial-gradient(100% 120% at var(--ilg-light-x, 15%) var(--ilg-light-y, 0%), rgba(255, 255, 255, calc(var(--ilg-hl) * 0.09 * var(--ilg-wallpaper-hl-k, 1))), transparent 64%);
+        radial-gradient(120% 140% at 18% -20%, rgba(255, 255, 255, calc(var(--ilg-hl) * 0.30 * var(--ilg-k))), transparent 60%),
+        linear-gradient(180deg, rgba(255, 255, 255, calc(var(--ilg-hl) * 0.12 * var(--ilg-k))), transparent);
 }
 html.ilg body .ilg-glass:where(#top-bar, #top-bar *, #top-settings-holder, #top-settings-holder *, #sheld, #sheld *, #options, #options *, #extensionsMenu, #extensionsMenu *, #toast-container, #toast-container *, #ilg-fold-menu, #ilg-fold-menu *, dialog.popup.ilg-glass, dialog.popup.ilg-glass > .popup-body > .popup-controls *):where(:not(.popup:not(.ilg-glass), .popup:not(.ilg-glass) *, dialog:not(.ilg-glass), dialog:not(.ilg-glass) *, [role="dialog"]:not(.ilg-recent):not(.ilg-glass), [role="dialog"]:not(.ilg-recent):not(.ilg-glass) *, .popup-content, .popup-content *))::before {
     content: "";
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    padding: 1px;
+    padding: 1.6px;
     pointer-events: none;
-    background: linear-gradient(var(--ilg-light-angle, 135deg),
-        rgba(255, 255, 255, calc(var(--ilg-hl) * 0.42 * var(--ilg-wallpaper-hl-k, 1))) 0%,
-        rgba(255, 255, 255, calc(var(--ilg-hl) * 0.09 * var(--ilg-wallpaper-hl-k, 1))) 28%,
-        rgba(255, 255, 255, 0.015) 52%,
-        rgba(255, 255, 255, calc(var(--ilg-hl) * 0.12 * var(--ilg-wallpaper-hl-k, 1))) 100%);
+    background: linear-gradient(135deg,
+        rgba(255, 255, 255, calc(var(--ilg-hl) * 1.5 * var(--ilg-k))) 0%,
+        rgba(255, 255, 255, 0.12) 26%,
+        rgba(255, 255, 255, 0.03) 50%,
+        rgba(255, 255, 255, 0.12) 74%,
+        rgba(255, 255, 255, calc(var(--ilg-hl) * 1.0 * var(--ilg-k))) 100%);
     -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
     -webkit-mask-composite: xor;
     mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
@@ -334,16 +342,23 @@ html.ilg body :where(#top-bar, #top-bar *, #top-settings-holder, #top-settings-h
 }
 
 
-/* ---------- Bars and islands retain elevation without stacked white inner rims ---------- */
+/* ---------- 顶栏 / 输入框 / 悬浮岛：更厚的玻璃块（亮边更宽、底部聚光；底部暗边调淡，避免看着像圆柱） ---------- */
 html.ilg body :is(#top-bar, #nonQRFormItems, #ilg-floor, .ilg-island) {
     box-shadow:
-        inset 0 -1px 2px rgba(0, 0, 0, calc(var(--ilg-drop) * 0.22)),
+        inset 0 2px 0 rgba(255, 255, 255, calc(var(--ilg-hl) * 1.3 * var(--ilg-k))),
+        inset 0 4px 0 -2px rgba(255, 255, 255, calc(var(--ilg-hl) * 0.45 * var(--ilg-k))),
+        inset 1.5px 0 0 rgba(255, 255, 255, calc(var(--ilg-hl) * 0.35 * var(--ilg-k))),
+        inset -1.5px 0 0 rgba(255, 255, 255, calc(var(--ilg-hl) * 0.25 * var(--ilg-k))),
+        inset 0 -2px 4px rgba(0, 0, 0, calc(var(--ilg-drop) * 0.45)),
+        inset 0 -1.5px 0 rgba(255, 255, 255, calc(var(--ilg-hl) * 0.4 * var(--ilg-k))),
+        inset 0 -10px 18px -12px rgba(255, 255, 255, calc(var(--ilg-hl) * 0.3 * var(--ilg-k))),
+        inset 0 16px 30px -16px rgba(255, 255, 255, calc(var(--ilg-hl) * 0.45 * var(--ilg-k))),
         0 var(--ilg-lift-y) var(--ilg-lift-b) rgba(var(--ilg-drop-rgb), var(--ilg-drop)),
         0 4px 10px rgba(var(--ilg-drop-rgb), calc(var(--ilg-drop) * 0.6)),
         0 0 0 0.5px rgba(var(--ilg-drop-rgb), calc(var(--ilg-drop) * 0.7));
     transition: background-color .35s ease;
 }
-html.ilg body :is(#top-bar, #nonQRFormItems, #ilg-floor, .ilg-island).ilg-glass::before { padding: 1px; }
+html.ilg body :is(#top-bar, #nonQRFormItems, #ilg-floor, .ilg-island).ilg-glass::before { padding: 2px; }
 /* 浅色内容滚到下面时自动加深（深色模式）/ 深色内容时自动提亮（浅色模式） */
 html.ilg body :is(#top-bar, #nonQRFormItems, #ilg-floor, .ilg-island).ilg-over-light { background-color: rgba(16, 10, 22, 0.52); }
 html.ilg.ilg-light body :is(#top-bar, #nonQRFormItems, #ilg-floor, .ilg-island).ilg-over-dark { background-color: rgba(255, 255, 255, 0.62); }
@@ -531,7 +546,7 @@ html.ilg body .ilg-sheen.ilg-phys:where(#top-bar, #top-bar *, #top-settings-hold
     inset: 0;
     height: auto;
     border-radius: inherit;
-    background: radial-gradient(100% 140% at var(--ilg-light-x, 15%) var(--ilg-light-y, 0%), rgba(255, 255, 255, calc(0.055 * var(--ilg-sheen-k) * var(--ilg-wallpaper-hl-k, 1))), transparent 65%);
+    background: linear-gradient(180deg, rgba(255, 255, 255, calc(0.14 * var(--ilg-sheen-k))), rgba(255, 255, 255, 0) 50%);
 }
 
 /* 尊重酒馆“减少动画 / 关闭阴影”设置 */
@@ -3561,137 +3576,334 @@ html.ilg body .ilg-settings #ilg-card-report-copy {
     white-space: normal;
 }
 
-/* Custom wallpaper controls: neutral contrast icon, explicit wallpaper actions. */
-html.ilg body #ilg-tone-button.ilg-custom-wallpaper .ilg-tone-icon::before {
-    -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%228%22%2F%3E%3Cpath%20d%3D%22M12%204a8%208%200%200%200%200%2016z%22%20fill%3D%22%23000%22%20stroke%3D%22none%22%2F%3E%3C%2Fsvg%3E");
-    mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%221.8%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%228%22%2F%3E%3Cpath%20d%3D%22M12%204a8%208%200%200%200%200%2016z%22%20fill%3D%22%23000%22%20stroke%3D%22none%22%2F%3E%3C%2Fsvg%3E");
-    transform: none;
+/* Local appearance controls: stable wallpaper palette and a compact native-control popover. */
+html.ilg {
+    --ilg-ink: #25282d;
+    --ilg-pearl: #e6e9ee;
+    --ilg-reading-muted: #b9c0cb;
+    --ilg-surface: rgba(25, 29, 35, .97);
+    --ilg-control-line: rgba(233, 229, 220, .14);
+    --ilg-control-hover: rgba(233, 229, 220, .08);
+    --ilg-accent: #a4c5e6;
 }
-html.ilg body #ilg-wallpaper-menu {
+html.ilg.ilg-light {
+    --ilg-reading-muted: #555d68;
+    --ilg-surface: rgba(248, 249, 251, .97);
+    --ilg-control-line: rgba(43, 52, 58, .13);
+    --ilg-control-hover: rgba(43, 52, 58, .055);
+    --ilg-accent: #2f638e;
+}
+html.ilg body :where(#top-bar, #top-settings-holder, #form_sheld, #chat, #ilg-home, #options, #extensionsMenu, #toast-container, #ilg-fold-menu, dialog.popup.ilg-glass) {
+    --SmartThemeBodyColor: var(--ilg-pearl);
+    --SmartThemeEmColor: #b9c0cb;
+    --SmartThemeQuoteColor: #c6cfda;
+    --SmartThemeUnderlineColor: #a4c5e6;
+    color: var(--SmartThemeBodyColor);
+}
+html.ilg.ilg-light body :where(#top-bar, #top-settings-holder, #form_sheld, #chat, #ilg-home, #options, #extensionsMenu, #toast-container, #ilg-fold-menu, dialog.popup.ilg-glass) {
+    --SmartThemeBodyColor: var(--ilg-ink);
+    --SmartThemeEmColor: #555d68;
+    --SmartThemeQuoteColor: #42678a;
+    --SmartThemeUnderlineColor: #2563a6;
+}
+html.ilg:not(.ilg-light) body #chat .mes_text {
+    text-shadow: 0 1px 2px rgba(12, 17, 23, .52);
+}
+html.ilg.ilg-light body #chat .mes_text { text-shadow: 0 1px 1px rgba(255, 253, 248, .22); }
+html.ilg body #send_textarea { caret-color: var(--SmartThemeBodyColor); }
+html.ilg body #send_textarea::placeholder { color: var(--ilg-reading-muted); opacity: 1; }
+/* The old scrims ended at the chat column, forming rectangular dark edges on a photograph. */
+html.ilg.ilg-float.ilg-custom-wallpaper body .ilg-scrim { display: none; }
+html.ilg.ilg-custom-wallpaper body #nonQRFormItems { background-color: rgba(24, 30, 38, .42); }
+html.ilg.ilg-custom-wallpaper.ilg-light body #nonQRFormItems { background-color: rgba(250, 249, 246, .64); }
+html.ilg body #ilg-tone-button .ilg-tone-icon { border: 0; background: transparent; font: inherit; cursor: pointer; }
+html.ilg body #ilg-tone-button .ilg-tone-icon::before { display: none; }
+html.ilg body #ilg-tone-button .ilg-tone-icon > svg { display: block; width: 21px; height: 21px; }
+html.ilg body #ilg-appearance-panel {
+    --ilg-panel-fg: #f0ede8;
+    --ilg-panel-muted: #b7b0a8;
+    --ilg-panel-bg: rgba(30, 29, 29, .98);
+    --ilg-panel-well: #282625;
+    --ilg-panel-selected: #47413b;
+    --ilg-panel-line: rgba(234, 222, 207, .12);
+    --ilg-panel-accent: #edc39b;
+    --ilg-preview-bg: #19191b;
+    box-sizing: border-box;
     position: fixed;
-    top: calc(var(--topBarBlockSize, 40px) + 12px);
-    right: max(12px, env(safe-area-inset-right));
-    z-index: 3010;
-    width: min(320px, calc(100vw - 24px));
-    max-height: calc(100dvh - var(--topBarBlockSize, 40px) - 36px);
-    overflow: auto;
-    padding: 18px;
-    border: 1px solid rgba(255,255,255,.12);
-    border-radius: 18px;
-    background: rgba(24,27,35,.94);
-    color: #f3f4f7;
-    box-shadow: 0 12px 32px rgba(0,0,0,.22);
-    -webkit-backdrop-filter: blur(18px);
-    backdrop-filter: blur(18px);
+    z-index: 10020;
+    padding: 22px;
+    max-height: calc(100dvh - 24px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border: 0;
+    border-radius: 24px;
+    background: var(--ilg-panel-bg);
+    color: var(--ilg-panel-fg);
+    box-shadow: 0 18px 64px rgba(10, 12, 16, .28);
+    backdrop-filter: blur(24px) saturate(1.1);
+    -webkit-backdrop-filter: blur(24px) saturate(1.1);
+    font-family: inherit;
     font-size: 14px;
     line-height: 1.5;
     text-align: left;
-    cursor: auto;
-}
-html.ilg.ilg-light body #ilg-wallpaper-menu { background: rgba(248,249,251,.96); color: #262a33; border-color: rgba(25,32,44,.12); }
-html.ilg body #ilg-wallpaper-menu[hidden],
-html.ilg body #ilg-wallpaper-menu [hidden] { display: none; }
-html.ilg body #ilg-wallpaper-menu .ilg-wallpaper-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-html.ilg body #ilg-wallpaper-menu strong { font-size: 16px; font-weight: 600; }
-html.ilg body #ilg-wallpaper-menu p { margin: 8px 0 16px; font-size: 13px; opacity: .8; }
-html.ilg body #ilg-wallpaper-menu button,
-html.ilg body #ilg-wallpaper-menu select {
-    box-sizing: border-box;
-    min-height: 44px;
-    margin: 0;
-    padding: 10px 12px;
-    border: 1px solid rgba(127,127,127,.28);
-    border-radius: 10px;
-    color: inherit;
-    background: rgba(127,127,127,.10);
-    font: inherit;
     text-shadow: none;
+    animation: ilg-appearance-enter .2s cubic-bezier(.16, 1, .3, 1);
+    scrollbar-width: thin;
+    scrollbar-color: var(--ilg-panel-line) transparent;
+    color-scheme: dark;
+}
+html.ilg.ilg-light body #ilg-appearance-panel {
+    --ilg-panel-fg: #2c2926;
+    --ilg-panel-muted: #68615b;
+    --ilg-panel-bg: rgba(250, 249, 246, .98);
+    --ilg-panel-well: #eeece7;
+    --ilg-panel-selected: #fffefa;
+    --ilg-panel-line: rgba(65, 48, 34, .13);
+    --ilg-panel-accent: #8b5029;
+    --ilg-preview-bg: #f3f0e9;
+    color-scheme: light;
+}
+html.ilg body #ilg-appearance-panel[hidden],
+html.ilg body #ilg-appearance-panel [hidden] { display: none; }
+html.ilg body #ilg-appearance-panel * { box-sizing: border-box; text-shadow: none; }
+html.ilg body #ilg-appearance-panel button { font: inherit; color: inherit; cursor: pointer; text-shadow: none; }
+html.ilg body #ilg-appearance-panel svg { width: 22px; height: 22px; flex-shrink: 0; }
+html.ilg body #ilg-appearance-panel .ilg-appearance-heading {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    margin: -4px -6px 20px 0;
+}
+html.ilg body #ilg-appearance-panel .ilg-appearance-heading strong { color: var(--ilg-panel-fg); font-size: 20px; font-weight: 600; letter-spacing: -.025em; }
+html.ilg body #ilg-appearance-panel .ilg-appearance-heading p { margin: 3px 0 0; font-size: 12px; color: var(--ilg-panel-muted); }
+html.ilg body #ilg-appearance-panel .ilg-appearance-close {
+    display: grid; place-items: center; width: 44px; height: 44px; padding: 0;
+    border: 0; border-radius: 50%; background: transparent; color: var(--ilg-panel-muted);
+}
+html.ilg body #ilg-appearance-panel .ilg-appearance-close svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; }
+html.ilg body #ilg-appearance-panel .ilg-appearance-close:hover { background: var(--ilg-panel-well); color: var(--ilg-panel-fg); }
+html.ilg body #ilg-appearance-panel fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
+html.ilg body #ilg-appearance-panel legend { margin: 0 0 10px; padding: 0; color: var(--ilg-panel-fg); font-size: 13px; font-weight: 600; }
+html.ilg body #ilg-appearance-panel .ilg-appearance-modes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 4px; background: var(--ilg-panel-well); border-radius: 16px; }
+html.ilg body #ilg-appearance-panel label { position: relative; display: block; margin: 0; color: inherit; cursor: pointer; }
+html.ilg body #ilg-appearance-panel label input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+html.ilg body #ilg-appearance-panel .ilg-appearance-modes label > span {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px;
+    min-height: 72px; padding: 10px 4px; border-radius: 12px;
+    background: transparent; color: var(--ilg-panel-muted); font-size: 13px;
+}
+html.ilg body #ilg-appearance-panel .ilg-appearance-modes input:checked + span { background: var(--ilg-panel-selected); color: var(--ilg-panel-fg); font-weight: 600; }
+html.ilg body #ilg-appearance-panel .ilg-appearance-modes input:checked + span > svg { color: var(--ilg-panel-accent); }
+html.ilg body #ilg-appearance-panel label:hover > span { color: var(--ilg-panel-fg); }
+html.ilg body #ilg-appearance-panel :is(input:focus-visible + span, button:focus-visible) { outline: 2px solid var(--ilg-panel-accent); outline-offset: 2px; }
+html.ilg body #ilg-appearance-panel .ilg-reading-section { margin-top: 24px; }
+html.ilg body #ilg-appearance-panel .ilg-reading-choice { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; padding: 4px; background: var(--ilg-panel-well); border-radius: 14px; }
+html.ilg body #ilg-appearance-panel .ilg-reading-choice label > span { display: flex; flex-direction: column; justify-content: center; gap: 4px; min-height: 64px; padding: 9px 10px; border-radius: 10px; }
+html.ilg body #ilg-appearance-panel .ilg-reading-choice input:checked + span { background: var(--ilg-panel-selected); }
+html.ilg body #ilg-appearance-panel .ilg-style-name { display: flex; align-items: center; gap: 6px; color: var(--ilg-panel-fg); font-size: 14px; font-weight: 500; }
+html.ilg body #ilg-appearance-panel .ilg-reading-choice input:checked + span .ilg-style-name { color: var(--ilg-panel-accent); font-weight: 600; }
+html.ilg body #ilg-appearance-panel .ilg-style-name small { padding: 1px 4px; border-radius: 4px; background: var(--ilg-panel-well); color: var(--ilg-panel-muted); font-size: 10px; font-weight: 500; line-height: 1.5; }
+html.ilg body #ilg-appearance-panel .ilg-style-detail { color: var(--ilg-panel-muted); font-size: 11px; line-height: 1.6; }
+html.ilg body #ilg-appearance-panel .ilg-preview-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 16px 0 8px; color: var(--ilg-panel-muted); font-size: 11px; }
+html.ilg body #ilg-appearance-panel .ilg-preview-tone { color: var(--ilg-panel-accent); }
+html.ilg body #ilg-appearance-panel .ilg-reading-preview { padding: 15px 16px; border-radius: 12px; background: var(--ilg-preview-bg); color: var(--ilg-prose-text); font-size: 14px; font-weight: 400; line-height: var(--ilg-prose-leading); letter-spacing: var(--ilg-prose-tracking); }
+html.ilg body #ilg-appearance-panel .ilg-reading-preview p { margin: 0 0 6px; padding: 0; }
+html.ilg body #ilg-appearance-panel .ilg-reading-preview p:last-child { margin-bottom: 0; }
+html.ilg body #ilg-appearance-panel .ilg-reading-preview strong { color: var(--ilg-prose-strong); font-weight: 600; }
+html.ilg body #ilg-appearance-panel .ilg-reading-preview em { color: var(--ilg-prose-muted); font-style: var(--ilg-prose-em-style); }
+html.ilg body #ilg-appearance-panel .ilg-reading-preview q { color: var(--ilg-prose-quote); font-weight: var(--ilg-prose-quote-weight); background: var(--ilg-prose-quote-fill); text-decoration: var(--ilg-prose-quote-decoration); text-decoration-color: var(--ilg-prose-quote-line); text-decoration-thickness: 1px; text-underline-offset: .23em; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+html.ilg body #ilg-appearance-panel .ilg-reading-preview q::before,
+html.ilg body #ilg-appearance-panel .ilg-reading-preview q::after { content: none; }
+html.ilg body #ilg-appearance-panel .ilg-appearance-custom { margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--ilg-panel-line); }
+html.ilg body #ilg-appearance-panel .ilg-text-choice { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; padding: 3px; background: var(--ilg-panel-well); border-radius: 12px; }
+html.ilg body #ilg-appearance-panel .ilg-text-choice label > span { display: grid; place-items: center; min-height: 44px; border-radius: 9px; color: var(--ilg-panel-muted); font-size: 13px; }
+html.ilg body #ilg-appearance-panel .ilg-text-choice input:checked + span { background: var(--ilg-panel-selected); color: var(--ilg-panel-fg); font-weight: 600; }
+html.ilg body #ilg-appearance-panel .ilg-appearance-hint { margin: 9px 0 10px; color: var(--ilg-panel-muted); font-size: 11px; }
+html.ilg body #ilg-appearance-panel .ilg-choose-wallpaper { display: flex; align-items: center; justify-content: space-between; width: 100%; min-height: 44px; padding: 6px 0; border: 0; border-radius: 0; background: transparent; font-size: 13px; }
+html.ilg body #ilg-appearance-panel .ilg-choose-wallpaper > span { display: flex; align-items: center; gap: 10px; }
+html.ilg body #ilg-appearance-panel .ilg-choose-wallpaper svg { width: 18px; height: 18px; color: var(--ilg-panel-accent); }
+html.ilg body #ilg-appearance-panel .ilg-choose-wallpaper .ilg-wallpaper-arrow { width: 16px; height: 16px; color: var(--ilg-panel-muted); }
+html.ilg body #ilg-appearance-panel .ilg-choose-wallpaper:hover { color: var(--ilg-panel-accent); }
+html.ilg body #ilg-appearance-panel .ilg-appearance-status { margin: 14px 0 0; padding-top: 13px; border-top: 1px solid var(--ilg-panel-line); color: var(--ilg-panel-muted); font-size: 11px; text-align: center; }
+html.ilg body .ilg-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+html.ilg body #ilg-appearance-panel ::selection { background: color-mix(in srgb, var(--ilg-panel-accent) 26%, transparent); }
+@keyframes ilg-appearance-enter { from { opacity: .7; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { html.ilg body #ilg-appearance-panel { animation: none; } }
+html.ilg body.reduced-motion #ilg-appearance-panel { animation: none; }
+
+/* Typography palettes affect eligible native prose; all chat surfaces stay host-owned. */
+html.ilg {
+    --ilg-prose-text: #e8e5e0;
+    --ilg-prose-muted: #ada8a1;
+    --ilg-prose-quote: #e3b783;
+    --ilg-prose-link: #b4c8e2;
+    --ilg-prose-strong: #faf2e6;
+    --ilg-prose-leading: 1.94;
+    --ilg-prose-tracking: .015em;
+    --ilg-prose-quote-weight: 500;
+    --ilg-prose-em-style: normal;
+    --ilg-prose-quote-decoration: underline;
+    --ilg-prose-quote-line: rgba(227, 183, 131, .28);
+    --ilg-prose-quote-fill: none;
+}
+html.ilg.ilg-light {
+    --ilg-prose-text: #2c2926;
+    --ilg-prose-muted: #67625c;
+    --ilg-prose-quote: #935327;
+    --ilg-prose-link: #315e86;
+    --ilg-prose-strong: #29201b;
+    --ilg-prose-leading: 1.9;
+    --ilg-prose-quote-line: rgba(147, 83, 39, .24);
+}
+html.ilg[data-ilg-reading-style="classic"] {
+    --ilg-prose-text: rgba(242, 242, 247, .9);
+    --ilg-prose-muted: rgba(235, 235, 245, .62);
+    --ilg-prose-quote: #ffc48c;
+    --ilg-prose-link: #a4c5e6;
+    --ilg-prose-strong: #f5f7fb;
+    --ilg-prose-leading: 1.85;
+    --ilg-prose-tracking: normal;
+    --ilg-prose-quote-weight: 400;
+    --ilg-prose-em-style: italic;
+    --ilg-prose-quote-decoration: none;
+    --ilg-prose-quote-fill: linear-gradient(transparent 62%, rgba(255, 170, 100, .14) 62%, rgba(255, 170, 100, .14) 92%, transparent 92%);
+}
+html.ilg.ilg-light[data-ilg-reading-style="classic"] {
+    --ilg-prose-text: rgba(29, 29, 31, .86);
+    --ilg-prose-muted: rgba(60, 60, 67, .62);
+    --ilg-prose-quote: #b84a1c;
+    --ilg-prose-link: #2563a6;
+    --ilg-prose-strong: #1d1d1f;
+    --ilg-prose-quote-fill: linear-gradient(transparent 62%, rgba(255, 140, 70, .14) 62%, rgba(255, 140, 70, .14) 92%, transparent 92%);
+}
+html.ilg body #ilg-home .ilg-home-caption { position: relative; display: grid; gap: 10px; isolation: isolate; }
+html.ilg body #ilg-home .ilg-home-title {
+    font-size: clamp(27px, 1.8vw + 14px, 36px);
+    font-weight: 500;
+    line-height: 1.4;
+    letter-spacing: .015em;
+}
+html.ilg body #ilg-home .ilg-home-sub { font-size: clamp(14px, .4vw + 12px, 16px); font-weight: 400; line-height: 1.6; letter-spacing: .015em; }
+html.ilg.ilg-custom-wallpaper body #ilg-home { color: #f5f5f7; --SmartThemeBodyColor: #f5f5f7; }
+html.ilg.ilg-custom-wallpaper body #ilg-home .ilg-home-logo { background-color: #f5f5f7; filter: drop-shadow(0 2px 5px rgba(9, 16, 25, .25)); }
+html.ilg.ilg-custom-wallpaper body #ilg-home .ilg-home-caption::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    inset: -62px -84px;
+    pointer-events: none;
+    background: radial-gradient(ellipse closest-side, rgba(9, 16, 25, .5) 8%, rgba(9, 16, 25, .24) 58%, transparent 100%);
+    filter: blur(15px);
+}
+html.ilg.ilg-custom-wallpaper body #ilg-home .ilg-home-title { color: #f5f5f7; text-shadow: 0 2px 5px rgba(9, 16, 25, .34); }
+html.ilg.ilg-custom-wallpaper body #ilg-home .ilg-home-sub { color: #e1e5eb; text-shadow: 0 1px 4px rgba(9, 16, 25, .42); }
+html.ilg.ilg-custom-wallpaper body #ilg-home .ilg-home-recent {
+    color: #f5f5f7;
+    background-color: rgba(255, 255, 255, .18);
+    text-shadow: 0 1px 2px rgba(9, 16, 25, .28);
+    font-weight: 500;
+}
+html.ilg.ilg-custom-wallpaper body #ilg-home .ilg-home-recent:hover { background-color: rgba(255, 255, 255, .28); }
+html.ilg body #chat .mes:not(.smallSysMes):not([is_system="true"]) .mes_text > :is(p,ul,ol,blockquote):not([class]):not([style]):not(:has(img,iframe,video,audio,svg,canvas,button,input,select,textarea,table,details,div,[class],[style],[role])) {
+    --SmartThemeBodyColor: var(--ilg-prose-text) !important;
+    --SmartThemeEmColor: var(--ilg-prose-muted) !important;
+    --SmartThemeQuoteColor: var(--ilg-prose-quote) !important;
+    --SmartThemeUnderlineColor: var(--ilg-prose-link) !important;
+    color: var(--ilg-prose-text) !important;
+    text-shadow: none;
+    font-weight: 400;
+    line-height: var(--ilg-prose-leading);
+    letter-spacing: var(--ilg-prose-tracking);
+    text-wrap: pretty;
+    hanging-punctuation: first last;
+}
+html.ilg body #chat .mes:not(.smallSysMes):not([is_system="true"]) .mes_text > :is(p,ul,ol,blockquote):not([class]):not([style]):not(:has(img,iframe,video,audio,svg,canvas,button,input,select,textarea,table,details,div,[class],[style],[role])) :is(q,em,i,strong,b,a) { text-shadow: none; }
+html.ilg body #chat .mes:not(.smallSysMes):not([is_system="true"]) .mes_text > :is(p,ul,ol,blockquote):not([class]):not([style]):not(:has(img,iframe,video,audio,svg,canvas,button,input,select,textarea,table,details,div,[class],[style],[role])) :is(strong,b) { color: var(--ilg-prose-strong); font-weight: 600; }
+html.ilg body #chat .mes:not(.smallSysMes):not([is_system="true"]) .mes_text > :is(p,ul,ol,blockquote):not([class]):not([style]):not(:has(img,iframe,video,audio,svg,canvas,button,input,select,textarea,table,details,div,[class],[style],[role])) :is(em,i) { color: var(--ilg-prose-muted) !important; font-style: var(--ilg-prose-em-style); }
+html.ilg body #chat .mes:not(.smallSysMes):not([is_system="true"]) .mes_text > :is(p,ul,ol,blockquote):not([class]):not([style]):not(:has(img,iframe,video,audio,svg,canvas,button,input,select,textarea,table,details,div,[class],[style],[role])) q {
+    color: var(--ilg-prose-quote) !important;
+    font-weight: var(--ilg-prose-quote-weight);
+    background: var(--ilg-prose-quote-fill);
     box-shadow: none;
-    cursor: pointer;
+    border: 0;
+    text-decoration: var(--ilg-prose-quote-decoration);
+    text-decoration-color: var(--ilg-prose-quote-line);
+    text-decoration-thickness: 1px;
+    text-underline-offset: .23em;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
 }
-html.ilg body #ilg-wallpaper-menu .ilg-wallpaper-close { min-width: 44px; font-size: 22px; line-height: 1; padding: 8px; background: transparent; border: 0; }
-html.ilg body #ilg-wallpaper-menu select,
-html.ilg body #ilg-wallpaper-return { width: 100%; }
-html.ilg body #ilg-wallpaper-menu select { margin-top: 8px; }
-html.ilg body #ilg-wallpaper-menu option { color: #252832; background: #f7f8fa; }
-html.ilg body #ilg-wallpaper-menu .ilg-wallpaper-adapt { display: flex; align-items: center; gap: 8px; min-height: 44px; margin-top: 8px; font-size: 13px; }
-html.ilg body #ilg-wallpaper-menu input[type="checkbox"] { width: 18px; height: 18px; margin: 0; accent-color: #0a84ff; }
-html.ilg body #ilg-wallpaper-menu .ilg-wallpaper-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 16px 0 10px; }
-html.ilg body #ilg-wallpaper-menu button:hover:not(:disabled) { background: rgba(127,127,127,.2); }
-html.ilg body #ilg-wallpaper-menu button:focus-visible,
-html.ilg body #ilg-wallpaper-menu select:focus-visible,
-html.ilg body #ilg-wallpaper-menu input:focus-visible { outline: 2px solid #63a9ff; outline-offset: 2px; }
-html.ilg body #ilg-wallpaper-menu button:disabled { opacity: .45; cursor: default; }
-html.ilg body #ilg-wallpaper-menu .ilg-wallpaper-hint { margin: 12px 0 0; font-size: 12px; }
-html.ilg body .ilg-custom-wallpaper-settings select { width: 100%; min-height: 44px; }
+html.ilg body #chat .mes:not(.smallSysMes):not([is_system="true"]) .mes_text > :is(p,ul,ol,blockquote):not([class]):not([style]):not(:has(img,iframe,video,audio,svg,canvas,button,input,select,textarea,table,details,div,[class],[style],[role])) q :is(strong,b,em,i) { color: inherit !important; }
+html.ilg body #chat .mes:not(.smallSysMes):not([is_system="true"]) .mes_text > :is(p,ul,ol,blockquote):not([class]):not([style]):not(:has(img,iframe,video,audio,svg,canvas,button,input,select,textarea,table,details,div,[class],[style],[role])) a { color: var(--ilg-prose-link) !important; text-underline-offset: .2em; text-decoration-thickness: 1px; }
+html.ilg body #chat .mes:not(.smallSysMes):not([is_system="true"]) .mes_text > :is(p,ul,ol,blockquote):not([class]):not([style]):not(:has(img,iframe,video,audio,svg,canvas,button,input,select,textarea,table,details,div,[class],[style],[role])) ::selection { background: color-mix(in srgb, var(--ilg-prose-quote) 25%, transparent); }
+html.ilg body #send_textarea::selection { background: color-mix(in srgb, var(--ilg-accent) 23%, transparent); }
 
-/* Chat glass has one dedicated settings frame; the existing interface controls stay in place. */
-html.ilg body .ilg-settings .ilg-glass-pairing { margin: 18px 0; padding: 14px; border: 1px solid var(--SmartThemeBorderColor, rgba(127,127,127,.25)); border-radius: 12px; }
-html.ilg body .ilg-settings .ilg-surface-choice { margin-top: 14px; }
-html.ilg body .ilg-settings .ilg-surface-choice > label { display: block; margin-bottom: 6px; font-weight: 600; }
-html.ilg body .ilg-settings .ilg-surface-choice > select { width: 100%; min-height: 44px; }
-html.ilg body .ilg-settings .ilg-surface-choice details { margin-top: 8px; }
-html.ilg body .ilg-settings .ilg-surface-choice summary { padding: 10px 0; cursor: pointer; }
-html.ilg body .ilg-settings .ilg-surface-choice input[type="range"] { width: 100%; }
-html.ilg body .ilg-settings .ilg-surface-choice [hidden] { display: none; }
+@media (max-width: 600px) {
+    html.ilg body #ilg-home .ilg-home-caption { gap: 9px; }
+    html.ilg.ilg-custom-wallpaper body #ilg-home .ilg-home-caption::before { inset: -50px -42px; }
+}
 
-/* Bright custom wallpapers use a light contact tint, never an automatic black slab. */
-html.ilg.ilg-custom-wallpaper body :is(#top-bar, #nonQRFormItems, #ilg-floor, .ilg-island).ilg-over-light {
-    background-color: rgba(247,249,252,.28);
-    --SmartThemeBodyColor: #19232f;
-    --SmartThemeEmColor: #485566;
-    color: var(--SmartThemeBodyColor);
+/* iOS compatibility material: CSS light and system blur, not SVG background displacement.
+   Only the extension's compact host controls are admitted. Message/card surfaces stay untouched. */
+html.ilg.ilg-ios-material body {
+    --ilg-ios-edge-light: rgba(255, 255, 255, .72);
+    --ilg-ios-edge-soft: rgba(234, 243, 255, .22);
+    --ilg-ios-edge-shade: rgba(5, 16, 29, .25);
+    --ilg-ios-veil: rgba(237, 245, 255, .12);
+    --ilg-ios-contact: rgba(0, 8, 20, .15);
+    --ilg-ios-lift: rgba(0, 8, 20, .19);
 }
-html.ilg.ilg-custom-wallpaper body #top-settings-holder > .ilg-icon-over-light,
-html.ilg.ilg-custom-wallpaper body #top-bar.ilg-over-light ~ #top-settings-holder {
-    --SmartThemeBodyColor: #19232f;
-    --SmartThemeEmColor: #485566;
-    color: var(--SmartThemeBodyColor);
+html.ilg.ilg-light.ilg-ios-material body {
+    --ilg-ios-edge-light: rgba(255, 255, 255, .96);
+    --ilg-ios-edge-soft: rgba(255, 255, 255, .32);
+    --ilg-ios-edge-shade: rgba(27, 46, 67, .18);
+    --ilg-ios-veil: rgba(255, 255, 255, .2);
+    --ilg-ios-contact: rgba(35, 50, 74, .1);
+    --ilg-ios-lift: rgba(35, 50, 74, .13);
 }
-html.ilg.ilg-custom-wallpaper body #top-settings-holder > .ilg-icon-over-light .drawer-icon,
-html.ilg.ilg-custom-wallpaper body #top-bar.ilg-over-light ~ #top-settings-holder .drawer-icon {
-    color: #19232f;
-    filter: none;
+html.ilg.ilg-ios-material body:not(.no-blur) .ilg-glass:is(#top-bar, #nonQRFormItems, #ilg-floor, .ilg-island) {
+    box-shadow:
+        inset 0 -1px 1.5px var(--ilg-ios-edge-shade),
+        0 2px 5px var(--ilg-ios-contact),
+        0 10px 26px var(--ilg-ios-lift);
 }
-html.ilg.ilg-custom-wallpaper body #nonQRFormItems.ilg-over-light #send_textarea { color: #19232f; }
-html.ilg.ilg-custom-wallpaper body #nonQRFormItems.ilg-over-light #send_textarea::placeholder { color: #485566; opacity: 1; }
-/* Wallpaper-aware foreground only: retain original prose geometry and clear background. */
-html.ilg body .ilg-text-dark {
-    --ilg-readable-ink: #1b2229;
-    --ilg-readable-shadow: 0 1px 1px rgba(255,255,255,.32);
-    --ilg-narr: #1b2229;
-    --ilg-say: #763810;
-    --ilg-think: #3c4958;
-    --SmartThemeBodyColor: #1b2229;
-    --SmartThemeEmColor: #3c4958;
-    --SmartThemeQuoteColor: #763810;
-    --SmartThemeUnderlineColor: #084e82;
+html.ilg.ilg-ios-material body:not(.no-blur) .ilg-glass:is(#top-bar, #nonQRFormItems, #ilg-floor, .ilg-island)::before {
+    content: "";
+    display: block;
+    position: absolute;
+    inset: 0;
+    padding: 1px;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: .82;
+    background: linear-gradient(138deg,
+        var(--ilg-ios-edge-light) 0%,
+        var(--ilg-ios-edge-soft) 20%,
+        transparent 38%,
+        var(--ilg-ios-edge-shade) 56%,
+        transparent 70%,
+        var(--ilg-ios-edge-soft) 86%,
+        var(--ilg-ios-edge-light) 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
 }
-html.ilg body .ilg-text-light {
-    --ilg-readable-ink: #f5f5f2;
-    --ilg-readable-shadow: 0 1px 2px rgba(12,15,20,.85), 0 2px 5px rgba(12,15,20,.22);
-    --ilg-narr: #f5f5f2;
-    --ilg-say: #ffd49f;
-    --ilg-think: #dce5ee;
-    --SmartThemeBodyColor: #f5f5f2;
-    --SmartThemeEmColor: #dce5ee;
-    --SmartThemeQuoteColor: #ffd49f;
-    --SmartThemeUnderlineColor: #a7d8ff;
+html.ilg.ilg-ios-material body:not(.no-blur) .ilg-glass:is(#top-bar, #nonQRFormItems, #ilg-floor, .ilg-island)::after {
+    content: "";
+    display: block;
+    position: absolute;
+    inset: 0;
+    width: auto;
+    height: auto;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: .72;
+    background: radial-gradient(120% 150% at 5% -20%, var(--ilg-ios-veil), transparent 64%);
 }
-/* An embedded card protects its subtree, not the ordinary prose beside it. */
-html.ilg.ilg-readable-chat body.bubblechat #chat .mes:not(.smallSysMes) .mes_text > :is(.ilg-text-dark,.ilg-text-light) {
-    --ilg-say-bg: transparent;
-    color: var(--ilg-readable-ink);
-    text-shadow: var(--ilg-readable-shadow);
+html.ilg.ilg-ios-material body:not(.no-blur) #nonQRFormItems.ilg-glass:focus-within::before,
+html.ilg.ilg-ios-material body:not(.no-blur) .ilg-island.ilg-glass:active::before { opacity: 1; }
+html.ilg.ilg-ios-material body:not(.no-blur) #nonQRFormItems.ilg-glass:focus-within::after { opacity: 1; }
+html.ilg.ilg-ios-material body:not(.no-blur) .ilg-glass.ilg-over-light {
+    --ilg-ios-edge-shade: rgba(22, 37, 54, .24);
+    --ilg-ios-contact: rgba(20, 35, 55, .16);
 }
-html.ilg body #ilg-home :is(.ilg-home-title,.ilg-home-sub):is(.ilg-text-dark,.ilg-text-light) {
-    color: var(--ilg-readable-ink);
-    text-shadow: var(--ilg-readable-shadow);
-}
-html.ilg body #ilg-home :is(.ilg-home-title,.ilg-home-sub).ilg-text-light {
-    text-shadow: 0 1px 3px rgba(12,15,20,.8), 0 3px 10px rgba(12,15,20,.3);
-}
-html.ilg body #ilg-home .ilg-home-logo:is(.ilg-text-dark,.ilg-text-light) {
-    color: var(--ilg-readable-ink);
-    filter: drop-shadow(0 1px 2px rgba(12,15,20,.35));
-}
+html.ilg.ilg-ios-material body.noShadows .ilg-glass:is(#top-bar, #nonQRFormItems, #ilg-floor, .ilg-island) { box-shadow: none; }
