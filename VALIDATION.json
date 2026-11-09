@@ -401,5 +401,81 @@
     "Desktop iOS identities and synthetic sensors are not physical mobile acceptance",
     "Local only; no GitHub publication"
   ],
-  "developmentStarted": "2026-11-04"
+  "developmentStarted": "2026-11-04",
+  "followups": [
+    {
+      "date": "2026-11-09",
+      "version": "1.4.5-test.14",
+      "scope": "Folded menu alignment and mobile native drawer contour/scrollbars",
+      "environment": "Isolated headless Edge against local SillyTavern; save requests blocked",
+      "viewports": [
+        {
+          "width": 320,
+          "height": 700,
+          "light": false
+        },
+        {
+          "width": 320,
+          "height": 700,
+          "light": true
+        },
+        {
+          "width": 390,
+          "height": 844,
+          "light": false
+        },
+        {
+          "width": 390,
+          "height": 844,
+          "light": true
+        },
+        {
+          "width": 844,
+          "height": 390,
+          "light": false
+        },
+        {
+          "width": 844,
+          "height": 390,
+          "light": true
+        },
+        {
+          "width": 1280,
+          "height": 800,
+          "light": false
+        },
+        {
+          "width": 1280,
+          "height": 800,
+          "light": true
+        }
+      ],
+      "drawers": [
+        "left-nav-panel",
+        "rm_api_block",
+        "AdvancedFormatting",
+        "WorldInfo",
+        "user-settings-block",
+        "Backgrounds",
+        "rm_extensions_block",
+        "PersonaManagement",
+        "right-nav-panel"
+      ],
+      "drawerCases": 72,
+      "checks": [
+        "Menu icon centred within 0.5 CSS px of the glass; 44px touch hit area",
+        "All mobile native drawer outlines clipped to 24px corners",
+        "Scrolling decorative pseudo layers hidden on mobile drawers",
+        "Touch scrollbars hidden including nested scrolling areas; scrolling remains functional",
+        "Expanded menu hit region receives actual mouse events",
+        "Drawer close and back-to-menu actions work",
+        "10 offline regressions passed",
+        "Manifest validator passed"
+      ],
+      "limits": [
+        "Physical Android/TT and iOS/WebKit rendering not verified",
+        "TT-specific extra nested menus absent from the local ST installation remain unverified"
+      ]
+    }
+  ]
 }

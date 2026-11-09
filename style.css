@@ -738,6 +738,8 @@ html.ilg body.reduced-motion #ilg-tone-button .ilg-tone-icon::before { transitio
 html.ilg.ilg-fold body #ilg-fold-button {
     display: flex;
     align-items: center;
+    justify-content: center;
+    align-self: center;
     flex: 0 0 auto;
 }
 html.ilg.ilg-fold body #ilg-fold-button .ilg-fold-icon {
@@ -1268,6 +1270,8 @@ html.ilg.ilg-float body:not(.movingUI) #top-settings-holder > .drawer > .drawer-
 /* 手机：所有抽屉都是同一张页，夹在顶栏和输入框中间 */
 @media screen and (max-width: 1000px) {
     html.ilg.ilg-float body:not(.movingUI) #top-settings-holder > .drawer > .drawer-content {
+        /* Clip the backdrop filter and scrolling content to the same outline. */
+        clip-path: inset(0 round 24px);
         --ilg-sheet-top: calc(var(--topBarBlockSize) + var(--ilg-gap) * 2);
         position: fixed;
         top: var(--ilg-sheet-top) !important;
@@ -1284,6 +1288,13 @@ html.ilg.ilg-float body:not(.movingUI) #top-settings-holder > .drawer > .drawer-
     html.ilg.ilg-float body:not(.movingUI) #top-settings-holder > .drawer > :is(.fillLeft, .fillRight).openDrawer {
         height: calc(100dvh - var(--ilg-sheet-top) - var(--ilg-form-h) - var(--ilg-gap) * 3);
     }
+}
+
+/* Absolute decorative rims scroll with drawer content and leave a second outline mid-panel.
+   Keep the actual glass backdrop; mobile drawers use the clipped shell as their only contour. */
+@media screen and (max-width: 1000px) {
+    html.ilg.ilg-float body:not(.movingUI) #top-settings-holder > .drawer > .drawer-content::before,
+    html.ilg.ilg-float body:not(.movingUI) #top-settings-holder > .drawer > .drawer-content::after { display: none; }
 }
 
 /* 吸顶标题栏：‹ 菜单 | 名字 | ×。下面滚过的内容在标题栏后面模糊掉（外层玻璃是“背景根”，这里只模糊抽屉自己的内容） */
@@ -4559,7 +4570,21 @@ html.ilg.ilg-kb-open body #ilg-ball { visibility: hidden; }
     html.ilg body #form_sheld :is(#options_button, #extensionsMenuButton, #ilg-qr-toggle)::after {
         content: ""; position: absolute; inset: -2px; border-radius: inherit;
     }
+    /* The interactive icon expands around the existing toolbar centre; its visible pill stays 30px high. */
     html.ilg body #ilg-fold-button { min-width: 44px; min-height: 44px; }
+    html.ilg.ilg-fold body #ilg-fold-button .ilg-fold-icon {
+        min-width: 44px;
+        min-height: 44px;
+        box-sizing: border-box;
+        padding-block: 7px;
+        background-clip: content-box;
+    }
+    html.ilg.ilg-fold body #ilg-fold-button.ilg-alert .ilg-fold-icon::after { top: 10px; }
+    /* Hide native touch scrollbars without removing scrollability, including nested host scroll areas. */
+    html.ilg body #top-settings-holder > .drawer > .drawer-content,
+    html.ilg body #top-settings-holder > .drawer > .drawer-content * { scrollbar-width: none; }
+    html.ilg body #top-settings-holder > .drawer > .drawer-content::-webkit-scrollbar,
+    html.ilg body #top-settings-holder > .drawer > .drawer-content *::-webkit-scrollbar { display: none; }
 }
 
 /* 2026-11-09 阅读页的行距 / 左右留白滑杆：没设置时变量不存在，沿用风格自己的值（含窄屏 −.1）。 */
