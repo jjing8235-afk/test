@@ -476,6 +476,71 @@
         "Physical Android/TT and iOS/WebKit rendering not verified",
         "TT-specific extra nested menus absent from the local ST installation remain unverified"
       ]
+    },
+    {
+      "date": "2026-11-09",
+      "version": "1.4.5-test.15",
+      "scope": "Restrained, perceptible hand-held pose lighting",
+      "automated": [
+        "11 offline regressions including deterministic pose response, smoothing, bounds, neutral return and cleanup",
+        "Synthetic browser sensor checks for original/Web materials, stable filter/map/geometry/text, ball response, rotation and opt-in permission",
+        "Denied/rejected/thrown/missing/insecure/late permission fallbacks; missing-data status; hidden/no-blur/reduced-motion pause",
+        "Image comparisons at -6, 0 and +6 degrees in original, Web and CSS materials, both tones"
+      ],
+      "limits": [
+        "Synthetic desktop sensor data is not physical phone or WebKit acceptance",
+        "Pixel deltas establish a render change, not subjective user acceptance"
+      ],
+      "pixelEvidence": [
+        {
+          "material": "original",
+          "light": false,
+          "edgeMeanRgbDelta": 1.1,
+          "maxRgbDelta": 13.33,
+          "stableMaps": true,
+          "stableFilters": true
+        },
+        {
+          "material": "original",
+          "light": true,
+          "edgeMeanRgbDelta": 1.023,
+          "maxRgbDelta": 12.33,
+          "stableMaps": true,
+          "stableFilters": true
+        },
+        {
+          "material": "liquid-web",
+          "light": false,
+          "edgeMeanRgbDelta": 1.179,
+          "maxRgbDelta": 14.33,
+          "stableMaps": true,
+          "stableFilters": true
+        },
+        {
+          "material": "liquid-web",
+          "light": true,
+          "edgeMeanRgbDelta": 1.063,
+          "maxRgbDelta": 13,
+          "stableMaps": true,
+          "stableFilters": true
+        },
+        {
+          "material": "css",
+          "light": false,
+          "edgeMeanRgbDelta": 3.556,
+          "maxRgbDelta": 13.67,
+          "stableMaps": true,
+          "stableFilters": true
+        },
+        {
+          "material": "css",
+          "light": true,
+          "edgeMeanRgbDelta": 2.99,
+          "maxRgbDelta": 13,
+          "stableMaps": true,
+          "stableFilters": true
+        }
+      ]
     }
   ]
 }

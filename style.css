@@ -4476,14 +4476,14 @@ html.ilg.ilg-tilt-light body:not(.no-blur):not(.reduced-motion) .ilg-glass.ilg-r
     --ilg-touch-light-a: 0;
     opacity: 1 !important;
     background: radial-gradient(ellipse 90px 34px at var(--ilg-reflection-x, 25%) var(--ilg-reflection-y, 10%), rgba(251,254,255,var(--ilg-touch-light-a)), transparent 80%),
-        radial-gradient(ellipse at calc(28% + var(--ilg-tilt-x, 0) * 12%) calc(6% + var(--ilg-tilt-y, 0) * 10%), rgba(246,252,255,.24), transparent 68%) !important;
+        radial-gradient(ellipse 48% 150% at calc(35% + var(--ilg-tilt-x, 0) * 32%) calc(8% + var(--ilg-tilt-y, 0) * 24%), rgba(246,252,255,.36), transparent 76%) !important;
 }
 html.ilg.ilg-tilt-light body:not(.no-blur):not(.reduced-motion) .ilg-glass.ilg-reflection.ilg-reflection-pressed:is(.ilg-glass, #ilg-floor):not(.mes)::before { --ilg-touch-light-a: .4; }
 html.ilg.ilg-tilt-light body:not(.no-blur):not(.reduced-motion) > #ilg-ball-glass::before {
     content: "";
     position: absolute; inset: 0;
     pointer-events: none;
-    background: radial-gradient(ellipse at calc(28% + var(--ilg-tilt-x, 0) * 12%) calc(6% + var(--ilg-tilt-y, 0) * 10%), rgba(246,252,255,.24), transparent 68%);
+    background: radial-gradient(ellipse 48% 150% at calc(35% + var(--ilg-tilt-x, 0) * 32%) calc(8% + var(--ilg-tilt-y, 0) * 24%), rgba(246,252,255,.36), transparent 76%);
     -webkit-mask: var(--ilg-reflection-map) 0 0 / 100% 100% no-repeat;
     mask: var(--ilg-reflection-map) 0 0 / 100% 100% no-repeat;
 }
@@ -4535,6 +4535,12 @@ html.ilg.ilg-css-glass body:not(.no-blur) :is(.ilg-css-surface, #chat .mes.ilg-c
     background:radial-gradient(ellipse at calc(18% + var(--ilg-tilt-x,0) * 8%) calc(-10% + var(--ilg-tilt-y,0) * 8%),rgba(250,253,255,var(--ilg-css-glaze)),transparent 64%),linear-gradient(145deg,rgba(240,249,255,.025),transparent 42%,rgba(180,219,247,.025)) !important;
     -webkit-mask:none !important;mask:none !important;filter:none !important;
     box-shadow:none;opacity:1 !important;transform:none;mix-blend-mode:normal;transition:none;
+}
+/* A broader, low-alpha sheen makes small authorised tilts legible on the CSS material too.
+   This remains a plain gradient; sensor events do not rasterise maps or move the surface. */
+html.ilg.ilg-css-glass.ilg-tilt-light body:not(.no-blur):not(.reduced-motion) :is(.ilg-css-surface, #chat .mes.ilg-css-surface):not(.mes)::before {
+    background: radial-gradient(ellipse 65% 180% at calc(28% + var(--ilg-tilt-x, 0) * 28%) calc(-5% + var(--ilg-tilt-y, 0) * 20%), rgba(250,253,255,.095), transparent 72%),
+        linear-gradient(145deg,rgba(240,249,255,.025),transparent 42%,rgba(180,219,247,.025)) !important;
 }
 /* Keep the large-card shadow on the same shallow elevation as the light chrome. */
 html.ilg.ilg-css-glass body.bubblechat:not(.no-blur):not(.noShadows) #chat .mes.ilg-css-surface:not(.smallSysMes) {

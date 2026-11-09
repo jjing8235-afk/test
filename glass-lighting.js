@@ -21,8 +21,9 @@ export function createGlassLighting({onPoint, onStatus = () => {}}) {
         frame = 0;
         if (!attached || quiet() || !target) return;
         const settled = filtered && Math.abs(filtered.x - target.x) + Math.abs(filtered.y - target.y) < .004;
-        filtered = !filtered || settled ? {...target} : {x:filtered.x + (target.x - filtered.x) * .22, y:filtered.y + (target.y - filtered.y) * .22};
-        if (now - lastEmit >= 33 || settled) {
+        filtered = !filtered || settled ? {...target} : {x:filtered.x + (target.x - filtered.x) * .18, y:filtered.y + (target.y - filtered.y) * .18};
+        // 32ms spans two 60Hz frames; 33ms otherwise skips to a third frame on some devices.
+        if (now - lastEmit >= 32 || settled) {
             const point = {x:Math.round(filtered.x * 1000) / 1000, y:Math.round(filtered.y * 1000) / 1000};
             if (!last || Math.abs(last.x - point.x) + Math.abs(last.y - point.y) >= .003 || (settled && point.x === 0 && point.y === 0 && (last.x !== 0 || last.y !== 0))) { onPoint(point); last = point; lastEmit = now; }
         }
@@ -37,7 +38,13 @@ export function createGlassLighting({onPoint, onStatus = () => {}}) {
         if (a === 90) [x, y] = [y, -x];
         else if (a === 180) [x, y] = [-x, -y];
         else if (a === 270) [x, y] = [-y, x];
-        const normal = v => Math.abs(v) < .8 ? 0 : -clamp(v / 24);
+        // Suppress resting sensor noise, then respond early and ease into the travel limit.
+        // The continuous dead zone avoids a visible jump when a small tilt crosses it.
+        const normal = v => {
+            const delta = Math.max(0, Math.abs(v) - .45);
+            if (delta === 0) return 0;
+            return -Math.sign(v) * clamp(Math.tanh(delta / 11.5) / Math.tanh(17.55 / 11.5));
+        };
         const next = {x:normal(x), y:normal(y)};
         if (!target || Math.abs(next.x - target.x) + Math.abs(next.y - target.y) > .003) {
             target = next;
