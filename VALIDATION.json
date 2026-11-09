@@ -640,6 +640,604 @@
         "Physical phone and WebKit rendering not observed",
         "Pixel thresholds are regression checks, not human visibility acceptance"
       ]
+    },
+    {
+      "date": "2026-11-09",
+      "version": "1.4.5-test.17",
+      "scope": "Floating-ball drag geometry reuse, bounded preset caches and mobile adaptation without changing visual recipes",
+      "automated": [
+        {
+          "name": "ball-drag-regression.mjs",
+          "passed": true,
+          "ms": 5356
+        },
+        {
+          "name": "card-solid-regression.mjs",
+          "passed": true,
+          "ms": 45
+        },
+        {
+          "name": "chat-background-regression.mjs",
+          "passed": true,
+          "ms": 64
+        },
+        {
+          "name": "chat-font-regression.mjs",
+          "passed": true,
+          "ms": 35
+        },
+        {
+          "name": "filter-reuse-regression.mjs",
+          "passed": true,
+          "ms": 39
+        },
+        {
+          "name": "first-line-indent-regression.mjs",
+          "passed": true,
+          "ms": 37
+        },
+        {
+          "name": "form-scroll-regression.mjs",
+          "passed": true,
+          "ms": 48
+        },
+        {
+          "name": "mobile-performance-regression.mjs",
+          "passed": true,
+          "ms": 92
+        },
+        {
+          "name": "mobile-tilt-response-regression.mjs",
+          "passed": true,
+          "ms": 34
+        },
+        {
+          "name": "popup-boundary-regression.mjs",
+          "passed": true,
+          "ms": 39
+        },
+        {
+          "name": "settings-regression.mjs",
+          "passed": true,
+          "ms": 39
+        },
+        {
+          "name": "tt-compat-regression.mjs",
+          "passed": true,
+          "ms": 45
+        }
+      ],
+      "parameters": {
+        "originalPresets": 7,
+        "webPresets": 4,
+        "presetValuesUnchanged": true,
+        "savedSettingsMigrationChanged": false
+      },
+      "geometry": {
+        "exactRasterComparisons": 24,
+        "freeTranslationCached": true,
+        "straightEdgeCached": true,
+        "cornersRebuilt": true,
+        "previewDensity": 1,
+        "settledMaxDPR": 2,
+        "finalRectAfterScale": true,
+        "dprInvalidation": true,
+        "noShadowMaskSkipped": true
+      },
+      "cacheBudgets": {
+        "ball": {
+          "entries": 32,
+          "pixels": 524288,
+          "encodedCharacters": 2097152
+        },
+        "physical": {
+          "entries": 80,
+          "encodedCharacters": 4194304
+        },
+        "physicalLUTs": 40,
+        "legacyMaps": 120,
+        "webBallTables": 12,
+        "eviction": "Least recently used entries, with cache/buffer cleanup on ball removal"
+      },
+      "browser": {
+        "host": "Local ST in desktop Edge; write requests blocked",
+        "performanceViewport": [
+          390,
+          844
+        ],
+        "cpuSlowdown": 4,
+        "before": {
+          "free": {
+            "avg": 36.26,
+            "p95": 60.4,
+            "png": 20,
+            "pngMs": 18.1,
+            "by": {
+              "ball": 20
+            }
+          },
+          "fused": {
+            "avg": 59.69,
+            "p95": 86.2,
+            "png": 148,
+            "pngMs": 120.9,
+            "by": {
+              "ball": 148
+            }
+          }
+        },
+        "after": {
+          "free": {
+            "avg": 22.95,
+            "p95": 42.9,
+            "png": 24,
+            "pngMs": 19.8,
+            "by": {
+              "ball": 24
+            }
+          },
+          "fused": {
+            "avg": 28.55,
+            "p95": 59.2,
+            "png": 40,
+            "pngMs": 34.8,
+            "by": {
+              "ball": 40
+            }
+          }
+        },
+        "allPresetDrag": [
+          {
+            "mode": "original",
+            "key": "natural",
+            "result": {
+              "free": {
+                "avg": 18.63,
+                "p95": 23.5,
+                "png": 12,
+                "pngMs": 11.7,
+                "by": {
+                  "ball": 12
+                }
+              },
+              "fused": {
+                "avg": 24.32,
+                "p95": 44.2,
+                "png": 40,
+                "pngMs": 35.8,
+                "by": {
+                  "ball": 40
+                }
+              }
+            }
+          },
+          {
+            "mode": "original",
+            "key": "ultra",
+            "result": {
+              "free": {
+                "avg": 18.71,
+                "p95": 30.8,
+                "png": 28,
+                "pngMs": 26.9,
+                "by": {
+                  "ball": 28
+                }
+              },
+              "fused": {
+                "avg": 22.71,
+                "p95": 40.4,
+                "png": 40,
+                "pngMs": 31.6,
+                "by": {
+                  "ball": 40
+                }
+              }
+            }
+          },
+          {
+            "mode": "original",
+            "key": "depth",
+            "result": {
+              "free": {
+                "avg": 20.49,
+                "p95": 32.6,
+                "png": 32,
+                "pngMs": 26.8,
+                "by": {
+                  "ball": 32
+                }
+              },
+              "fused": {
+                "avg": 22.82,
+                "p95": 39.8,
+                "png": 40,
+                "pngMs": 32,
+                "by": {
+                  "ball": 40
+                }
+              }
+            }
+          },
+          {
+            "mode": "original",
+            "key": "thin",
+            "result": {
+              "free": {
+                "avg": 18.51,
+                "p95": 40.3,
+                "png": 28,
+                "pngMs": 22.7,
+                "by": {
+                  "ball": 28
+                }
+              },
+              "fused": {
+                "avg": 24.34,
+                "p95": 39.4,
+                "png": 40,
+                "pngMs": 34,
+                "by": {
+                  "ball": 40
+                }
+              }
+            }
+          },
+          {
+            "mode": "original",
+            "key": "standard",
+            "result": {
+              "free": {
+                "avg": 18.24,
+                "p95": 30.2,
+                "png": 28,
+                "pngMs": 24.5,
+                "by": {
+                  "ball": 28
+                }
+              },
+              "fused": {
+                "avg": 23.95,
+                "p95": 40,
+                "png": 40,
+                "pngMs": 35.8,
+                "by": {
+                  "ball": 40
+                }
+              }
+            }
+          },
+          {
+            "mode": "original",
+            "key": "thick",
+            "result": {
+              "free": {
+                "avg": 18.86,
+                "p95": 35.3,
+                "png": 28,
+                "pngMs": 24.2,
+                "by": {
+                  "ball": 28
+                }
+              },
+              "fused": {
+                "avg": 24.61,
+                "p95": 47.3,
+                "png": 40,
+                "pngMs": 35.7,
+                "by": {
+                  "ball": 40
+                }
+              }
+            }
+          },
+          {
+            "mode": "original",
+            "key": "extreme",
+            "result": {
+              "free": {
+                "avg": 21.71,
+                "p95": 41.8,
+                "png": 28,
+                "pngMs": 32.3,
+                "by": {
+                  "ball": 28
+                }
+              },
+              "fused": {
+                "avg": 23.57,
+                "p95": 40.2,
+                "png": 40,
+                "pngMs": 37.2,
+                "by": {
+                  "ball": 40
+                }
+              }
+            }
+          },
+          {
+            "mode": "liquid-web",
+            "key": "clear",
+            "result": {
+              "free": {
+                "avg": 18.37,
+                "p95": 30.8,
+                "png": 32,
+                "pngMs": 29,
+                "by": {
+                  "ball": 32
+                }
+              },
+              "fused": {
+                "avg": 22.87,
+                "p95": 40.2,
+                "png": 40,
+                "pngMs": 32.9,
+                "by": {
+                  "ball": 40
+                }
+              }
+            }
+          },
+          {
+            "mode": "liquid-web",
+            "key": "thin",
+            "result": {
+              "free": {
+                "avg": 18.45,
+                "p95": 35.9,
+                "png": 32,
+                "pngMs": 27.4,
+                "by": {
+                  "ball": 32
+                }
+              },
+              "fused": {
+                "avg": 22.54,
+                "p95": 38.6,
+                "png": 40,
+                "pngMs": 34.1,
+                "by": {
+                  "ball": 40
+                }
+              }
+            }
+          },
+          {
+            "mode": "liquid-web",
+            "key": "soft",
+            "result": {
+              "free": {
+                "avg": 16.35,
+                "p95": 18.4,
+                "png": 16,
+                "pngMs": 14.3,
+                "by": {
+                  "ball": 16
+                }
+              },
+              "fused": {
+                "avg": 22.94,
+                "p95": 40.3,
+                "png": 40,
+                "pngMs": 34.2,
+                "by": {
+                  "ball": 40
+                }
+              }
+            }
+          },
+          {
+            "mode": "liquid-web",
+            "key": "crystal",
+            "result": {
+              "free": {
+                "avg": 18.71,
+                "p95": 40.5,
+                "png": 28,
+                "pngMs": 23.2,
+                "by": {
+                  "ball": 28
+                }
+              },
+              "fused": {
+                "avg": 23.48,
+                "p95": 42.7,
+                "png": 40,
+                "pngMs": 31.6,
+                "by": {
+                  "ball": 40
+                }
+              }
+            }
+          },
+          {
+            "mode": "css",
+            "key": "blur",
+            "result": {
+              "free": {
+                "avg": 16.36,
+                "p95": 29.8,
+                "png": 0,
+                "pngMs": 0,
+                "by": {}
+              },
+              "fused": {
+                "avg": 17.18,
+                "p95": 26.1,
+                "png": 0,
+                "pngMs": 0,
+                "by": {}
+              }
+            }
+          }
+        ],
+        "gestureChecks": {
+          "cleared": true,
+          "cancelled": true,
+          "recreated": true
+        },
+        "touchInput": "CDP Input.dispatchTouchEvent",
+        "touchChecks": {
+          "out": [
+            {
+              "mode": "original",
+              "fused": true,
+              "drag": true,
+              "kind": "phys",
+              "covers": true,
+              "release": true
+            },
+            {
+              "mode": "liquid-web",
+              "fused": true,
+              "drag": true,
+              "kind": "web",
+              "covers": true,
+              "release": true
+            }
+          ],
+          "tap": true,
+          "viewportDuringDrag": true,
+          "errors": []
+        },
+        "audits": [
+          {
+            "viewport": [
+              320,
+              740
+            ],
+            "presetTransitions": 22,
+            "allFiltersFinite": true,
+            "states": [
+              {
+                "name": "noShadows",
+                "sdf": true,
+                "shadow": "none"
+              },
+              {
+                "name": "reduced",
+                "sdf": true,
+                "shadow": "block"
+              },
+              {
+                "name": "noBlur",
+                "sdf": false,
+                "shadow": "block"
+              },
+              {
+                "name": "css",
+                "sdf": false
+              }
+            ]
+          },
+          {
+            "viewport": [
+              390,
+              844
+            ],
+            "presetTransitions": 22,
+            "allFiltersFinite": true,
+            "states": [
+              {
+                "name": "noShadows",
+                "sdf": true,
+                "shadow": "none"
+              },
+              {
+                "name": "reduced",
+                "sdf": true,
+                "shadow": "block"
+              },
+              {
+                "name": "noBlur",
+                "sdf": false,
+                "shadow": "block"
+              },
+              {
+                "name": "css",
+                "sdf": false
+              }
+            ]
+          },
+          {
+            "viewport": [
+              844,
+              390
+            ],
+            "presetTransitions": 22,
+            "allFiltersFinite": true,
+            "states": [
+              {
+                "name": "noShadows",
+                "sdf": true,
+                "shadow": "none"
+              },
+              {
+                "name": "reduced",
+                "sdf": true,
+                "shadow": "block"
+              },
+              {
+                "name": "noBlur",
+                "sdf": false,
+                "shadow": "block"
+              },
+              {
+                "name": "css",
+                "sdf": false
+              }
+            ]
+          }
+        ],
+        "narrow320": {
+          "web": {
+            "free": {
+              "avg": 22.59,
+              "p95": 42.2,
+              "png": 24,
+              "pngMs": 19.7,
+              "by": {
+                "ball": 24
+              }
+            },
+            "fused": {
+              "avg": 33.51,
+              "p95": 50.8,
+              "png": 88,
+              "pngMs": 73.3,
+              "by": {
+                "ball": 88
+              }
+            }
+          },
+          "original": {
+            "free": {
+              "avg": 25.82,
+              "p95": 53.5,
+              "png": 20,
+              "pngMs": 20.9,
+              "by": {
+                "ball": 20
+              }
+            },
+            "fused": {
+              "avg": 31.05,
+              "p95": 46.3,
+              "png": 88,
+              "pngMs": 69.4,
+              "by": {
+                "ball": 88
+              }
+            }
+          }
+        }
+      },
+      "limits": [
+        "Desktop emulation is not physical phone FPS or thermal evidence",
+        "iPhone/WebKit and long-session phone performance not observed",
+        "Rounded corners still require new fusion geometry; long-edge cache reuse cannot cover every path"
+      ]
     }
   ]
 }

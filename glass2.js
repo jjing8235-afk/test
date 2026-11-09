@@ -26,9 +26,9 @@ function lensLut(bezel, mag) {
 }
 export function lut(profile, bezel, thick, ior, mag) {
     const key = [profile, bezel, thick, ior, mag].join('|');
-    if (luts.has(key)) return luts.get(key);
+    if (luts.has(key)) { const value = luts.get(key); luts.delete(key); luts.set(key, value); return value; }
     if (profile === 'lens') {
-        if (luts.size > 40) luts.clear();
+        if (luts.size >= 40) luts.delete(luts.keys().next().value);
         luts.set(key, lensLut(bezel, mag));
         return luts.get(key);
     }
@@ -44,7 +44,7 @@ export function lut(profile, bezel, thick, ior, mag) {
         d[i] = h * (a * nr) / (-eta + a * nz);
         s[i] = nr;
     }
-    if (luts.size > 40) luts.clear();
+    if (luts.size >= 40) luts.delete(luts.keys().next().value);
     luts.set(key, { d, s });
     return luts.get(key);
 }
@@ -134,6 +134,8 @@ function buildTiles(r, bez, L, dpr, normals) {
 // 只有启用光照或厚度阴影时才需要法线贴图；位移贴图始终保持原精度。
 const needsNormals = o => o.specular > 0 || o.edgeShade > 0 || o.fresnel > 0 || o.caustic > 0;
 const cache = new Map();
+let cachedChars = 0;
+const mapChars = m => (m.full ? [m.full] : Object.values(m.tiles)).reduce((n, p) => n + p.d.length + (p.n?.length || 0), 0);
 export function getMaps(w, h, r, o) {
     // 弧面最宽占短边的 30%（放大镜截面 40%），小玻璃中间留出平坦区；厚度同比缩小，边缘的“坡度”和大玻璃一致
     const lens = o.profile === 'lens';
@@ -146,12 +148,18 @@ export function getMaps(w, h, r, o) {
     if (!m) {
         const L = lut(o.profile, bez, thick, o.ior, mag);
         m = tiled ? buildTiles(Math.round(r), bez, L, dpr, normals) : buildFull(w, h, r, bez, L, dpr, normals);
-        if (cache.size > 80) cache.clear();
-        cache.set(key, m);
+        const chars = mapChars(m);
+        if (chars <= 4194304) {
+            while (cache.size && (cache.size >= 80 || cachedChars + chars > 4194304)) {
+                const first = cache.keys().next().value; cachedChars -= mapChars(cache.get(first)); cache.delete(first);
+            }
+            cache.set(key, m); cachedChars += chars;
+        }
     }
+    else { cache.delete(key); cache.set(key, m); }
     return m;
 }
-export function clearMaps() { cache.clear(); }
+export function clearMaps() { cache.clear(); cachedChars = 0; }
 
 // 光源方向 → 颜色矩阵：输出白色，透明度 = 法线 · 光源方向（sign=-1 时取对面那条反光）。0=右，90=上，135=左上
 export function lightRow(deg, sign) {

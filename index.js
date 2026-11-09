@@ -21,7 +21,7 @@ window.__ilgLoaded = new URL('.', import.meta.url).pathname;
 
 let studioUI = null;
 const MODULE = 'iosLiquidGlass';
-const BUILD_VERSION = '1.4.5-test.16';
+const BUILD_VERSION = '1.4.5-test.17';
 const NS = 'http://www.w3.org/2000/svg';
 const ctx = SillyTavern.getContext();
 
@@ -844,7 +844,7 @@ function radiusOf(el, w, h) {
 // 位移贴图：中心灰色=不动；越靠近圆角矩形边缘越向内取样（R=水平，G=垂直）
 function makeMap(w, h, r, bevel) {
     const key = [w, h, Math.round(r), bevel, S.curve].join('|');
-    if (cache.has(key)) return cache.get(key);
+    if (cache.has(key)) { const value = cache.get(key); cache.delete(key); cache.set(key, value); return value; }
     const area = w * h;
     const k = area > 400000 ? 0.33 : area > 120000 ? 0.5 : 1;
     const cw = Math.max(2, Math.round(w * k)), ch = Math.max(2, Math.round(h * k));
@@ -877,7 +877,7 @@ function makeMap(w, h, r, bevel) {
     }
     c2.putImageData(img, 0, 0);
     const url = cv.toDataURL('image/png');
-    if (cache.size > 120) cache.clear();
+    if (cache.size >= 120) cache.delete(cache.keys().next().value);
     cache.set(key, url);
     return url;
 }
@@ -1747,7 +1747,7 @@ function ballSdfOn() {
 function ballMaterial() {
     const R0 = ballSize() / 2, web = webStyleEnabled();
     const key = [web ? 'w' : 'p', R0, web ? normalizeWebPreset(S.webPreset)
-        : [S.profile, S.pIor, S.pMagnify, S.pBezel, S.pThickness, S.pStrength, S.pAberration, S.barBlur, S.pSaturate, S.pBrightness, S.pContrast, S.pLight].join(',')].join('|');
+        : [S.profile, S.pIor, S.pMagnify, S.pBezel, S.pThickness, S.pStrength, S.pAberration, S.barBlur, S.pSaturate, S.pBrightness, S.pContrast].join(',')].join('|');
     if (ballMat?.key === key) return ballMat;
     if (web) {
         const preset = normalizeWebPreset(S.webPreset);
@@ -1766,9 +1766,9 @@ function hideBridge() {
     ball.classList.remove('ilg-ball-fused');
 }
 // 按小球此刻真实的位置和大小（含拖动放大 / 按下缩小）画玻璃
-function updateFuse() {
+function updateFuse(geometry) {
     if (!(S.enabled && S.floatBall) || !ball.isConnected) { hideBridge(); ballGlass.hide(); return; }
-    const r = ball.getBoundingClientRect(), R = r.width / 2, cx = r.left + R, cy = r.top + R;
+    const r = geometry || ball.getBoundingClientRect(), R = r.width / 2, cx = r.left + R, cy = r.top + R;
     const list = fuseList || (fuseList = fuseCandidates());
     if (ballSdfOn()) {
         hideBridge();
@@ -1776,7 +1776,7 @@ function updateFuse() {
         const near = n && n.dist - R < SMIN_K / 2 + 2 ? n : null;
         try {
             ballGlass.paint({ cx, cy, R }, near && { el: near.t.el, l: near.t.r.left, t: near.t.r.top, r: near.t.r.right, b: near.t.r.bottom, rad: near.t.rad,
-                sx: near.sx, sy: near.sy, nx: near.nx, ny: near.ny }, ballMaterial(), SMIN_K, !!ballDrag?.moved || !!followRaf);
+                sx: near.sx, sy: near.sy, nx: near.nx, ny: near.ny }, ballDrag?.material || ballMaterial(), SMIN_K, !!ballDrag?.moved || !!followRaf);
         } catch (error) {
             // 贴图生成失败（画布受限等）：这次会话里退回颈部补片
             console.warn('[NVWA] 悬浮小球融合玻璃不可用，退回颈部补片。', error);
@@ -1805,7 +1805,7 @@ function updateFuse() {
     ball.classList.add('ilg-ball-fused');
 }
 // 预设 / 滑块改了：小球的贴图跟着重算（repaintAll / repaintVisible 调它）
-ballRefresh = () => { if (ball.isConnected && ballSdfOn()) { ballMat = null; updateFuse(); } };
+ballRefresh = () => { if (ball.isConnected && ballSdfOn()) { ballMat = null; if (ballDrag) { ballDrag.material = null; ballDrag.rect = null; } updateFuse(); } };
 // 松手后的吸边 / 贴靠、按下缩放都是 CSS 过渡，这期间每帧按小球实际位置跟着画（拉开时颈部会自己捏断）；最后一帧用全分辨率
 let followRaf = 0;
 function followFuse(ms = 420) {
@@ -1840,7 +1840,7 @@ let ballDrag = null, ballDraggedAt = 0, dragRaf = 0;
 ball.addEventListener('pointerdown', e => {
     if (e.button > 0) return;
     const r = ball.getBoundingClientRect();
-    ballDrag = { id: e.pointerId, sx: e.clientX, sy: e.clientY, dx: e.clientX - r.left, dy: e.clientY - r.top, moved: false, x: r.left, y: r.top };
+    ballDrag = { id: e.pointerId, sx: e.clientX, sy: e.clientY, dx: e.clientX - r.left, dy: e.clientY - r.top, moved: false, x: r.left, y: r.top, bounds: ballBounds(false), material: ballSdfOn() ? ballMaterial() : null };
     // 按下就抓住指针：手快一下甩出球外，后面的移动事件也还归它
     try { ball.setPointerCapture(e.pointerId); } catch { /* 指针已经不在了 */ }
     if (ballSdfOn()) followFuse(220);
@@ -1850,6 +1850,8 @@ ball.addEventListener('pointermove', e => {
     if (!ballDrag.moved) {
         if (Math.hypot(e.clientX - ballDrag.sx, e.clientY - ballDrag.sy) < 6) return;
         ballDrag.moved = true;
+        ballDrag.measureUntil = performance.now() + 220;
+        ballDrag.rect = null;
         fuseList = fuseCandidates();
         bridgeTint = getComputedStyle(ball).backgroundColor;
         cancelAnimationFrame(followRaf);
@@ -1859,9 +1861,21 @@ ball.addEventListener('pointermove', e => {
     if (!dragRaf) dragRaf = requestAnimationFrame(() => {
         dragRaf = 0;
         if (!ballDrag) return;
-        const p = clampFree(ballDrag.x, ballDrag.y);
+        // Read before writing the position. The fusion renderer must not force a second layout.
+        const bounds = ballDrag.bounds;
+        // Once the press/drag scale settles, translation cannot change its bounds.
+        // Capture one final rectangle after the transition, then reuse its local offset.
+        if (!ballDrag.rect?.settled) {
+            const r = ball.getBoundingClientRect();
+            ballDrag.rect = { ox: r.left - Math.round(ballPos.x), oy: r.top - Math.round(ballPos.y), width: r.width, height: r.height, settled: performance.now() >= ballDrag.measureUntil };
+        }
+        const cached = ballDrag.rect, r = { left: Math.round(ballPos.x) + cached.ox, top: Math.round(ballPos.y) + cached.oy, width: cached.width, height: cached.height };
+        if (!fuseList) fuseList = fuseCandidates();
+        if (!ballDrag.material && ballSdfOn()) ballDrag.material = ballMaterial();
+        const p = {x: clampTo(ballDrag.x, bounds.minX, bounds.maxX), y: clampTo(ballDrag.y, bounds.minY, bounds.maxY)};
+        const geometry = {left:r.left + Math.round(p.x) - Math.round(ballPos.x), top:r.top + Math.round(p.y) - Math.round(ballPos.y), width:r.width, height:r.height};
         setBall(p.x, p.y);
-        updateFuse();
+        updateFuse(geometry);
     });
 });
 function endBallDrag(e) {
@@ -1888,11 +1902,16 @@ ball.addEventListener('pointerup', endBallDrag);
 ball.addEventListener('pointercancel', endBallDrag);
 // 拖完松手浏览器还会补一次 click，350 毫秒内的那次不算点
 ball.addEventListener('click', () => { if (performance.now() - ballDraggedAt > 350) openAppearancePanel(); });
-onViewportChange(() => { if (ball.isConnected && !ballDrag) restoreBall(true); });
+onViewportChange(() => { if (ballDrag) { ballDrag.bounds = ballBounds(false); ballDrag.material = null; ballDrag.rect = null; fuseList = null; } else if (ball.isConnected) restoreBall(true); });
 // 输入框打字变高、顶栏换行时，贴着它的小球跟着挪
 const ballRO = new ResizeObserver(() => { if (ball.isConnected && !ballDrag) restoreBall(true); });
 function applyBall() {
     if (!(S.enabled && S.floatBall)) {
+        cancelAnimationFrame(dragRaf); dragRaf = 0;
+        cancelAnimationFrame(followRaf); followRaf = 0;
+        const pointer = ballDrag?.id; ballDrag = null;
+        ball.classList.remove('ilg-ball-drag');
+        if (pointer !== undefined && ball.hasPointerCapture(pointer)) ball.releasePointerCapture(pointer);
         if (items.has(ball)) untrack(ball);
         ballRO.disconnect();
         ball.remove(); bridge.remove(); neckShade.remove(); ballGlass.remove();
@@ -1906,6 +1925,7 @@ function applyBall() {
     if (sdf) { if (items.has(ball)) untrack(ball); }
     else { ballGlass.remove(); if (!items.has(ball)) track(ball, 'bar'); }
     bridgeTint = ''; ballMat = null;
+    if (ballDrag) ballDrag.material = null;
     ['form_sheld', 'top-bar'].forEach(id => { const el = document.getElementById(id); if (el) ballRO.observe(el); });
     restoreBall();
 }
