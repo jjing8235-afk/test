@@ -3,7 +3,7 @@
 export function createGlassLighting({onPoint, onStatus = () => {}}) {
     const media = matchMedia('(prefers-reduced-motion: reduce)');
     let enabled = false, wanted = false, authorized = false, attached = false, blurred = false;
-    let base = null, target = null, filtered = null, last = null, frame = 0, lastEmit = -Infinity, waitTimer = 0;
+    let base = null, target = null, filtered = null, last = null, frame = 0, lastEmit = -Infinity, lastStatus = -Infinity, waitTimer = 0;
     let phase = '手机姿态高光未开启。', failure = '', inFlight = null;
     const clamp = v => Math.max(-1, Math.min(1, v));
     const reduced = () => media.matches || document.body.classList.contains('reduced-motion');
@@ -15,7 +15,7 @@ export function createGlassLighting({onPoint, onStatus = () => {}}) {
     function clear() {
         if (frame) cancelAnimationFrame(frame);
         clearTimeout(waitTimer); waitTimer = frame = 0;
-        target = filtered = last = null; lastEmit = -Infinity; onPoint(null);
+        target = filtered = last = null; lastEmit = lastStatus = -Infinity; onPoint(null);
     }
     function tick(now) {
         frame = 0;
@@ -50,7 +50,12 @@ export function createGlassLighting({onPoint, onStatus = () => {}}) {
             target = next;
             if (!frame) frame = requestAnimationFrame(tick);
         }
-        say('已收到手机姿态；高光正随倾斜轻微变化。');
+        // A bounded live readout distinguishes a subtle render from missing sensor delivery.
+        const now = performance.now();
+        if (now - lastStatus >= 200) {
+            lastStatus = now;
+            say('已收到手机姿态 · 左右 ' + x.toFixed(1) + '° / 前后 ' + y.toFixed(1) + '°');
+        }
     }
     function stop() { if (attached) window.removeEventListener('deviceorientation', orientation); attached = false; }
     function update() {

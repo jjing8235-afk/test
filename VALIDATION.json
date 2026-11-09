@@ -541,6 +541,105 @@
           "stableFilters": true
         }
       ]
+    },
+    {
+      "date": "2026-11-09",
+      "version": "1.4.5-test.16",
+      "scope": "Travelling pose rim independent of fixed reflection lighting; live sensor angle status",
+      "browser": "Isolated desktop Edge against local ST with synthetic ±4 degree events and blocked saves",
+      "automated": [
+        "Three materials and two tones; light cases use a flat pale background",
+        "Readable centre remains stable while the rim changes",
+        "Original/Web geometry, ink, filter and cached map stable; fused-ball contour retained",
+        "Permission denial/failure/insecure/missing-data/late-grant handling and rotation, hidden, no-blur, reduced-motion pause",
+        "11 offline regressions including throttled angle readout"
+      ],
+      "pixelEvidence": [
+        {
+          "material": "liquid-web",
+          "light": false,
+          "edgeMeanRgbDelta": 18.117,
+          "edgeMaxRgbDelta": 121,
+          "stableMaps": true,
+          "stableFilters": true
+        },
+        {
+          "material": "liquid-web",
+          "light": true,
+          "edgeMeanRgbDelta": 17.029,
+          "edgeMaxRgbDelta": 97.67,
+          "stableMaps": true,
+          "stableFilters": true
+        },
+        {
+          "material": "original",
+          "light": false,
+          "edgeMeanRgbDelta": 16.939,
+          "edgeMaxRgbDelta": 113,
+          "stableMaps": true,
+          "stableFilters": true
+        },
+        {
+          "material": "original",
+          "light": true,
+          "edgeMeanRgbDelta": 14.132,
+          "edgeMaxRgbDelta": 84.67,
+          "stableMaps": true,
+          "stableFilters": true
+        },
+        {
+          "material": "css",
+          "light": false,
+          "edgeMeanRgbDelta": 15.389,
+          "edgeMaxRgbDelta": 114,
+          "stableMaps": true,
+          "stableFilters": true
+        },
+        {
+          "material": "css",
+          "light": true,
+          "edgeMeanRgbDelta": 14.608,
+          "edgeMaxRgbDelta": 90,
+          "stableMaps": true,
+          "stableFilters": true
+        }
+      ],
+      "interiorEvidence": [
+        {
+          "tag": "web-dark",
+          "interiorMeanRgbDelta": 0,
+          "max": 0
+        },
+        {
+          "tag": "web-light",
+          "interiorMeanRgbDelta": 0,
+          "max": 0
+        },
+        {
+          "tag": "original-dark",
+          "interiorMeanRgbDelta": 0,
+          "max": 0
+        },
+        {
+          "tag": "original-light",
+          "interiorMeanRgbDelta": 0,
+          "max": 0
+        },
+        {
+          "tag": "css-dark",
+          "interiorMeanRgbDelta": 0,
+          "max": 1
+        },
+        {
+          "tag": "css-light",
+          "interiorMeanRgbDelta": 0,
+          "max": 0
+        }
+      ],
+      "limits": [
+        "Physical phone and WebKit rendering not observed",
+        "Pixel thresholds are regression checks, not human visibility acceptance"
+      ]
     }
   ]
 }
