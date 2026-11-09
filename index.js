@@ -21,7 +21,7 @@ window.__ilgLoaded = new URL('.', import.meta.url).pathname;
 
 let studioUI = null;
 const MODULE = 'iosLiquidGlass';
-const BUILD_VERSION = '1.4.5-test.17';
+const BUILD_VERSION = '1.4.5-test.18';
 const NS = 'http://www.w3.org/2000/svg';
 const ctx = SillyTavern.getContext();
 
@@ -1737,7 +1737,10 @@ function neckGeometry(x1, y1, R, n) {
 let fuseList = null, bridgeTint = '', ballMat = null, ballSdfFailed = false;
 // 融合半径：两块玻璃的空隙小于它的一半时开始长颈部
 const SMIN_K = 30;
-const ballGlass = createBallGlass();
+const ballGlass = createBallGlass({ onError(error) {
+    console.warn('[NVWA] 悬浮小球绘制失败，恢复兼容绘制。', error);
+    ballSdfFailed = true; applyBall();
+} });
 // 一整块融合玻璃：要能做 SVG 背景折射，并且用新版物理引擎或 Web 材质；iOS、仅模糊、旧版引擎退回颈部补片
 function ballSdfOn() {
     return S.enabled && S.floatBall && !ballSdfFailed && S.refract && canRefract() && !isIOS
@@ -2558,6 +2561,7 @@ function iosTrialReport() {
         '美化 / 折射 / iOS 实验: ' + !!S.enabled + ' / ' + !!S.refract + ' / ' + !!S.iosSvgTrial,
         '关闭模糊 / 气泡 / 浅色: ' + document.body.classList.contains('no-blur') + ' / ' + document.body.classList.contains('bubblechat') + ' / ' + root.classList.contains('ilg-light'),
         '引擎: ' + S.engine,
+        '悬浮球计算: ' + JSON.stringify((({mode, reason, suspended, active, pending, workerFrames, syncFrames, coalesced, failures, cacheEntries}) => ({mode, reason, suspended, active, pending, workerFrames, syncFrames, coalesced, failures, cacheEntries}))(ballGlass.status())),
         '控件材质: ' + S.glassStyle,
         'Web 预设: ' + WEB_PRESETS[S.webPreset].label,
         '状态: ' + statusText(),

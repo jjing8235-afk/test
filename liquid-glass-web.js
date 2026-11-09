@@ -35,11 +35,10 @@ export function sampleWebDisplacement(x, y, width, height, recipe = webPresetOf(
     const sy = bendY === 1 ? s : smoothStep(0, 1, smoothStep(.8, 0, d - .15 / (recipe.edge * bendY) / strength));
     return [(ix * s + .5) * vw - vx, (iy * sy + .5) * vh - vy];
 }
-function displacement(width, height, preset, strength, bendY) {
+// Pure displacement samples are also usable inside the ball worker.
+export function sampleWebMap(width, height, preset, strength = 1, bendY = 1) {
     const recipe = webPresetOf(preset);
     const w = Math.max(2, Math.round(width)), h = Math.max(2, Math.round(height));
-    const key = w + 'x' + h + ':' + normalizeWebPreset(preset) + ':' + strength + ':' + bendY;
-    if (maps.has(key)) { const value = maps.get(key); maps.delete(key); maps.set(key, value); return value; }
     // At most one texel per CSS pixel (upstream canvasDPI = 1) and a bounded total; the map stretches to the element.
     const resolution = Math.min(1, 2048 / w, 768 / h, Math.sqrt(393216 / (w * h)));
     const tw = Math.max(2, Math.round(w * resolution)), th = Math.max(2, Math.round(h * resolution));
@@ -51,6 +50,13 @@ function displacement(width, height, preset, strength, bendY) {
     }
     // Upstream normalization: halve the peak, encode raw / half + 0.5, let the byte clamp the far tails.
     const half = Math.max(.0001, max * .5);
+    return { raw, tw, th, half };
+}
+function displacement(width, height, preset, strength, bendY) {
+    const w = Math.max(2, Math.round(width)), h = Math.max(2, Math.round(height));
+    const key = w + 'x' + h + ':' + normalizeWebPreset(preset) + ':' + strength + ':' + bendY;
+    if (maps.has(key)) { const value = maps.get(key); maps.delete(key); maps.set(key, value); return value; }
+    const { raw, tw, th, half } = sampleWebMap(w, h, preset, strength, bendY);
     const image = new ImageData(tw, th);
     for (let i = 0, p = 0; i < image.data.length; i += 4, p += 2) {
         image.data[i] = (raw[p] / half + .5) * 255;

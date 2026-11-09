@@ -1238,6 +1238,537 @@
         "iPhone/WebKit and long-session phone performance not observed",
         "Rounded corners still require new fusion geometry; long-edge cache reuse cannot cover every path"
       ]
+    },
+    {
+      "date": "2026-11-10",
+      "version": "1.4.5-test.18",
+      "scope": "NVWA-only first performance-engine iteration: ball raster/PNG worker plus bounded latest-task queue",
+      "contract": {
+        "consumers": [
+          "SDF floating ball"
+        ],
+        "workerCount": 1,
+        "maxActive": 1,
+        "maxPending": 1,
+        "latestPendingReplacesOld": true,
+        "obsoleteResultsCannotOverwriteCurrent": true,
+        "initialProbeAndUnsupportedPath": "existing synchronous drawing",
+        "busySettledDelayMs": 80,
+        "startupTimeoutMs": 2500,
+        "renderTimeoutMs": 1500,
+        "background": "terminate and resume lazily",
+        "pageLifecycle": "pagehide/pageshow and visibilitychange",
+        "removal": "terminate worker, clear queue/timers/listeners/cache/canvas",
+        "settingsMigration": false,
+        "presetValuesUnchanged": true,
+        "hostAPIsPatched": false,
+        "payload": "local geometry and material only; no chat content"
+      },
+      "automated": [
+        {
+          "name": "ball-drag-regression.mjs",
+          "passed": true,
+          "ms": 182
+        },
+        {
+          "name": "ball-raster-regression.mjs",
+          "passed": true,
+          "ms": 366
+        },
+        {
+          "name": "card-solid-regression.mjs",
+          "passed": true,
+          "ms": 34
+        },
+        {
+          "name": "chat-background-regression.mjs",
+          "passed": true,
+          "ms": 49
+        },
+        {
+          "name": "chat-font-regression.mjs",
+          "passed": true,
+          "ms": 32
+        },
+        {
+          "name": "filter-reuse-regression.mjs",
+          "passed": true,
+          "ms": 34
+        },
+        {
+          "name": "first-line-indent-regression.mjs",
+          "passed": true,
+          "ms": 34
+        },
+        {
+          "name": "form-scroll-regression.mjs",
+          "passed": true,
+          "ms": 45
+        },
+        {
+          "name": "glass-performance-regression.mjs",
+          "passed": true,
+          "ms": 31
+        },
+        {
+          "name": "mobile-performance-regression.mjs",
+          "passed": true,
+          "ms": 85
+        },
+        {
+          "name": "mobile-tilt-response-regression.mjs",
+          "passed": true,
+          "ms": 33
+        },
+        {
+          "name": "popup-boundary-regression.mjs",
+          "passed": true,
+          "ms": 39
+        },
+        {
+          "name": "settings-regression.mjs",
+          "passed": true,
+          "ms": 41
+        },
+        {
+          "name": "tt-compat-regression.mjs",
+          "passed": true,
+          "ms": 45
+        }
+      ],
+      "pixelParity": {
+        "baseline": "1.4.5-test.17",
+        "exactRasterCases": 110,
+        "decodedPNGComparisons": 418
+      },
+      "workerBrowser": {
+        "passed": true,
+        "rasterCases": 110,
+        "decodedPNGComparisons": 418,
+        "staleResultIgnored": true,
+        "latestResultApplied": true,
+        "removalTerminates": true,
+        "syncFallback": true,
+        "backgroundPause": true,
+        "pageLifecycle": true,
+        "arrayBufferEncoder": true,
+        "noCanvasProbe": true,
+        "cspFallback": true
+      },
+      "nativeTouch": {
+        "out": [
+          {
+            "mode": "original",
+            "fused": true,
+            "drag": true,
+            "kind": "phys",
+            "covers": true,
+            "release": true
+          },
+          {
+            "mode": "liquid-web",
+            "fused": true,
+            "drag": true,
+            "kind": "web",
+            "covers": true,
+            "release": true
+          }
+        ],
+        "tap": true,
+        "viewportDuringDrag": true,
+        "errors": []
+      },
+      "dragMatrix": [
+        {
+          "mode": "original",
+          "key": "natural",
+          "result": {
+            "free": {
+              "avg": 19.56,
+              "p95": 43.8,
+              "png": 0,
+              "pngMs": 0,
+              "by": {}
+            },
+            "fused": {
+              "avg": 24.03,
+              "p95": 48.1,
+              "png": 0,
+              "pngMs": 0,
+              "by": {}
+            }
+          }
+        },
+        {
+          "mode": "original",
+          "key": "ultra",
+          "result": {
+            "free": {
+              "avg": 18.54,
+              "p95": 28.9,
+              "png": 0,
+              "pngMs": 0,
+              "by": {}
+            },
+            "fused": {
+              "avg": 22.79,
+              "p95": 43.9,
+              "png": 0,
+              "pngMs": 0,
+              "by": {}
+            }
+          }
+        },
+        {
+          "mode": "original",
+          "key": "depth",
+          "result": {
+            "free": {
+              "avg": 17.66,
+              "p95": 27.1,
+              "png": 0,
+              "pngMs": 0,
+              "by": {}
+            },
+            "fused": {
+              "avg": 22.36,
+              "p95": 44.5,
+              "png": 0,
+              "pngMs": 0,
+              "by": {}
+            }
+          }
+        },
+        {
+          "mode": "original",
+          "key": "thin",
+          "result": {
+            "free": {
+              "avg": 18.18,
+              "p95": 32.6,
+              "png": 0,
+              "pngMs": 0,
+              "by": {}
+            },
+            "fused": {
+              "avg": 22.98,
+              "p95": 46.9,
+              "png": 0,
+              "pngMs": 0,
+              "by": {}
+            }
+          }
+        },
+        {
+          "mode": "original",
+          "key": "standard",
+          "result": {
+            "free": {
+              "avg": 17.39,
+              "p95": 28.5,
+              "png": 0,
+              "pngMs": 0,
+              "by": {}
+            },
+            "fused": {
+              "avg": 21.75,
+              "p95": 42.1,
+              "png": 0,
+              "pngMs": 0,
+              "by": {}
+            }
+          }
+        },
+        {
+          "mode": "original",
+          "key": "thick",
+          "result": {
+            "free": {
+              "avg": 18.58,
+              "p95": 26.9,
+              "png": 0,
+              "pngMs": 0,
+              "by": {}
+            },
+            "fused": {
+              "avg": 22.43,
+              "p95": 46.7,
+              "png": 0,
+              "pngMs": 0,
+              "by": {}
+            }
+          }
+        },
+        {
+          "mode": "original",
+          "key": "extreme",
+          "result": {
+            "free": {
+              "avg": 17.46,
+              "p95": 21.9,
+              "png": 0,
+              "pngMs": 0,
+              "by": {}
+            },
+            "fused": {
+              "avg": 23.14,
+              "p95": 46.9,
+              "png": 0,
+              "pngMs": 0,
+              "by": {}
+            }
+          }
+        },
+        {
+          "mode": "liquid-web",
+          "key": "clear",
+          "result": {
+            "free": {
+              "avg": 16.95,
+              "p95": 18.7,
+              "png": 0,
+              "pngMs": 0,
+              "by": {}
+            },
+            "fused": {
+              "avg": 21.56,
+              "p95": 42.4,
+              "png": 0,
+              "pngMs": 0,
+              "by": {}
+            }
+          }
+        },
+        {
+          "mode": "liquid-web",
+          "key": "thin",
+          "result": {
+            "free": {
+              "avg": 18.17,
+              "p95": 22.8,
+              "png": 0,
+              "pngMs": 0,
+              "by": {}
+            },
+            "fused": {
+              "avg": 21.89,
+              "p95": 41.5,
+              "png": 0,
+              "pngMs": 0,
+              "by": {}
+            }
+          }
+        },
+        {
+          "mode": "liquid-web",
+          "key": "soft",
+          "result": {
+            "free": {
+              "avg": 17.33,
+              "p95": 27.6,
+              "png": 0,
+              "pngMs": 0,
+              "by": {}
+            },
+            "fused": {
+              "avg": 21.74,
+              "p95": 42.4,
+              "png": 0,
+              "pngMs": 0,
+              "by": {}
+            }
+          }
+        },
+        {
+          "mode": "liquid-web",
+          "key": "crystal",
+          "result": {
+            "free": {
+              "avg": 16.76,
+              "p95": 18.2,
+              "png": 0,
+              "pngMs": 0,
+              "by": {}
+            },
+            "fused": {
+              "avg": 22.13,
+              "p95": 42.3,
+              "png": 0,
+              "pngMs": 0,
+              "by": {}
+            }
+          }
+        },
+        {
+          "mode": "css",
+          "key": "blur",
+          "result": {
+            "free": {
+              "avg": 16.85,
+              "p95": 29,
+              "png": 0,
+              "pngMs": 0,
+              "by": {}
+            },
+            "fused": {
+              "avg": 17.47,
+              "p95": 27.4,
+              "png": 0,
+              "pngMs": 0,
+              "by": {}
+            }
+          }
+        }
+      ],
+      "gestureCleanup": {
+        "cleared": true,
+        "cancelled": true,
+        "recreated": true
+      },
+      "viewportAudits": [
+        {
+          "viewport": [
+            320,
+            740
+          ],
+          "presetTransitions": 22,
+          "finite": true,
+          "states": [
+            {
+              "name": "noShadows",
+              "sdf": true,
+              "shadow": "none"
+            },
+            {
+              "name": "reduced",
+              "sdf": true,
+              "shadow": "block"
+            },
+            {
+              "name": "noBlur",
+              "sdf": false,
+              "shadow": "block"
+            },
+            {
+              "name": "css",
+              "sdf": false
+            }
+          ]
+        },
+        {
+          "viewport": [
+            844,
+            390
+          ],
+          "presetTransitions": 22,
+          "finite": true,
+          "states": [
+            {
+              "name": "noShadows",
+              "sdf": true,
+              "shadow": "none"
+            },
+            {
+              "name": "reduced",
+              "sdf": true,
+              "shadow": "block"
+            },
+            {
+              "name": "noBlur",
+              "sdf": false,
+              "shadow": "block"
+            },
+            {
+              "name": "css",
+              "sdf": false
+            }
+          ]
+        }
+      ],
+      "narrowDrag": {
+        "free": {
+          "avg": 24.17,
+          "p95": 45.3,
+          "png": 0,
+          "pngMs": 0,
+          "by": {}
+        },
+        "fused": {
+          "avg": 26.93,
+          "p95": 45,
+          "png": 0,
+          "pngMs": 0,
+          "by": {}
+        }
+      },
+      "cooperativeObservations": {
+        "comparison": "test.18 synchronous fallback vs test.18 worker, simulated input/DOM output/scroll/drag; no model API calls",
+        "browser": "desktop Edge against local ST, saves blocked",
+        "samples": [
+          {
+            "path": "fallback",
+            "pageCpuSlowdown": 1,
+            "simulatedSteps": 120,
+            "meanFrameInterval": 10.43,
+            "p95FrameInterval": 13.7,
+            "maxTimerProbeGap": 32.2,
+            "p95TimerProbeGap": 27.6,
+            "appliedOpticalUpdates": 110,
+            "mainThreadBallPNG": 440,
+            "workerJobsSent": 0,
+            "workerResults": 0,
+            "maxInFlight": 0
+          },
+          {
+            "path": "worker",
+            "pageCpuSlowdown": 1,
+            "simulatedSteps": 120,
+            "meanFrameInterval": 6.29,
+            "p95FrameInterval": 7.6,
+            "maxTimerProbeGap": 29,
+            "p95TimerProbeGap": 19.3,
+            "appliedOpticalUpdates": 45,
+            "mainThreadBallPNG": 0,
+            "workerJobsSent": 97,
+            "workerResults": 96,
+            "maxInFlight": 1
+          },
+          {
+            "path": "fallback",
+            "pageCpuSlowdown": 4,
+            "simulatedSteps": 120,
+            "meanFrameInterval": 52.43,
+            "p95FrameInterval": 71.7,
+            "maxTimerProbeGap": 154.7,
+            "p95TimerProbeGap": 130.7,
+            "appliedOpticalUpdates": 109,
+            "mainThreadBallPNG": 440,
+            "workerJobsSent": 0,
+            "workerResults": 0,
+            "maxInFlight": 0
+          },
+          {
+            "path": "worker",
+            "pageCpuSlowdown": 4,
+            "simulatedSteps": 120,
+            "meanFrameInterval": 39.97,
+            "p95FrameInterval": 58.6,
+            "maxTimerProbeGap": 127.5,
+            "p95TimerProbeGap": 96.6,
+            "appliedOpticalUpdates": 108,
+            "mainThreadBallPNG": 0,
+            "workerJobsSent": 110,
+            "workerResults": 109,
+            "maxInFlight": 1
+          }
+        ]
+      },
+      "limits": [
+        "Physical phone FPS, temperature and battery use not observed",
+        "Worker and page CPU throttling need not be identical; timings are desktop observations, not device-core guarantees",
+        "DOM layout, final glass compositing and other extension rendering still use browser resources",
+        "iOS/CSS compatibility paths do not start the SDF ball worker"
+      ]
     }
   ]
 }

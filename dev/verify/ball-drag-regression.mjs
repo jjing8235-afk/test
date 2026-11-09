@@ -2,12 +2,10 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import { createHash } from 'node:crypto';
-import { lut, LUT_N, physicalFilter, getMaps, clearMaps } from '../../glass2.js';
-import { reflectionPixel } from '../../glass-reflections.js';
-import { sampleWebDisplacement, webMapHalf, FILTER_TAIL } from '../../liquid-glass-web.js';
+import { lut, getMaps, clearMaps } from '../../glass2.js';
 import { webPresetOf } from '../../web-presets.js';
+import { createBallGlass } from '../../ball-glass.js';
 const root = new URL('../../', import.meta.url);
-const source = fs.readFileSync(new URL('ball-glass.js', root), 'utf8').replace(/\r\n/g, '\n');
 const main = fs.readFileSync(new URL('index.js', root), 'utf8').replace(/\r\n/g, '\n');
 let images = [], bodyNodes = [];
 const style = () => ({ setProperty(k, v) { this[k] = v; }, removeProperty(k) { delete this[k]; } });
@@ -22,15 +20,13 @@ function node(type) {
     }
     return el;
 }
-const document = {createElement:node,createElementNS:(_ns,type)=>node(type),body:{classList:{contains:()=>false},append(...nodes){bodyNodes.push(...nodes);nodes.forEach(e=>{e.isConnected=true;});}}};
-const window = {devicePixelRatio:2};globalThis.document=document;globalThis.window=window;
+const document = {addEventListener(){},removeEventListener(){},createElement:node,createElementNS:(_ns,type)=>node(type),body:{classList:{contains:()=>false},append(...nodes){bodyNodes.push(...nodes);nodes.forEach(e=>{e.isConnected=true;});}}};
+const window = {devicePixelRatio:2,addEventListener(){},removeEventListener(){}};globalThis.document=document;globalThis.window=window;globalThis.cancelAnimationFrame=()=>{};
 globalThis.ImageData=class {constructor(w,h){this.data=new Uint8ClampedArray(w*h*4);}};
-const imports = { document,window,lut,LUT_N,physicalFilter,reflectionPixel,sampleWebDisplacement,webMapHalf,FILTER_TAIL };
-function renderer(text=source) { text=text.replace('return { paint, hide, remove };','return { paint, hide, remove, stats: () => ({size:frames.size,pixels:cachedPixels,chars:cachedChars}) };'); return vm.runInNewContext(text.replace(/^import .*;\n/gm,'').replace(/^export /gm,'')+';createBallGlass()', { ...imports }); }
+function renderer() { return createBallGlass({workerFactory:null}); }
 const options={profile:'lens',ior:1.5,magnify:3,bezel:40,thickness:40,strength:1,aberration:3,blur:.25,saturate:1.08,brightness:1.01,contrast:1,specular:0,sharp:4,edgeShade:0,fresnel:0,caustic:0};
 const phys={key:'natural',kind:'phys',R0:24,angle:135,o:options};
 const web={key:'web-clear',kind:'web',R0:24,preset:'clear',recipe:webPresetOf('clear')};
-webMapHalf(48,48,'clear');
 const target=(x=220,vertical=false)=>vertical?{el:{style:style()},l:100,t:-500,r:152,b:1000,rad:26,sx:100,sy:x,nx:-1,ny:0}:{el:{style:style()},l:-500,t:100,r:1000,b:152,rad:26,sx:x,sy:100,nx:0,ny:-1};
 const b={cx:220,cy:76,R:24};let r=renderer();images=[];r.paint(b,null,phys,30,true);assert.equal(images.length,4);const preview=images.slice();
 images=[];r.paint({...b,cx:226,cy:82},null,phys,30,true);assert.equal(images.length,0,'A translated free ball must not rasterise again');
@@ -45,14 +41,7 @@ const t=target();r.paint(b,t,phys,30,false);assert(t.el.style['--ilg-fuse-light-
 document.body.classList.contains=k=>k==='noShadows';images=[];r.paint(b,null,phys,30,true);assert.equal(images.length,3,'Hidden shadows must not generate their inverse mask');
 document.body.classList.contains=()=>false;r.remove();images=[];r.paint(b,null,phys,30,true);assert.equal(images.length,4,'Removing the renderer clears cached frames');r.remove();
 // Returning to a frequently used shape remains cheap under pressure; storage stays bounded.
-r=renderer();for(let i=0;i<50;i++){r.paint(b,null,phys,30,true);r.paint(b,null,{...phys,key:'variant-'+i},30,true);}assert(r.stats().size<=32);assert(r.stats().pixels<=524288);assert(r.stats().chars<=2097152);images=[];r.paint(b,null,phys,30,true);assert.equal(images.length,0);r.remove();assert.equal(r.stats().size,0);
-// Compare actual raster bytes with the exact finite rectangle, not a picture-based tolerance.
-const finite=source.replace(/        \/\/ Across a long straight edge[\s\S]*?        const ballD =/, '        const ballD =');assert.notEqual(finite,source);
-let compared=0;for(const m of [phys,web])for(const low of [true,false])for(const vertical of [false,true])for(const R of [22.08,24,25.92]){
-    const ball=vertical?{cx:76,cy:220,R}:{cx:220,cy:76,R},tar=target(220,vertical);
-    const a=renderer(),ref=renderer(finite);images=[];a.paint(ball,tar,m,30,low);const actual=images.slice();images=[];ref.paint(ball,tar,m,30,low);
-    assert.deepEqual(images,actual,'Canonical straight edges must preserve every raster byte');a.remove();ref.remove();compared++;
-}
+r=renderer();for(let i=0;i<50;i++){r.paint(b,null,phys,30,true);r.paint(b,null,{...phys,key:'variant-'+i},30,true);}assert(r.status().cacheEntries<=32);assert(r.status().cachedPixels<=524288);assert(r.status().cachedChars<=2097152);images=[];r.paint(b,null,phys,30,true);assert.equal(images.length,0);r.remove();assert.equal(r.status().cacheEntries,0);
 // The real event handler coalesces pointer moves and predicts CSS-rounded movement without reading after writes.
 const handler=main.split("ball.addEventListener('pointermove', e => {")[1]?.split('\n});')[0];assert(handler);
 let raf,reads=[],geometry,clock=500;
@@ -67,4 +56,4 @@ clock=1200;reads=[];drag({pointerId:1,clientX:116,clientY:216});raf();assert.dee
 // Exceed the old all-at-once purge thresholds while frequently touching a useful map/table.
 clearMaps();let warm=getMaps(80,32,16,options);for(let i=0;i<100;i++){getMaps(80,32,16,options);getMaps(82+i,32,16,{...options,ior:1.3+i*.001});}assert.equal(getMaps(80,32,16,options),warm,'Cache pressure must retain the recently used preset');
 const table=lut('squircle',8,12,1.5,0);for(let i=0;i<55;i++){lut('squircle',8,12,1.5,0);lut('squircle',8,12,1.3+i*.002,0);}assert.equal(lut('squircle',8,12,1.5,0),table,'LUT pressure must evict one old entry, not every preset');
-console.log(JSON.stringify({passed:true,exactRasterComparisons:compared,checks:['translation and corner invalidation','bounded geometry reuse','preview/full/DPR restoration','reflection and removal cleanup','coalesced rounded drag with reads before writes','map and LUT cache pressure']},null,2));
+console.log(JSON.stringify({passed:true,checks:['translation and corner invalidation','bounded geometry reuse','preview/full/DPR restoration','reflection and removal cleanup','coalesced rounded drag with reads before writes','map and LUT cache pressure']},null,2));
