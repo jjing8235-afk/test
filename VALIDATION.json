@@ -1,137 +1,405 @@
 {
-  "date": "2026-11-04",
-  "version": "1.4.4-test.12",
-  "repository": "https://github.com/jjing8235-afk/test",
-  "branch": "main",
-  "source": {
-    "snapshotVersion": "1.4.4-local.5",
-    "officialBaselineVersion": "1.4.4",
-    "officialBaselineCommit": "b9aa19d815ac633eda9f27970c418be42858a370",
-    "replacementOf": "1.4.4-test.11",
-    "mergeOldTestArchitecture": false
+  "date": "2026-11-05",
+  "version": "1.4.4-local.9",
+  "baseline": "1.4.4-local.8",
+  "scope": "Original/Web isolation, directional lighting, independent Web recipes and unified settings workbench",
+  "upstream": {
+    "repository": "https://github.com/xiaofangstudio/liquid-glass-web",
+    "verifiedMain": "3094add905e60ee5aeb45e806751beb94425dd73",
+    "commitDate": "2026-10-22",
+    "newNamedPresets": false,
+    "localAdaptedPresets": [
+      "clear",
+      "thin",
+      "soft",
+      "crystal"
+    ]
   },
-  "scope": "Publish validated local.5 snapshot as test.12, preserving approved typography/homepage and iOS compatibility material.",
-  "settings": {
-    "namespace": "iosLiquidGlass",
-    "version": 9,
-    "newField": "iosMaterial",
-    "resetExisting": false
-  },
-  "inheritedEvidence": {
-    "sourceVersion": "1.4.4-local.5",
-    "automated": {
-      "browser": "headless Microsoft Edge",
-      "iosIdentityScenarios": 9,
-      "appearanceWidths": [
-        390,
-        1280
-      ],
-      "readingStyles": [
-        "warm",
-        "classic"
-      ],
-      "tones": [
-        "light",
-        "dark"
-      ],
-      "sourceRegressions": [
-        "TT capability (26)",
-        "chat background (48)",
-        "filter reuse",
-        "settings and host contract",
-        "chat font",
-        "first-line indent",
-        "card solid",
-        "manifest",
-        "JS syntax",
-        "typography detector"
-      ]
-    },
-    "live": {
-      "host": "SillyTavern 1.18.0 on Windows",
-      "sourceVersion": "1.4.4-local.5",
-      "homepagePreserved": true,
-      "iphoneVerified": false
-    }
-  },
-  "publicationChecks": {
-    "status": "passed",
-    "date": "2026-11-04",
+  "automated": {
+    "passed": true,
+    "checks": 28,
     "results": [
       {
+        "name": "web-presets-regression",
+        "passed": true,
+        "exitCode": 0,
+        "milliseconds": 78
+      },
+      {
+        "name": "material-isolation-regression",
+        "passed": true,
+        "exitCode": 0,
+        "milliseconds": 52
+      },
+      {
+        "name": "settings-regression",
+        "passed": true,
+        "exitCode": 0,
+        "milliseconds": 61
+      },
+      {
+        "name": "clear-optics-regression",
+        "passed": true,
+        "exitCode": 0,
+        "milliseconds": 89
+      },
+      {
+        "name": "tt-compat-regression",
+        "passed": true,
+        "exitCode": 0,
+        "milliseconds": 65
+      },
+      {
+        "name": "chat-background-regression",
+        "passed": true,
+        "exitCode": 0,
+        "milliseconds": 67
+      },
+      {
+        "name": "filter-reuse-regression",
+        "passed": true,
+        "exitCode": 0,
+        "milliseconds": 50
+      },
+      {
+        "name": "chat-font-regression",
+        "passed": true,
+        "exitCode": 0,
+        "milliseconds": 48
+      },
+      {
+        "name": "first-line-indent-regression",
+        "passed": true,
+        "exitCode": 0,
+        "milliseconds": 50
+      },
+      {
+        "name": "card-solid-regression",
+        "passed": true,
+        "exitCode": 0,
+        "milliseconds": 49
+      },
+      {
+        "name": "popup-boundary-regression",
+        "passed": true,
+        "exitCode": 0,
+        "milliseconds": 55
+      },
+      {
+        "name": "mobile-performance-regression",
+        "passed": true,
+        "exitCode": 0,
+        "milliseconds": 144
+      },
+      {
+        "name": "form-scroll-regression",
+        "passed": true,
+        "exitCode": 0,
+        "milliseconds": 89
+      },
+      {
+        "name": "pose-lighting-browser",
+        "passed": true,
+        "exitCode": 0,
+        "milliseconds": 9659
+      },
+      {
+        "name": "material-isolation-browser",
+        "passed": true,
+        "exitCode": 0,
+        "milliseconds": 15452
+      },
+      {
+        "name": "studio-browser",
+        "passed": true,
+        "exitCode": 0,
+        "milliseconds": 16383
+      },
+      {
         "name": "manifest",
-        "passed": true
+        "passed": true,
+        "exitCode": 0,
+        "milliseconds": 44
       },
       {
-        "name": "settings",
-        "passed": true
+        "name": "syntax-index.js",
+        "passed": true,
+        "exitCode": 0,
+        "milliseconds": 39
       },
       {
-        "name": "tt-compat",
-        "passed": true
+        "name": "syntax-liquid-glass-web.js",
+        "passed": true,
+        "exitCode": 0,
+        "milliseconds": 38
       },
       {
-        "name": "chat-background",
-        "passed": true
+        "name": "syntax-glass-lighting.js",
+        "passed": true,
+        "exitCode": 0,
+        "milliseconds": 38
       },
       {
-        "name": "filter-reuse",
-        "passed": true
+        "name": "syntax-optics-settings.js",
+        "passed": true,
+        "exitCode": 0,
+        "milliseconds": 39
       },
       {
-        "name": "chat-font",
-        "passed": true
+        "name": "syntax-glass2.js",
+        "passed": true,
+        "exitCode": 0,
+        "milliseconds": 45
       },
       {
-        "name": "first-line-indent",
-        "passed": true
+        "name": "syntax-orb.js",
+        "passed": true,
+        "exitCode": 0,
+        "milliseconds": 41
       },
       {
-        "name": "card-solid",
-        "passed": true
+        "name": "syntax-card-clarity.js",
+        "passed": true,
+        "exitCode": 0,
+        "milliseconds": 36
       },
       {
-        "name": "ios-material",
-        "passed": true
+        "name": "syntax-web-presets.js",
+        "passed": true,
+        "exitCode": 0,
+        "milliseconds": 41
       },
       {
-        "name": "syntax:card-clarity.js",
-        "passed": true
+        "name": "syntax-settings-panel.js",
+        "passed": true,
+        "exitCode": 0,
+        "milliseconds": 40
       },
       {
-        "name": "syntax:glass2.js",
-        "passed": true
+        "name": "ios-material-browser",
+        "passed": true,
+        "exitCode": 0,
+        "milliseconds": 7095
       },
       {
-        "name": "syntax:index.js",
-        "passed": true
-      },
-      {
-        "name": "syntax:orb.js",
-        "passed": true
-      },
-      {
-        "name": "syntax:install/installer.js",
-        "passed": true
-      },
-      {
-        "name": "syntax:install/build.mjs",
-        "passed": true
-      },
-      {
-        "name": "syntax:dev/verify/ios-material-browser.mjs",
-        "passed": true
-      },
-      {
-        "name": "test-repository-installer-target",
-        "passed": true
+        "name": "liquid-web-browser",
+        "passed": true,
+        "exitCode": 0,
+        "milliseconds": 71753
       }
+    ],
+    "studioCases": 4,
+    "studioSectionViews": 16,
+    "isolationCases": 4,
+    "webCases": 24,
+    "poseCases": 4,
+    "iosIdentityCases": 9,
+    "approvedClearGoldenPoints": 180,
+    "styleDetector": {
+      "newFindings": 0,
+      "preExistingFindings": 15
+    }
+  },
+  "contracts": {
+    "namespace": "iosLiquidGlass",
+    "settingsVersion": 9,
+    "materialRevision": 1,
+    "webPresetIndependent": true,
+    "separateWebFilter": true,
+    "originalShapeRestoredStockOnly": true,
+    "customTuningPreserved": true,
+    "toolbarAppearance": "direct cycle without popover",
+    "diagnostics": "direct UTF-8 TXT download; chat, draft, names, URLs and credentials excluded",
+    "reducedMotion": "direct light feedback retained; interpolation, springs and transitions disabled"
+  },
+  "live": {
+    "date": "2026-11-05",
+    "developmentStarted": "2026-11-04",
+    "version": "1.4.4-local.9",
+    "host": "SillyTavern 1.18.0 / Windows Edge",
+    "status": "desktop-verified",
+    "state": {
+      "dialogOpen": true,
+      "dialogTone": "light",
+      "draftLength": 0,
+      "iframes": 1,
+      "messages": 1,
+      "oldInlineControls": 0,
+      "reducedMotion": true,
+      "savedToneControl": "dark",
+      "sectionCount": 4,
+      "selectedMaterial": "liquid-web",
+      "selectedWebPreset": "clear",
+      "toolbarMode": "custom",
+      "toolbarPaletteIcon": true,
+      "version": "即时生效，自动保存1.4.4-local.9"
+    },
+    "toolbarCycle": {
+      "light": {
+        "mode": "light",
+        "open": false
+      },
+      "dark": {
+        "mode": "dark",
+        "tone": "dark"
+      },
+      "custom": {
+        "customIconPath": "M12 3a9 9 0 1 0 0 18h1.3a2.2 2.2 0 0 0 1.5-3.8 1.4 1.4 0 0 1 1-2.4H18a3 3 0 0 0 3-3A9 9 0 0 0 12 3Z",
+        "mode": "custom",
+        "open": false
+      }
+    },
+    "recipes": [
+      {
+        "filter": "url(\"#ilg-f1-web\") blur(0.25px) contrast(1.2) brightness(1.05) saturate(1.1)",
+        "selected": "clear"
+      },
+      {
+        "filter": "url(\"#ilg-f1-web\") blur(0.15px) contrast(1.1) brightness(1.03) saturate(1.06)",
+        "selected": "thin"
+      },
+      {
+        "filter": "url(\"#ilg-f1-web\") blur(0.55px) contrast(1.12) brightness(1.04) saturate(1.08)",
+        "selected": "soft"
+      },
+      {
+        "filter": "url(\"#ilg-f1-web\") blur(0.25px) contrast(1.17) brightness(1.04) saturate(1.12)",
+        "selected": "crystal"
+      }
+    ],
+    "originalComposer": {
+      "background": "rgba(255, 255, 255, 0.13)",
+      "classes": "ilg-glass ilg-sheen ilg-phys",
+      "filter": "url(\"#ilg-f1\")",
+      "rect": {
+        "bottom": 1257,
+        "height": 52,
+        "left": 636.5,
+        "right": 1877.5,
+        "top": 1205,
+        "width": 1241,
+        "x": 636.5,
+        "y": 1205
+      },
+      "reducedMotion": true,
+      "rimOpacity": "0.78",
+      "transform": "none"
+    },
+    "mouse": [
+      {
+        "material": "original",
+        "left": {
+          "angle": "-63.3deg",
+          "background": "rgba(255, 255, 255, 0.13)",
+          "filter": "url(\"#ilg-f1\")",
+          "rect": {
+            "bottom": 1257,
+            "height": 52,
+            "left": 636.5,
+            "right": 1877.5,
+            "top": 1205,
+            "width": 1241,
+            "x": 636.5,
+            "y": 1205
+          }
+        },
+        "right": {
+          "angle": "62.9deg",
+          "filter": "url(\"#ilg-f1\")",
+          "rect": {
+            "bottom": 1257,
+            "height": 52,
+            "left": 636.5,
+            "right": 1877.5,
+            "top": 1205,
+            "width": 1241,
+            "x": 636.5,
+            "y": 1205
+          },
+          "transform": "none"
+        },
+        "responded": true,
+        "geometryStable": true,
+        "filterStable": true
+      },
+      {
+        "material": "liquid-web",
+        "left": {
+          "angle": "-63.3deg",
+          "filter": "url(\"#ilg-f1-web\") blur(0.25px) contrast(1.2) brightness(1.05) saturate(1.1)",
+          "rect": {
+            "bottom": 1257,
+            "height": 52,
+            "left": 636.5,
+            "right": 1877.5,
+            "top": 1205,
+            "width": 1241,
+            "x": 636.5,
+            "y": 1205
+          }
+        },
+        "right": {
+          "angle": "62.9deg",
+          "filter": "url(\"#ilg-f1-web\") blur(0.25px) contrast(1.2) brightness(1.05) saturate(1.1)",
+          "rect": {
+            "bottom": 1257,
+            "height": 52,
+            "left": 636.5,
+            "right": 1877.5,
+            "top": 1205,
+            "width": 1241,
+            "x": 636.5,
+            "y": 1205
+          },
+          "transform": "none"
+        },
+        "responded": true,
+        "geometryStable": true,
+        "filterStable": true
+      }
+    ],
+    "diagnostic": {
+      "downloadObservedOnDisk": true,
+      "bytes": 8303,
+      "driverDownloadEvent": "Not received; actual Downloads file was read and verified"
+    },
+    "logs": [],
+    "physicalIphoneVerified": false,
+    "published": false,
+    "settings": {
+      "changedFields": [
+        "pStrength",
+        "pThickness",
+        "pBezel",
+        "pIor",
+        "webPreset",
+        "materialRevision"
+      ],
+      "unrelatedPreferencesPreserved": true,
+      "installerWroteSettings": false,
+      "restoredOriginalPreset": "depth",
+      "refractionShapeFields": [
+        "pStrength",
+        "pThickness",
+        "pBezel",
+        "pIor"
+      ]
+    },
+    "diagnosticsPrivacy": {
+      "versionPresent": true,
+      "characterNameExcluded": true,
+      "wallpaperAddressExcluded": true,
+      "credentialShapeExcluded": true
+    },
+    "driverNotes": [
+      "Browser download event timed out; the actual downloaded TXT was independently read and verified",
+      "One refractive-chat screenshot request timed out; subsequent DOM interactions succeeded and application logs were empty"
     ]
   },
   "limits": [
-    "Desktop simulated iOS identity does not prove Apple WebKit/iPhone rendering.",
-    "No physical iPhone installation, keyboard, safe-area or sustained-performance acceptance.",
-    "Compatibility material does not displace background pixels.",
-    "No universal ST/TT version compatibility claim."
-  ]
+    "Physical iPhone sensor, WebKit rendering, keyboard/safe-area and long-session performance pending",
+    "Desktop iOS identities and synthetic sensors are not physical mobile acceptance",
+    "Local only; no GitHub publication"
+  ],
+  "developmentStarted": "2026-11-04"
 }

@@ -65,9 +65,13 @@ for (const mode of ['glass', 'transparent']) {
                         KIND: { mes: { blur: () => 3 } }, refractAllowed: () => allowed,
                         canRefract: () => allowed, isIOS: false, radiusOf: () => 22,
                         setPhys(node, _item, on) { node.classList.toggle('ilg-phys', on); },
+                        measure: () => ({ w: 300, h: 120, r: 22 }),
+                        cssGlassActive: () => false, webStyleEnabled: () => false, controlSurface: () => false, controlReadable: () => false,
+                        webGlass: { release() {}, paint() {} }, reflections: { release() {}, paint() {} },
+                        foldedMenuSurface: () => false,
                         buildPhysical() { calls.push('physical'); }, buildFilter() { calls.push('legacy'); },
                     };
-                    const api = vm.runInNewContext(bodyOf('messageSurface') + '\n' + bodyOf('paint') + '\n({paint,messageSurface})', sandbox);
+                    const api = vm.runInNewContext(bodyOf('messageSurface') + '\n' + bodyOf('surfaceBlur') + '\n' + bodyOf('paint') + '\n({paint,messageSurface})', sandbox);
                     api.paint(el);
                     const surface = it.backdrop || el;
                     assert.equal(!!it.backdrop, kind !== 'plain');
@@ -79,7 +83,7 @@ for (const mode of ['glass', 'transparent']) {
                         assert.deepEqual(calls, [engine]);
                         assert(surface.style.backdropFilter.includes('url(#test-filter)'));
                     } else {
-                        assert(surface.style.backdropFilter.startsWith('blur(' + (mode === 'transparent' ? 0 : 3) + 'px)'));
+                        assert(surface.style.backdropFilter.startsWith('blur(' + (mode === 'transparent' ? 0 : 3) + 'px)'), mode + ' ' + kind + ' got ' + surface.style.backdropFilter);
                     }
                     if (kind !== 'plain') {
                         const layer = it.backdrop;
@@ -102,10 +106,12 @@ for (const mode of ['glass', 'transparent']) {
 const physical = bodyOf('buildPhysical');
 const settings = { chatBackground: 'glass', mesBlur: 3, profile: 'lens' };
 const builds = [];
-const build = vm.runInNewContext(physical + '\n buildPhysical', {
+const build = vm.runInNewContext(bodyOf('surfaceBlur') + '\n' + physical + '\n buildPhysical', {
     S: settings,
-    KIND: { mes: { blur: () => settings.mesBlur }, bar: { blur: () => 1 } },
-    getMaps: () => ({}), lightAngle: () => 135,
+    KIND: { mes: { blur: () => settings.mesBlur, bezelK: 1, thickK: 1, k: 1 }, bar: { blur: () => 1, bezelK: 1, thickK: 1, k: 1 } },
+    ARC_ONLY: {},
+    getMaps: () => ({}), lightAngle: () => 135, controlReadable: () => false, foldedMenuSurface: () => false,
+    resizePhysicalFilter: () => false,
     filterOf: it => it.filter ||= { querySelectorAll: () => [] },
     physicalFilter(_maps, options) { builds.push(options.blur); return ''; },
 });

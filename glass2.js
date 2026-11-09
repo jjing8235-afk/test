@@ -1,3 +1,4 @@
+import { controlCoreFilter } from './control-material.js';
 /* 液态玻璃 v2 物理引擎（从液态玻璃实验台 glass2.js 移植，去掉了实验台专用的水滴/放大镜/降级高光图）
    折射：按玻璃截面（边缘弧面 + 厚度 + 折射率）用斯涅尔定律算出每个像素该往哪偏，生成位移贴图
    高光：同一个弧面的法线生成法线贴图，滤镜里拿光源方向做点乘；换光源只改颜色矩阵，不用重画贴图 */
@@ -8,7 +9,7 @@ const PROFILES = {
     circle: x => { const a = 1 - x, b = 1 - a * a; return [Math.sqrt(b), a / Math.sqrt(b)]; },
     soft: x => { const a = 1 - x; return [1 - a * a, 2 * a]; },
 };
-const LUT_N = 256;
+export const LUT_N = 256;
 const luts = new Map();
 /* 放大镜截面：不按物理折射算，直接规定“屏幕上离边缘 s 处取样离边缘 u(s) 处”。
    u 的斜率从边缘的 1/mag 平滑升到弧带内侧的 1（smoothstep），斜率始终在 0~1 之间：
@@ -23,7 +24,7 @@ function lensLut(bezel, mag) {
     }
     return { d, s };
 }
-function lut(profile, bezel, thick, ior, mag) {
+export function lut(profile, bezel, thick, ior, mag) {
     const key = [profile, bezel, thick, ior, mag].join('|');
     if (luts.has(key)) return luts.get(key);
     if (profile === 'lens') {
@@ -260,5 +261,6 @@ export function physicalFilter(m, o, w, h, angle) {
         }
         html += `<feBlend in="${acc}" in2="${out}" mode="screen"/>`;
     }
+    if (o.controlCore) html += controlCoreFilter(out, w, h, o.controlRadius, o.controlBlur);
     return html;
 }

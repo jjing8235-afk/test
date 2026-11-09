@@ -35,6 +35,7 @@ const S = { cardSolid: true };
 const message = { classList: { contains: () => true, toggle() {} } };
 const api = vm.runInNewContext(parse + '\n' + block + '\n' + card + '\n({tagCard})', {
     S, root: { classList: { contains: () => false } }, getComputedStyle: computed, paint() {},
+    MutationObserver: class { observe() {} disconnect() {} }, chatEl: { querySelectorAll: () => [] },
 });
 const test = children => api.tagCard({ children, closest: () => message });
 const frame = node('iframe');
