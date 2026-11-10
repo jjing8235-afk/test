@@ -3,6 +3,8 @@
    折射引擎有两套：新版物理折射（glass2.js，实验台 v2 移植）和旧版（本文件里的 makeMap / buildFilter） */
 import { getMaps, clearMaps, physicalFilter, resizePhysicalFilter } from './glass2.js';
 import { makeOrb } from './orb.js';
+import { positionFixed } from './fixed-position.js';
+import { createMessageRendering } from './message-rendering.js';
 import { createHostInteractionState } from './host-interaction-state.js';
 import { migrateClearOptics, restoreOriginalRefraction } from './optics-settings.js';
 import { WEB_PRESETS, normalizeWebPreset, webPresetOf } from './web-presets.js';
@@ -22,7 +24,7 @@ window.__ilgLoaded = new URL('.', import.meta.url).pathname;
 
 let studioUI = null;
 const MODULE = 'iosLiquidGlass';
-const BUILD_VERSION = '1.4.5-test.19';
+const BUILD_VERSION = '1.4.5-test.20';
 const NS = 'http://www.w3.org/2000/svg';
 const ctx = SillyTavern.getContext();
 
@@ -1124,6 +1126,7 @@ const ro = new ResizeObserver(entries => {
     const now = [];
     const streaming = document.body.dataset.generating === 'true';
     for (const e of entries) {
+        messageRendering.resize(e.target, e.contentRect.height, e.contentRect.width);
         if (streaming && items.get(e.target)?.kind === 'mes') { mesLate.add(e.target); continue; }
         now.push(e.target);
     }
@@ -1136,6 +1139,7 @@ const io = new IntersectionObserver(entries => {
     const changed = [];
     for (const e of entries) {
         const it = items.get(e.target);
+        messageRendering.visibility(e.target, e.isIntersecting);
         if (!it || it.visible === e.isIntersecting) continue;
         it.visible = e.isIntersecting;
         if (it.visible) visibleItems.add(e.target);
@@ -1158,11 +1162,12 @@ function track(el, kind) {
         it.posFixed = true;
     }
     ro.observe(el);
-    if (kind === 'mes') io.observe(el);
+    if (kind === 'mes') { messageRendering.track(el); io.observe(el); }
     paint(el);
 }
 
 function untrack(el) {
+    messageRendering.release(el);
     reflections.release(el);
     webGlass.release(el);
     const it = items.get(el);
@@ -1666,8 +1671,10 @@ function ballBounds(edge) {
 }
 function setBall(x, y) {
     ballPos = { x, y };
-    ball.style.left = `${Math.round(x)}px`;
-    ball.style.top = `${Math.round(y)}px`;
+    const firstTranslate = 'translate' in ball.style && !ball.style.translate;
+    if (firstTranslate) ball.style.transition = 'none';
+    positionFixed(ball, Math.round(x), Math.round(y));
+    if (firstTranslate) { ball.getBoundingClientRect(); ball.style.transition = ''; }
 }
 const clampFree = (x, y) => { const b = ballBounds(false); return { x: clampTo(x, b.minX, b.maxX), y: clampTo(y, b.minY, b.maxY) }; };
 // 自由停放：不压在输入区上，压到了就挪到它上面
@@ -1802,10 +1809,12 @@ function updateFuse(geometry) {
     // 拖动时用按下那一刻取的底色（省得每帧算样式）；其余时候每次重取，换明暗后颈部跟着变
     if (!bridgeTint || !ballDrag) bridgeTint = getComputedStyle(ball).backgroundColor;
     const { x, y, w, h } = g.box;
-    Object.assign(bridge.style, { left: `${x}px`, top: `${y}px`, width: `${w}px`, height: `${h}px`, clipPath: `path('${g.path(x, y)}')`, backgroundColor: bridgeTint });
+    positionFixed(bridge, x, y);
+    Object.assign(bridge.style, { width: `${w}px`, height: `${h}px`, clipPath: `path('${g.path(x, y)}')`, backgroundColor: bridgeTint });
     bridge.style.setProperty('--ilg-neck-k', g.k.toFixed(3));
     bridge.hidden = false;
-    Object.assign(neckShade.style, { display: '', left: `${x - SHADE_PAD}px`, top: `${y - SHADE_PAD}px`, width: `${w + SHADE_PAD * 2}px`, height: `${h + SHADE_PAD * 2}px` });
+    positionFixed(neckShade, x - SHADE_PAD, y - SHADE_PAD);
+    Object.assign(neckShade.style, { display: '', width: `${w + SHADE_PAD * 2}px`, height: `${h + SHADE_PAD * 2}px` });
     neckShade.setAttribute('viewBox', `0 0 ${w + SHADE_PAD * 2} ${h + SHADE_PAD * 2}`);
     shadePath.setAttribute('d', g.path(x - SHADE_PAD, y - SHADE_PAD));
     ball.classList.add('ilg-ball-fused');
@@ -2434,6 +2443,7 @@ function applyRoot() {
 // 输入框高度变化时同步底部留白；仅在扩展启用且宿主允许自动滚动时保持贴底
 const form = document.getElementById('form_sheld');
 const chatEl = document.getElementById('chat');
+const messageRendering = createMessageRendering(chatEl, { onReset(el) { if (items.has(el)) { ro.unobserve(el); ro.observe(el); } } });
 const cardClarity = createCardTextClarity(chatEl);
 new ResizeObserver(() => {
     const atBottom = chatEl.scrollHeight - chatEl.scrollTop - chatEl.clientHeight < 40;
@@ -2566,6 +2576,7 @@ function iosTrialReport() {
         '美化 / 折射 / iOS 实验: ' + !!S.enabled + ' / ' + !!S.refract + ' / ' + !!S.iosSvgTrial,
         '关闭模糊 / 气泡 / 浅色: ' + document.body.classList.contains('no-blur') + ' / ' + document.body.classList.contains('bubblechat') + ' / ' + root.classList.contains('ilg-light'),
         '引擎: ' + S.engine,
+        '消息渲染: ' + JSON.stringify(messageRendering.status()),
         '悬浮球计算: ' + JSON.stringify((({mode, reason, suspended, active, pending, workerFrames, syncFrames, coalesced, failures, cacheEntries}) => ({mode, reason, suspended, active, pending, workerFrames, syncFrames, coalesced, failures, cacheEntries}))(ballGlass.status())),
         '控件材质: ' + S.glassStyle,
         'Web 预设: ' + WEB_PRESETS[S.webPreset].label,
@@ -3479,8 +3490,8 @@ new MutationObserver(muts => {
         if (text) { dirty.add(text); continue; }
         m.addedNodes.forEach(n => { if (n.nodeType === 1) (n.matches('.mes_text') ? [n] : n.querySelectorAll('.mes_text')).forEach(t => dirty.add(t)); });
     }
-    dirty.forEach(markProse);
-}).observe(chatEl, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style', 'role'], attributeOldValue: true });
+    dirty.forEach(text => { markProse(text); messageRendering.invalidate(text.closest('.mes')); });
+}).observe(chatEl, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['class', 'style', 'role'], attributeOldValue: true });
 chatEl.querySelectorAll('.mes_text').forEach(markProse);
 function queueCards(all) {
     if (!S.enabled) { clearTimeout(cardTimer); cardDirty.clear(); return; }

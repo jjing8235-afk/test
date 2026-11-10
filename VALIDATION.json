@@ -1896,6 +1896,288 @@
         "Headless frame intervals and CDP page CPU slowdown are not physical-phone FPS, INP, battery or thermal measurements",
         "Changes apply to NVWA-owned styling and rendering; ST core and unrelated extensions are not modified"
       ]
+    },
+    {
+      "date": "2026-11-10",
+      "version": "1.4.5-test.20",
+      "scope": "High-floor direct manipulation: fixed overlay translations and native visibility management for distant plain messages",
+      "priority": "Responsive interaction; no new power-saving frame cap",
+      "changes": [
+        "Individual CSS translate for the ball, SDF glass/shadow and legacy neck; preserve press scale, snap transition and older-browser left/top fallback",
+        "Use existing ResizeObserver and 200px IntersectionObserver boundary; cache fractional content height, disable flex shrink while content-visibility:auto is active; retain message DOM",
+        "Restore nearby messages, invalidate on edits, actual width changes, reading typography, host fontScale and font loading; exclude latest reply, fixed/custom renderers, iframes/media, editing and open details",
+        "Disconnect metadata listeners and remove owned markers on untrack; add numeric message-rendering diagnostic counters"
+      ],
+      "syntheticStress": {
+        "hostVersion": "1.18.0",
+        "browser": "desktop Edge headless",
+        "viewport": [
+          390,
+          844
+        ],
+        "messages": 1000,
+        "nodes": 11000,
+        "pageCpuSlowdown": 4,
+        "pointerStepsPerPhase": 100,
+        "before": {
+          "free": {
+            "mean": 36.68297872340624,
+            "p95": 41.700000000186265,
+            "max": 45.90000000037253,
+            "png": 0,
+            "reads": 8,
+            "longCount": 5,
+            "longMax": 68,
+            "fused": false,
+            "perStep": {
+              "RecalcStyleDuration": 4.38967,
+              "LayoutDuration": 4.66038,
+              "ScriptDuration": 1.7145000000000001,
+              "TaskDuration": 42.42376,
+              "LayoutCount": 1.1,
+              "RecalcStyleCount": 1.21
+            }
+          },
+          "fused": {
+            "mean": 48.28191489361702,
+            "p95": 56.40000000037253,
+            "max": 146.8999999994412,
+            "png": 0,
+            "reads": 8,
+            "longCount": 18,
+            "longMax": 64,
+            "fused": true,
+            "perStep": {
+              "RecalcStyleDuration": 9.85662,
+              "LayoutDuration": 5.100119999999999,
+              "ScriptDuration": 3.76402,
+              "TaskDuration": 54.42282999999998,
+              "LayoutCount": 1.17,
+              "RecalcStyleCount": 1.24
+            }
+          }
+        },
+        "after": {
+          "free": {
+            "mean": 15.286170212769921,
+            "p95": 19.09999999962747,
+            "max": 38.799999999813735,
+            "png": 0,
+            "reads": 11,
+            "longCount": 0,
+            "longMax": 0,
+            "fused": false,
+            "perStep": {
+              "RecalcStyleDuration": 4.367030000000001,
+              "LayoutDuration": 0.7415299999999999,
+              "ScriptDuration": 1.67173,
+              "TaskDuration": 20.328840000000003,
+              "LayoutCount": 0.16,
+              "RecalcStyleCount": 1.28
+            }
+          },
+          "fused": {
+            "mean": 26.25744680851262,
+            "p95": 37,
+            "max": 141.1000000005588,
+            "png": 0,
+            "reads": 9,
+            "longCount": 1,
+            "longMax": 58,
+            "fused": true,
+            "perStep": {
+              "RecalcStyleDuration": 9.84794,
+              "LayoutDuration": 2.4623399999999998,
+              "ScriptDuration": 3.1106999999999996,
+              "TaskDuration": 30.856530000000003,
+              "LayoutCount": 0.57,
+              "RecalcStyleCount": 1.32
+            }
+          }
+        },
+        "initialScrollTopBefore": 189460,
+        "initialScrollTopAfter": 189460,
+        "autoManagedMessages": 995,
+        "budget": {
+          "freeP95Ms": 35,
+          "fusedP95Ms": 40,
+          "oldFailed": true,
+          "newPassed": true
+        }
+      },
+      "nativeTouchStress": {
+        "input": "CDP native touch dispatch, 72 moves per phase",
+        "pageCpuSlowdown": 4,
+        "messages": 1000,
+        "before": [
+          {
+            "phase": "free",
+            "events": 72,
+            "frames": 67,
+            "mean": 43.91194029850747,
+            "p95": 54.20000000000073,
+            "max": 87.59999999999854,
+            "eventQueueP95": 71.3999999994412,
+            "released": true,
+            "studioOpen": false
+          },
+          {
+            "phase": "fused",
+            "events": 72,
+            "frames": 67,
+            "mean": 58.156716417910445,
+            "p95": 91.70000000000073,
+            "max": 100.10000000000218,
+            "eventQueueP95": 78.40000000037253,
+            "released": true,
+            "studioOpen": false
+          }
+        ],
+        "after": [
+          {
+            "phase": "free",
+            "events": 72,
+            "frames": 67,
+            "mean": 31.03731343283582,
+            "p95": 37.400000000001455,
+            "max": 37.60000000000218,
+            "eventQueueP95": 50.90000000037253,
+            "released": true,
+            "studioOpen": false
+          },
+          {
+            "phase": "fused",
+            "events": 72,
+            "frames": 67,
+            "mean": 38.750746268656705,
+            "p95": 54.20000000000073,
+            "max": 62.599999999998545,
+            "eventQueueP95": 52,
+            "released": true,
+            "studioOpen": false
+          }
+        ]
+      },
+      "checks": {
+        "offlineRegressions": 16,
+        "renderManagement": {
+          "passed": true,
+          "messages": 243,
+          "initialCulled": 234,
+          "exactInitialHeight": true,
+          "naturalHeightChecks": 12,
+          "offscreenEdit": true,
+          "characterDataEdit": true,
+          "containerResize": true,
+          "fontChanges": true,
+          "richAndIframeExclusion": true,
+          "lateFixedPopup": true,
+          "nativeFind": true,
+          "newReplyLifecycle": true,
+          "translatedScaleGeometry": true,
+          "cleanup": true,
+          "unsupportedFallback": true,
+          "domPreserved": true,
+          "errors": []
+        },
+        "fullHostFloors": [
+          {
+            "floors": 4,
+            "autoMessages": 0,
+            "lifecycle": {
+              "enteringViewport": true,
+              "radiusRestored": true,
+              "blurDisabled": true,
+              "blurRestored": true,
+              "plainModeClean": true,
+              "bubbleModeRestored": true,
+              "insertedTracked": true,
+              "removedClean": true,
+              "disabledClean": true,
+              "renderingDisabledClean": true,
+              "enabledRestored": true
+            }
+          },
+          {
+            "floors": 80,
+            "autoMessages": 73,
+            "lifecycle": {
+              "enteringViewport": true,
+              "radiusRestored": true,
+              "blurDisabled": true,
+              "blurRestored": true,
+              "plainModeClean": true,
+              "bubbleModeRestored": true,
+              "insertedTracked": true,
+              "removedClean": true,
+              "disabledClean": true,
+              "renderingDisabledClean": true,
+              "enabledRestored": true
+            }
+          },
+          {
+            "floors": 240,
+            "autoMessages": 233,
+            "lifecycle": {
+              "enteringViewport": true,
+              "radiusRestored": true,
+              "blurDisabled": true,
+              "blurRestored": true,
+              "plainModeClean": true,
+              "bubbleModeRestored": true,
+              "insertedTracked": true,
+              "removedClean": true,
+              "disabledClean": true,
+              "renderingDisabledClean": true,
+              "enabledRestored": true
+            }
+          }
+        ],
+        "workerRawCases": 110,
+        "workerPNGComparisons": 418,
+        "workerFallbackAndLifecycle": {
+          "passed": true,
+          "rasterCases": 110,
+          "decodedPNGComparisons": 418,
+          "staleResultIgnored": true,
+          "latestResultApplied": true,
+          "removalTerminates": true,
+          "syncFallback": true,
+          "backgroundPause": true,
+          "pageLifecycle": true,
+          "arrayBufferEncoder": true,
+          "noCanvasProbe": true,
+          "cspFallback": true
+        },
+        "presetTransitions": 44,
+        "dragPaths": 12,
+        "mainThreadPNGsDuringDrag": 0,
+        "actualTouchFusionReleaseTapAndRotation": true,
+        "nativeDrawerQRAndIME": [
+          [
+            320,
+            740
+          ],
+          [
+            844,
+            390
+          ]
+        ],
+        "presetValuesUnchanged": true
+      },
+      "sourceHashes": {
+        "index.js": "94d6cba630ac4af6d8c86b90e65fc288a34f1e9281e35cef92f8b00eedcdd715",
+        "style.css": "c460ee036a0236c9175ef2a39f4e3cf92d6ad0541d9f8aecfd6cf77c29cf2fda",
+        "ball-glass.js": "e8f84f99d17296bdb660e72e2e041eef5500945bbdd685fdd7e5413226ff86f2",
+        "fixed-position.js": "9cc8a2ab2b1680c41497c1af3f5fe987621929f916a809bb62e712169663eead",
+        "message-rendering.js": "1ba63094d56b81c086f7cccbbbbcad3a917dc327d889083b354c66b496db87e1"
+      },
+      "limitations": [
+        "Synthetic ordinary text in a desktop browser; frame intervals are not real-phone FPS or INP",
+        "Conservative eligibility leaves custom/iframe-heavy cards on their existing render path; their cost is not removed",
+        "Long-tail pauses remain observable in the throttled synthetic run; no universal stutter-free or hardware boost claim",
+        "No physical phone battery, thermal or sustained refresh-rate measurement"
+      ]
     }
   ]
 }

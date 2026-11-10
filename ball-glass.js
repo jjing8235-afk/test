@@ -1,6 +1,7 @@
 // DOM presentation stays on the page; pure pixels and PNG encoding can run in one worker.
 import { buildBallJob, rasterBall, packBallFrame } from './ball-raster.js';
 import { createGlassPerformance } from './glass-performance.js';
+import { positionFixed } from './fixed-position.js';
 import { FILTER_TAIL } from './liquid-glass-web.js';
 const NS = 'http://www.w3.org/2000/svg', SHADE = 18;
 
@@ -53,8 +54,10 @@ export function createBallGlass({ workerFactory, onError = () => {} } = {}) {
     const setMask = (el, url) => { el.style.maskImage = el.style.webkitMaskImage = 'url("' + url + '")'; };
     function position(job, at = wanted?.job || job) {
         const L = at.L + at.ox - job.ox, T = at.T + at.oy - job.oy, { W, H, shadow } = job;
-        Object.assign(glass.style, { display: '', left: L + 'px', top: T + 'px', width: W + 'px', height: H + 'px' });
-        Object.assign(shade.style, { display: shadow ? '' : 'none', left: (L - SHADE) + 'px', top: (T - SHADE) + 'px', width: (W + 2 * SHADE) + 'px', height: (H + 2 * SHADE) + 'px' });
+        positionFixed(glass, L, T);
+        positionFixed(shade, L - SHADE, T - SHADE);
+        Object.assign(glass.style, { display: '', width: W + 'px', height: H + 'px' });
+        Object.assign(shade.style, { display: shadow ? '' : 'none', width: (W + 2 * SHADE) + 'px', height: (H + 2 * SHADE) + 'px' });
         Object.assign(shape.style, { left: SHADE + 'px', top: SHADE + 'px', width: W + 'px', height: H + 'px' });
     }
     function install(frame, job, target) {

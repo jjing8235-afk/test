@@ -71,6 +71,9 @@ try {
         assert.equal(await page.locator('#chat .mes.ilg-glass').count(), floors);
         const offscreenContours = await page.locator('#chat .mes.ilg-reflection').count();
         assert(offscreenContours <= Math.min(floors, 8), 'Offscreen messages must not keep raster contours');
+        const autoMessages = await page.locator('#chat .mes.ilg-render-away').count();
+        const autoSupported = await page.evaluate(() => CSS.supports('content-visibility', 'auto') && CSS.supports('contain-intrinsic-block-size', 'auto 1px'));
+        if (autoSupported && floors >= 80) assert(autoMessages >= floors - 10, 'Distant plain messages must enter render management');
         await page.evaluate(() => resetAudit());
         await page.locator('#fixture-open').click();
         const opened = await page.evaluate(async () => { await settle(); return { ...audit, paintedFloors: [...paintedMessages] }; });
@@ -101,12 +104,13 @@ try {
             fresh.remove(); await settle(); const removedClean = !fresh.classList.contains('ilg-glass');
             document.getElementById('ilg-opt-enabled').click(); await settle();
             const disabledClean = !chat.querySelector('.ilg-glass');
+            const renderingDisabledClean = !chat.querySelector('.ilg-render-away, [style*="--ilg-message-height"]');
             document.getElementById('ilg-opt-enabled').click(); await settle();
             const enabledRestored = chat.querySelectorAll('.mes.ilg-glass').length === count;
-            return { enteringViewport, radiusRestored, blurDisabled, blurRestored, plainModeClean, bubbleModeRestored, insertedTracked, removedClean, disabledClean, enabledRestored };
+            return { enteringViewport, radiusRestored, blurDisabled, blurRestored, plainModeClean, bubbleModeRestored, insertedTracked, removedClean, disabledClean, renderingDisabledClean, enabledRestored };
         }, floors);
         assert(Object.values(lifecycle).every(Boolean), JSON.stringify(lifecycle));
-        results.push({ floors, offscreenContours, physical, opened, closed, lifecycle });
+        results.push({ floors, offscreenContours, autoMessages, physical, opened, closed, lifecycle });
         await page.close();
     }
     assert.deepEqual(errors, []);
