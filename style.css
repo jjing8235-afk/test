@@ -890,7 +890,7 @@ html.ilg.ilg-qrfold body #ilg-qr-toggle {
     transition: background-color .2s, color .2s, transform .3s cubic-bezier(.3, 1.6, .5, 1);
 }
 /* 没有任何快捷回复时不显示这个按钮 */
-html.ilg.ilg-qrfold body:not(:has(#qr--bar .qr--button)) #ilg-qr-toggle { display: none; }
+html.ilg.ilg-qrfold body #ilg-qr-toggle.ilg-qr-empty { display: none; }
 html.ilg.ilg-qrfold body #ilg-qr-toggle::before {
     content: "";
     width: 20px;
@@ -1604,7 +1604,7 @@ html.ilg.ilg-light body #ilg-home .ilg-home-recent:hover { background-color: rgb
 html.ilg.ilg-light body #ilg-home .ilg-home-recent:focus-visible { outline-color: var(--ilg-accent); }
 /* 手机上二级页盖住首页时，首页问候先淡出，不然会透过玻璃页糊成一团 */
 @media screen and (max-width: 1000px) {
-    html.ilg body:has(#top-settings-holder > .drawer > .drawer-content.openDrawer) #ilg-home { opacity: 0; }
+    html.ilg body #ilg-home.ilg-home-covered { opacity: 0; }
 }
 
 /* ---------- 聊天正文：叙述退后一步，台词往前一步 ----------

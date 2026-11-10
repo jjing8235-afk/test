@@ -32,7 +32,17 @@ function roundedReflection(width, height, radius) {
     const canvas = document.createElement('canvas'); canvas.width = cw; canvas.height = ch;
     const ctx = canvas.getContext('2d'); if (!ctx) return null;
     const image = ctx.createImageData(cw, ch), data = image.data, out = [0, 0, 0, 0];
-    for (let y = 0, p = 0; y < ch; y++) for (let x = 0; x < cw; x++, p += 4) {
+    // Only the seven-pixel contour can contain colour. Skip the guaranteed
+    // transparent centre, retaining the original sample positions and RGBA math.
+    const band = Math.max(7, r);
+    let leftEnd = 0, rightStart = cw;
+    while (leftEnd < cw && (leftEnd + .5) * w / cw <= band) leftEnd++;
+    while (rightStart > leftEnd && (rightStart - .5) * w / cw >= w - band) rightStart--;
+    for (let y = 0; y < ch; y++) for (let x = 0; x < cw; x++) {
+        const row = (y + .5) * h / ch;
+        if (row > band && row < h - band && x === leftEnd) x = rightStart;
+        if (x >= cw) break;
+        const p = (y * cw + x) * 4;
         const px = (x + .5) * w / cw - w / 2, py = (y + .5) * h / ch - h / 2;
         const qx = Math.abs(px) - w / 2 + r, qy = Math.abs(py) - h / 2 + r;
         const ex = Math.max(qx, 0), ey = Math.max(qy, 0), length = Math.hypot(ex, ey);

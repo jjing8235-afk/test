@@ -1769,6 +1769,133 @@
         "DOM layout, final glass compositing and other extension rendering still use browser resources",
         "iOS/CSS compatibility paths do not start the SDF ball worker"
       ]
+    },
+    {
+      "date": "2026-11-10",
+      "version": "1.4.5-test.19",
+      "scope": "Cooperate with normal ST interactions by removing NVWA body-wide relational state selectors and unnecessary reflection work",
+      "host": {
+        "version": "1.18.0",
+        "browser": "desktop Edge headless",
+        "viewport": [
+          390,
+          844
+        ],
+        "syntheticMessages": 80,
+        "syntheticNodes": 1200,
+        "streamUpdates": 100,
+        "scrollSteps": 100,
+        "pageCpuSlowdown": 4
+      },
+      "changes": [
+        "Observe the existing top drawer and send-form trees for home coverage and Quick Reply availability; disable cleanup is paired",
+        "Skip the guaranteed-transparent reflection centre using unchanged sample positions and RGBA math",
+        "Only near-viewport messages retain canvas reflection resources"
+      ],
+      "observations": [
+        {
+          "material": "original",
+          "scene": "stream",
+          "pageCpuSlowdown": 4,
+          "beforeMeanMs": 91.69,
+          "afterMeanMs": 32.04,
+          "beforeP95Ms": 156.7,
+          "afterP95Ms": 59.4,
+          "beforeStyleMs": 59.89,
+          "afterStyleMs": 6.37
+        },
+        {
+          "material": "original",
+          "scene": "scroll",
+          "pageCpuSlowdown": 4,
+          "beforeMeanMs": 122.56,
+          "afterMeanMs": 33.91,
+          "beforeP95Ms": 211.6,
+          "afterP95Ms": 73.9,
+          "beforeStyleMs": 66.58,
+          "afterStyleMs": 8.83
+        },
+        {
+          "material": "liquid-web",
+          "scene": "stream",
+          "pageCpuSlowdown": 4,
+          "beforeMeanMs": 92.52,
+          "afterMeanMs": 30.1,
+          "beforeP95Ms": 165.1,
+          "afterP95Ms": 52.3,
+          "beforeStyleMs": 60.98,
+          "afterStyleMs": 5.92
+        },
+        {
+          "material": "liquid-web",
+          "scene": "scroll",
+          "pageCpuSlowdown": 4,
+          "beforeMeanMs": 116.01,
+          "afterMeanMs": 34.75,
+          "beforeP95Ms": 199.9,
+          "afterP95Ms": 75.8,
+          "beforeStyleMs": 64.5,
+          "afterStyleMs": 8.74
+        }
+      ],
+      "checks": {
+        "offlineRegressions": 15,
+        "hostLocalStateCases": 24,
+        "unrelatedStreamMutations": 100,
+        "unrelatedStreamQueries": 0,
+        "isolatedHostFloors": [
+          4,
+          80,
+          240
+        ],
+        "reflectionRawPixelCases": 52,
+        "rawPixelsExact": true,
+        "workerRawCases": 110,
+        "workerDecodedPNGComparisons": 418,
+        "workerLifecycleAndFallback": {
+          "passed": true,
+          "rasterCases": 110,
+          "decodedPNGComparisons": 418,
+          "staleResultIgnored": true,
+          "latestResultApplied": true,
+          "removalTerminates": true,
+          "syncFallback": true,
+          "backgroundPause": true,
+          "pageLifecycle": true,
+          "arrayBufferEncoder": true,
+          "noCanvasProbe": true,
+          "cspFallback": true
+        },
+        "presetTransitions": 44,
+        "dragPaths": 12,
+        "mainThreadBallPNGsDuringDrag": 0,
+        "nativePointerAndIMESizes": [
+          [
+            320,
+            740
+          ],
+          [
+            844,
+            390
+          ]
+        ],
+        "presetsUnchanged": true
+      },
+      "reflectionWork": {
+        "aggregateSampleVisitsBefore": 10293551,
+        "aggregateSampleVisitsAfter": 1665247,
+        "sample390x800Before": 287232,
+        "sample390x800After": 46200
+      },
+      "resourceObservation": {
+        "beforeRetainedMessageContours": 80,
+        "afterRetainedNearViewportContours": 3
+      },
+      "limitations": [
+        "Synthetic streaming and scrolling on a desktop browser, with save requests blocked; no model API request was made",
+        "Headless frame intervals and CDP page CPU slowdown are not physical-phone FPS, INP, battery or thermal measurements",
+        "Changes apply to NVWA-owned styling and rendering; ST core and unrelated extensions are not modified"
+      ]
     }
   ]
 }

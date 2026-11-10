@@ -16,7 +16,7 @@ let instrumented = original;
 const hooks = [
     ['const items = new Map();', 'const items = new window.HostAuditMap();'],
     ['function scan() {', 'function scan() { window.audit.scans++;'],
-    ['function paint(el) {', 'function paint(el) { if (el.matches?.("#chat .mes")) { window.audit.messagePaints++; window.paintedMessages.add(el.getAttribute("mesid")); }'],
+    ['function paint(el, geo) {', 'function paint(el, geo) { if (el.matches?.("#chat .mes")) { window.audit.messagePaints++; window.paintedMessages.add(el.getAttribute("mesid")); }'],
     ['function buildPhysical(it, el, w, h, r) {', 'function buildPhysical(it, el, w, h, r) { if (it.kind === "mes") window.filterRadii.set(el.getAttribute("mesid"), r);']
 ];
 for (const [from, to] of hooks) { assert(instrumented.includes(from), 'Missing audit hook: ' + from); instrumented = instrumented.replace(from, to); }
@@ -69,6 +69,8 @@ try {
         assert.equal(await page.evaluate(() => fixtureFailure), null);
         await page.evaluate(() => settle());
         assert.equal(await page.locator('#chat .mes.ilg-glass').count(), floors);
+        const offscreenContours = await page.locator('#chat .mes.ilg-reflection').count();
+        assert(offscreenContours <= Math.min(floors, 8), 'Offscreen messages must not keep raster contours');
         await page.evaluate(() => resetAudit());
         await page.locator('#fixture-open').click();
         const opened = await page.evaluate(async () => { await settle(); return { ...audit, paintedFloors: [...paintedMessages] }; });
@@ -104,7 +106,7 @@ try {
             return { enteringViewport, radiusRestored, blurDisabled, blurRestored, plainModeClean, bubbleModeRestored, insertedTracked, removedClean, disabledClean, enabledRestored };
         }, floors);
         assert(Object.values(lifecycle).every(Boolean), JSON.stringify(lifecycle));
-        results.push({ floors, physical, opened, closed, lifecycle });
+        results.push({ floors, offscreenContours, physical, opened, closed, lifecycle });
         await page.close();
     }
     assert.deepEqual(errors, []);

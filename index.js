@@ -3,6 +3,7 @@
    折射引擎有两套：新版物理折射（glass2.js，实验台 v2 移植）和旧版（本文件里的 makeMap / buildFilter） */
 import { getMaps, clearMaps, physicalFilter, resizePhysicalFilter } from './glass2.js';
 import { makeOrb } from './orb.js';
+import { createHostInteractionState } from './host-interaction-state.js';
 import { migrateClearOptics, restoreOriginalRefraction } from './optics-settings.js';
 import { WEB_PRESETS, normalizeWebPreset, webPresetOf } from './web-presets.js';
 import { createBallGlass } from './ball-glass.js';
@@ -21,7 +22,7 @@ window.__ilgLoaded = new URL('.', import.meta.url).pathname;
 
 let studioUI = null;
 const MODULE = 'iosLiquidGlass';
-const BUILD_VERSION = '1.4.5-test.18';
+const BUILD_VERSION = '1.4.5-test.19';
 const NS = 'http://www.w3.org/2000/svg';
 const ctx = SillyTavern.getContext();
 
@@ -1076,7 +1077,9 @@ function paint(el, geo) {
         surface.style.webkitBackdropFilter = filter;
         return;
     }
-    reflections.paint(el, w, h, r);
+    // Offscreen messages retain their CSS material; rasterise their contour on entry.
+    if (it.kind === 'mes' && !it.visible) reflections.release(el);
+    else reflections.paint(el, w, h, r);
     if (useWeb) {
         setPhys(el, it, false);
         webGlass.paint(el, it, { width: w, height: h,
@@ -2092,6 +2095,7 @@ function setHome(on) {
         chat.querySelectorAll(':scope > .ilg-home-hide').forEach(n => n.classList.remove('ilg-home-hide'));
     }
 }
+const hostInteractionState = createHostInteractionState({ holder, form: document.getElementById('form_sheld'), home, qrToggle });
 function syncHome() { setHome(S.enabled && S.home && !homeDismissed && onWelcome()); }
 new MutationObserver(muts => {
     if (!S.enabled || !S.home) return;
@@ -2372,6 +2376,7 @@ function queueGlassSettings() {
 }
 
 function applyRoot() {
+    hostInteractionState.setEnabled(S.enabled);
     normalizeTopStyleSettings(S);
     syncInputMaterial(false);
     if (glassSettingsRaf) { cancelAnimationFrame(glassSettingsRaf); glassSettingsRaf = 0; }
