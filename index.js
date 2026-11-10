@@ -24,7 +24,7 @@ window.__ilgLoaded = new URL('.', import.meta.url).pathname;
 
 let studioUI = null;
 const MODULE = 'iosLiquidGlass';
-const BUILD_VERSION = '1.4.5-test.20';
+const BUILD_VERSION = '1.4.5-test.21';
 const NS = 'http://www.w3.org/2000/svg';
 const ctx = SillyTavern.getContext();
 
@@ -794,7 +794,6 @@ const MES_SEL = '.mes:not(.smallSysMes)';
 const root = document.documentElement;
 const webGlass = createLiquidGlassWeb();
 const reflections = createGlassReflections();
-let tiltChoice = 0;
 const lighting = createGlassLighting({
     onPoint(point) {
         root.classList.toggle('ilg-tilt-light', !!point);
@@ -807,17 +806,11 @@ const lighting = createGlassLighting({
 });
 function syncMobileTilt() { lighting.sync(S.enabled, S.mobileTilt); }
 function requestMobileTilt() {
-    const choice = ++tiltChoice;
     S.mobileTilt = true;
     const checkbox = document.getElementById('ilg-opt-mobileTilt'); if (checkbox) checkbox.checked = true;
     syncMobileTilt();
-    const request = lighting.requestTilt();
+    lighting.requestTilt();
     ctx.saveSettingsDebounced();
-    request.then(ok => {
-        if (choice !== tiltChoice) return;
-        if (!ok) { S.mobileTilt = false; if (checkbox) checkbox.checked = false; }
-        syncMobileTilt(); ctx.saveSettingsDebounced();
-    });
 }
 const webStyleEnabled = () => S.enabled && !cssGlassActive() && S.glassStyle === 'liquid-web'
     && (supportsFilter('blur(1px)') || supportsPrefixedFilter('blur(1px)'))
@@ -2736,7 +2729,7 @@ function buildPanel() {
     });
     const tiltControls = document.createElement('div');
     tiltControls.id = 'ilg-tilt-controls'; tiltControls.className = 'ilg-tilt-controls';
-    tiltControls.innerHTML = '<button type="button" id="ilg-tilt-calibrate">授权 / 以当前握姿居中</button><p id="ilg-tilt-state" role="status" aria-live="polite"></p><p class="ilg-tilt-hint">轻微倾斜只改变边缘反光；文字与玻璃位置保持稳定。</p>';
+    tiltControls.innerHTML = '<button type="button" id="ilg-tilt-calibrate">以当前握姿居中</button><p id="ilg-tilt-state" role="status" aria-live="polite"></p><p class="ilg-tilt-hint">开启即自动申请，之后自动恢复；轻微倾斜只改变边缘反光；文字与玻璃位置保持稳定。</p>';
     wrap.querySelector('.inline-drawer-content').append(tiltControls);
     tiltControls.querySelector('#ilg-tilt-state').textContent = lighting.status();
     tiltControls.querySelector('#ilg-tilt-calibrate').addEventListener('click', requestMobileTilt);
@@ -2902,7 +2895,7 @@ function buildPanel() {
         S[k] = e.target.checked;
         if (k === 'mobileTilt') {
             if (S.mobileTilt) requestMobileTilt();
-            else { tiltChoice++; syncMobileTilt(); ctx.saveSettingsDebounced(); }
+            else { syncMobileTilt(); ctx.saveSettingsDebounced(); }
             return;
         }
         if (k === 'firstLineIndent') {

@@ -5,6 +5,7 @@ export function createGlassLighting({onPoint, onStatus = () => {}}) {
     let enabled = false, wanted = false, authorized = false, attached = false, blurred = false;
     let base = null, target = null, filtered = null, last = null, frame = 0, lastEmit = -Infinity, lastStatus = -Infinity, waitTimer = 0;
     let phase = '手机姿态高光未开启。', failure = '', inFlight = null;
+    let attempted = false, waitingGesture = false, armed = false, destroyed = false, choice = 0;
     const clamp = v => Math.max(-1, Math.min(1, v));
     const reduced = () => media.matches || document.body.classList.contains('reduced-motion');
     const quiet = () => document.hidden || blurred || reduced() || document.body.classList.contains('no-blur');
@@ -58,11 +59,36 @@ export function createGlassLighting({onPoint, onStatus = () => {}}) {
         }
     }
     function stop() { if (attached) window.removeEventListener('deviceorientation', orientation); attached = false; }
+    function disarm() {
+        if (!armed) return;
+        document.removeEventListener('click', gesture);
+        document.removeEventListener('keydown', gesture);
+        armed = false;
+    }
+    function gesture(event) {
+        if (!event.isTrusted || event.defaultPrevented || (event.type === 'keydown' && !['Enter', ' '].includes(event.key))) return;
+        // The explicit controls own their own permission/disable actions.
+        const controls = '#ilg-opt-mobileTilt, #ilg-tilt-calibrate, #ilg-opt-enabled';
+        if (event.target?.closest?.(controls) || event.target?.closest?.('label')?.control?.matches?.(controls)) return;
+        if (enabled && wanted && !quiet() && waitingGesture) requestTilt('gesture');
+    }
     function update() {
+        if (destroyed) return;
+        disarm();
         if (!enabled || !wanted) { stop(); clear(); say(failure || (wanted ? '液态玻璃已关闭；姿态高光暂停。' : '手机姿态高光未开启。')); return; }
         if (!available()) { stop(); clear(); say(window.isSecureContext ? '此浏览器没有提供手机姿态接口；保持固定高光。' : '姿态访问需要 HTTPS 或本机 localhost；当前保持固定高光。'); return; }
-        if (needsPermission() && !authorized) { stop(); clear(); say(failure || '点击“授权 / 以当前握姿居中”允许手机姿态访问。'); return; }
         if (quiet()) { stop(); clear(); say(reduced() ? '已开启减少动态效果；姿态高光暂停。' : '页面未在前台或已关闭模糊；姿态高光暂停。'); return; }
+        if (needsPermission() && !authorized) {
+            stop(); clear();
+            if (!attempted) { attempted = true; requestTilt('restore'); return; }
+            if (waitingGesture && !inFlight) {
+                document.addEventListener('click', gesture);
+                document.addEventListener('keydown', gesture);
+                armed = true;
+            }
+            say(inFlight ? '正在恢复手机姿态访问…' : failure || '已记住开启；下次点击页面时自动申请手机姿态访问。');
+            return;
+        }
         if (!attached) {
             base = null; window.addEventListener('deviceorientation', orientation, {passive:true}); attached = true;
             say('等待手机姿态数据；当前仍为固定高光。');
@@ -75,8 +101,10 @@ export function createGlassLighting({onPoint, onStatus = () => {}}) {
     function focus() { blurred = false; visibility(); }
     const bodyObserver = new MutationObserver(() => update());
     function sync(on, tilt) {
-        const was = enabled;
+        if (destroyed) return;
+        const was = enabled, wasWanted = wanted;
         enabled = on === true; wanted = tilt === true;
+        if (was !== enabled || wasWanted !== wanted) { choice++; attempted = false; waitingGesture = false; failure = ''; }
         if (was !== enabled) {
             document[enabled ? 'addEventListener' : 'removeEventListener']('visibilitychange', visibility);
             window[enabled ? 'addEventListener' : 'removeEventListener']('blur', blur);
@@ -87,20 +115,39 @@ export function createGlassLighting({onPoint, onStatus = () => {}}) {
         }
         update(); onStatus(phase);
     }
-    function requestTilt() {
+    function requestTilt(mode = 'manual') {
+        if (destroyed) return Promise.resolve(false);
         if (inFlight) return inFlight;
+        attempted = true; waitingGesture = false; disarm();
         if (!available()) { failure = window.isSecureContext ? '此浏览器没有提供手机姿态接口；保持固定高光。' : '姿态访问需要 HTTPS 或本机 localhost；当前保持固定高光。'; say(failure); return Promise.resolve(false); }
         if (authorized || !needsPermission()) { authorized = true; failure = ''; calibrate(); update(); return Promise.resolve(true); }
+        const requestChoice = choice;
+        function failed(error) {
+            if (destroyed || requestChoice !== choice) return false;
+            authorized = false;
+            // A missing user gesture is not a denial and must not erase the saved choice.
+            waitingGesture = mode === 'restore' && error?.name === 'NotAllowedError';
+            failure = waitingGesture ? '' : '手机姿态访问暂未恢复；可点击“以当前握姿居中”重试授权。';
+            stop(); clear();
+            return false;
+        }
         let request;
-        // Keep this call synchronous within the initiating click/change handler.
+        // Synchronous in the original trusted click/key handler, before any await.
         try { request = window.DeviceOrientationEvent.requestPermission(); }
-        catch { failure = '手机姿态权限请求失败；保持固定高光。'; say(failure); return Promise.resolve(false); }
+        catch (error) { const result = failed(error); update(); return Promise.resolve(result); }
         inFlight = Promise.resolve(request).then(result => {
-            authorized = result === 'granted'; failure = authorized ? '' : '未获准访问手机姿态；保持固定高光，可再次点击授权。';
-            if (authorized) { base = null; clear(); update(); } else { stop(); clear(); say(failure); }
+            if (destroyed || requestChoice !== choice) return false;
+            authorized = result === 'granted';
+            failure = authorized ? '' : '浏览器未允许姿态访问；已保留开启设置，请检查网站的运动与方向权限。';
+            if (authorized) { base = null; clear(); }
+            else { stop(); clear(); }
             return authorized;
-        }).catch(() => {authorized = false; failure = '手机姿态权限请求失败；保持固定高光，可再次点击授权。'; stop(); clear(); say(failure); return false;}).finally(() => {inFlight = null;});
+        }).catch(failed).finally(() => {
+            inFlight = null;
+            if (requestChoice !== choice) attempted = false;
+            if (!destroyed) update();
+        });
         return inFlight;
     }
-    return {sync, requestTilt, calibrate, status:() => phase, destroy() {sync(false, false); stop(); clear();}};
+    return {sync, requestTilt, calibrate, status:() => phase, destroy() {sync(false, false); destroyed = true; disarm(); stop(); clear();}};
 }

@@ -2178,6 +2178,48 @@
         "Long-tail pauses remain observable in the throttled synthetic run; no universal stutter-free or hardware boost claim",
         "No physical phone battery, thermal or sustained refresh-rate measurement"
       ]
+    },
+    {
+      "date": "2026-11-10",
+      "version": "1.4.5-test.21",
+      "scope": "Saved-on device-orientation lighting auto restore and toggle-only permission flow",
+      "automated": {
+        "passed": true,
+        "offlineRegressions": 17,
+        "browser": {
+          "passed": true,
+          "checks": [
+            "Real index restores saved-on lighting and accepts mocked sensor events",
+            "Reload restores granted sensor access without any button",
+            "First trusted page click synchronously requests activation-required access",
+            "Denied sensor access keeps enabled preference and reports browser restriction",
+            "Enabling the actual settings toggle performs authorization in that same gesture",
+            "Turning off the actual toggle stops lighting",
+            "Settings exposes calibration without a separate authorization step"
+          ],
+          "viewport": [
+            390,
+            844
+          ],
+          "permissionAPI": "Mocked granted / transient-activation / denied states; actual Edge trusted clicks",
+          "physicalPhone": false,
+          "blockedWrites": [
+            "POST /api/quick-replies/save",
+            "POST /api/settings/save"
+          ],
+          "expectedBlockedWriteErrors": 6,
+          "extensionErrors": []
+        }
+      },
+      "sourceHashes": {
+        "index.js": "034e2a8e9457e69203c36f7fd20f8ae9ff8e6a04b1c6d5e74be561fac6b5d86b",
+        "glass-lighting.js": "00bf9835ce8d8687612f774ad4a13658bacda03c47c6f27a0f713a493eb1f0f3",
+        "settings-panel.js": "02dfff4f36fb914b09ad34038e3a519150271742bcaabea7e175b91877455ff3"
+      },
+      "limitations": [
+        "Permission API and sensor delivery mocked in Edge; real native clicks and page reloads exercised",
+        "Browser-required native permission prompts are not bypassed; physical mobile confirmation remains unverified"
+      ]
     }
   ]
 }
