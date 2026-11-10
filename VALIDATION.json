@@ -2220,6 +2220,221 @@
         "Permission API and sensor delivery mocked in Edge; real native clicks and page reloads exercised",
         "Browser-required native permission prompts are not bypassed; physical mobile confirmation remains unverified"
       ]
+    },
+    {
+      "date": "2026-11-10",
+      "version": "1.4.5-test.22",
+      "guidance": {
+        "route": "sillytavern-extension-dev",
+        "snapshot": "2026-08-18",
+        "documents": [
+          "ST-A0",
+          "ST-D5",
+          "ST-E5"
+        ],
+        "design": "impeccable scoped refinement"
+      },
+      "scope": "Retire card backings, add one shared reading filter and adapt top icon/floor foreground while retaining transparent materials",
+      "automated": {
+        "passed": true,
+        "offlineRegressions": 18,
+        "readingViewports": [
+          {
+            "viewport": [
+              320,
+              740
+            ],
+            "checks": 10,
+            "errors": []
+          },
+          {
+            "viewport": [
+              844,
+              390
+            ],
+            "checks": 9,
+            "errors": []
+          }
+        ],
+        "topViewports": [
+          {
+            "viewport": [
+              320,
+              740
+            ],
+            "checks": 12,
+            "rasterReads": 6,
+            "errors": []
+          },
+          {
+            "viewport": [
+              844,
+              390
+            ],
+            "checks": 12,
+            "rasterReads": 6,
+            "errors": []
+          }
+        ],
+        "readingChecks": [
+          "Removed card background toggle and migrated its saved value",
+          "One noninteractive stationary layer behind scrolling chat; text ancestors remain unfiltered",
+          "Strength 0-100 changes without message-map replacement or scroll/height shifts",
+          "Transparent mode retains original wallpaper and remembers glass filter strength",
+          "Host no-blur preference disables background blur while retaining the reading tint",
+          "Authored gradients/iframe transparency preserved; fixed card overlays retain viewport positioning",
+          "Extension disable removes the veil and enable restores it",
+          "Home view keeps its wallpaper treatment",
+          "Native touch drag adjusts the new range from its thumb",
+          "Responsive settings have a labeled keyboard-operable range without horizontal overflow"
+        ],
+        "topChecks": [
+          "Bright local wallpaper uses dark top icons without changing the chosen page text tone",
+          "Dark wallpaper uses light icons and floor text while glass transparency stays identical",
+          "Separate left/right islands follow their own wallpaper region",
+          "Cover-cropped wallpaper top is sampled instead of using the whole-image average",
+          "Saturated green/magenta wallpapers use actual RGB contrast instead of gray brightness alone",
+          "Scrolling and revisiting cached wallpapers do not re-read image pixels",
+          "Rapid wallpaper switches cannot apply an obsolete light palette",
+          "Visible opaque card content retains priority over wallpaper fallback",
+          "Original no-blur fallback retains its page-tone icons without new opacity settings",
+          "Disable clears all owned top palette markers and enable restores them",
+          "Native top drawer clicks remain functional",
+          "Reading-filter changes resample local top contrast without decoding the wallpaper again"
+        ],
+        "modeledRGBCases": 12288,
+        "foregroundOnly": true
+      },
+      "performance": {
+        "environment": "Headless Edge 390x844; 4x CPU throttle; 1000 synthetic ordinary messages; same bundled landscape wallpaper",
+        "drag": {
+          "before": {
+            "free": {
+              "mean": 17.049999999992075,
+              "p95": 33.69999999925494,
+              "max": 119,
+              "png": 0,
+              "reads": 11,
+              "longCount": 1,
+              "longMax": 54,
+              "fused": false,
+              "perStep": {
+                "RecalcStyleDuration": 4.49765,
+                "LayoutDuration": 0.7199,
+                "ScriptDuration": 1.7221700000000002,
+                "TaskDuration": 20.921280000000003,
+                "LayoutCount": 0.15,
+                "RecalcStyleCount": 1.29
+              }
+            },
+            "fused": {
+              "mean": 26.65851063828202,
+              "p95": 35.69999999925494,
+              "max": 46.599999997764826,
+              "png": 0,
+              "reads": 9,
+              "longCount": 2,
+              "longMax": 95,
+              "fused": true,
+              "perStep": {
+                "RecalcStyleDuration": 10.00328,
+                "LayoutDuration": 3.1087700000000003,
+                "ScriptDuration": 3.4077699999999993,
+                "TaskDuration": 32.111650000000004,
+                "LayoutCount": 0.7,
+                "RecalcStyleCount": 1.34
+              }
+            }
+          },
+          "after": {
+            "free": {
+              "mean": 17.68297872343596,
+              "p95": 33.400000002235174,
+              "max": 116.69999999925494,
+              "png": 0,
+              "reads": 11,
+              "longCount": 1,
+              "longMax": 54,
+              "fused": false,
+              "perStep": {
+                "RecalcStyleDuration": 4.661040000000001,
+                "LayoutDuration": 0.70654,
+                "ScriptDuration": 1.81917,
+                "TaskDuration": 21.3962,
+                "LayoutCount": 0.15,
+                "RecalcStyleCount": 1.28
+              }
+            },
+            "fused": {
+              "mean": 29.088297872348353,
+              "p95": 40.899999998509884,
+              "max": 135.60000000149012,
+              "png": 0,
+              "reads": 10,
+              "longCount": 1,
+              "longMax": 60,
+              "fused": true,
+              "perStep": {
+                "RecalcStyleDuration": 10.31118,
+                "LayoutDuration": 3.20663,
+                "ScriptDuration": 3.46804,
+                "TaskDuration": 33.27614,
+                "LayoutCount": 0.71,
+                "RecalcStyleCount": 1.34
+              }
+            }
+          }
+        },
+        "scroll": {
+          "before": {
+            "frames": 170,
+            "mean": 62.85352941176472,
+            "p95": 137.60000000000036,
+            "max": 195.6999999999989,
+            "height": 190303,
+            "finalHeight": 190303,
+            "veil": "none",
+            "culled": 991
+          },
+          "after": {
+            "frames": 170,
+            "mean": 54.22470588235294,
+            "p95": 129.10000000000218,
+            "max": 204.1999999999989,
+            "height": 190303,
+            "finalHeight": 190303,
+            "veil": "\"\"",
+            "culled": 991
+          }
+        },
+        "physicalPhone": false
+      },
+      "sourceHashes": {
+        "index.js": "b846b3aea3f2bdd513fbf8d5eb6cf708381041dcadfc25e4fbeebf8ce2dff7b4",
+        "style.css": "fb29d611500d25bd8826fb3af4a8f229deda1dd824a554ed0250c92585371d17",
+        "settings-panel.js": "6e32579b92b3991f2293baa401d1fba8a3ef385cd6089c88e01f5adf2e7da104",
+        "appearance-bookmark.js": "03aeeda32c0def17af18d381296a487412f93f655c453b9872b298332c7ee281",
+        "wallpaper-sampling.js": "29b0238e5f9d331a9f88b5510f861c6393cc5a25e474a8c46bb52de254eee699"
+      },
+      "unchangedModules": [
+        "glass-lighting.js",
+        "glass2.js",
+        "control-material.js",
+        "ball-glass.js",
+        "ball-raster.js",
+        "glass-performance.js",
+        "glass-worker.js",
+        "glass-reflections.js",
+        "message-rendering.js",
+        "fixed-position.js",
+        "web-presets.js",
+        "optics-settings.js"
+      ],
+      "limitations": [
+        "Desktop synthetic timing is not physical phone FPS or INP; long-tail pauses remain",
+        "Pure RGB cases compare foreground choices and hysteresis; high transparency cannot guarantee fixed contrast against every arbitrary wallpaper pixel",
+        "Cross-origin/unavailable image pixels fall back to existing UI tone; authored iframe contents remain unchanged"
+      ]
     }
   ]
 }

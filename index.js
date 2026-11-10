@@ -15,6 +15,7 @@ import { createLiquidGlassWeb } from './liquid-glass-web.js';
 import { createCardTextClarity } from './card-clarity.js';
 import { createGlassReflections } from './glass-reflections.js';
 import { createGlassLighting } from './glass-lighting.js';
+import { wallpaperLayout, wallpaperPoint, topTone } from './wallpaper-sampling.js';
 import { createAppearanceBookmark } from './appearance-bookmark.js';
 import { onViewportChange, createKeyboard, createReadingAnchor } from './viewport.js';
 
@@ -24,7 +25,7 @@ window.__ilgLoaded = new URL('.', import.meta.url).pathname;
 
 let studioUI = null;
 const MODULE = 'iosLiquidGlass';
-const BUILD_VERSION = '1.4.5-test.21';
+const BUILD_VERSION = '1.4.5-test.22';
 const NS = 'http://www.w3.org/2000/svg';
 const ctx = SillyTavern.getContext();
 
@@ -601,7 +602,7 @@ const PRESETS_PREVIOUS = {
     ]
 };
 const DEFAULTS = {
-    chatBackground: 'glass', chatFontSize: 0, firstLineIndent: false, cardSolid: true, justifyText: false, compatibilityMode: 'auto', androidWebViewRefract: false, iosSvgTrial: false, iosMaterial: true,
+    chatBackground: 'glass', chatVeil: 45, chatFontSize: 0, firstLineIndent: false, justifyText: false, compatibilityMode: 'auto', androidWebViewRefract: false, iosSvgTrial: false, iosMaterial: true,
     enabled: true, float: true, islands: true, fold: true, qrFold: true, home: true, toneBtn: true, homeName: 'NVWA 用户', icons: true, refract: true, refractMes: true, font: true, tone: 'time', dayStart: 7, dayEnd: 19, avatar: 'line', orb: true, panelRead: true, dock: false, floatBall: true, ballSnap: true, ballFuse: true, ballSide: 'right', ballY: 0.62, ballFx: 0.92, ballFy: 0.6, ballDock: false,
     webPreset: 'clear', mobileTilt: false, glassStyle: 'original', engine: 'physical', follow: true, pLight: 135, customTextTone: 'auto', customWallpaper: '', readingStyle: 'warm', proseLeading: 0, proseInset: 0,
     // 自然弧度没写的参数（厚度、折射率等，只给物理折射截面用）沿用清透立体的
@@ -650,7 +651,6 @@ const TOGGLES = [
     ['mobileTilt', '手机姿态高光'],
     ['font', '统一字体：思源黑体（苹果设备用苹方）'],
     ['firstLineIndent', '普通正文首行缩进两个汉字（不影响列表、代码和自带样式面板）'],
-    ['cardSolid', '卡片使用不透明底（沿用卡片自身颜色）'],
     ['justifyText', '正文两端对齐（右边不参差；关掉是左对齐，右边缘会自然留白）'],
     ['islands', '顶栏拆成三个分组的悬浮岛'],
     ['fold', '顶栏折叠：设置类图标收进左上角菜单'],
@@ -666,6 +666,9 @@ const TOGGLES = [
 
 ctx.extensionSettings[MODULE] = Object.assign({}, DEFAULTS, ctx.extensionSettings[MODULE]);
 const S = ctx.extensionSettings[MODULE];
+// Retired option: authored card colors and transparency always remain in control.
+if (Object.hasOwn(S, 'cardSolid')) { delete S.cardSolid; ctx.saveSettingsDebounced(); }
+S.chatVeil = normalizeChatVeil(S.chatVeil);
 S.chatFontSize = normalizeChatFontSize(S.chatFontSize);
 S.proseLeading = normalizeProseLeading(S.proseLeading);
 S.proseInset = normalizeProseInset(S.proseInset);
@@ -2223,6 +2226,7 @@ function sampleLuminance(url) {
 }
 
 const wallpaperToneCache = new Map();
+let currentWallpaperSample = null;
 function sampleCustomWallpaper(url) {
     if (wallpaperToneCache.has(url)) return wallpaperToneCache.get(url);
     const sample = new Promise(resolve => {
@@ -2246,7 +2250,7 @@ function sampleCustomWallpaper(url) {
                 }
                 dark.sort((a,b)=>a-b); light.sort((a,b)=>a-b);
                 const index=Math.floor(dark.length*.25);
-                finish({ dark:dark[index], light:light[index] });
+                finish({ dark:dark[index], light:light[index], raster:{pixels:data,size:48,width:img.naturalWidth,height:img.naturalHeight} });
             } catch { finish(null); }
         };
         img.onerror = () => finish(null); img.src = url;
@@ -2297,16 +2301,20 @@ function followTone() {
 }
 async function applyTone() {
     const request = ++toneRequest, url = wallpaperUrl(), custom = !!url && !onToneWall();
+    if (currentWallpaperSample?.url !== url) currentWallpaperSample = null;
+    let sampled = null;
     root.classList.toggle('ilg-custom-wallpaper', S.enabled && custom);
     if (S.enabled && custom) rememberCustomWallpaper(url);
     let nextLight;
     if (custom) {
         S.customTextTone = normalizeCustomTextTone(S.customTextTone);
         const sample = await sampleCustomWallpaper(url);
+        sampled = sample?.raster ? {url,raster:sample.raster} : null;
         nextLight = S.customTextTone === 'dark' ? true : S.customTextTone === 'light' ? false : sample ? sample.dark >= sample.light : lightBg;
     } else if (S.tone === 'light' || S.tone === 'dark') nextLight = S.tone === 'light';
     else nextLight = url ? (await sampleLuminance(url)) > 0.6 : false;
     if (request !== toneRequest || url !== wallpaperUrl()) return;
+    currentWallpaperSample = sampled;
     lightBg = nextLight;
     root.classList.toggle('ilg-light', S.enabled && lightBg);
     syncToneBtn();
@@ -2326,6 +2334,9 @@ async function applyTone() {
 setInterval(followTone, 60000);
 sysDark.addEventListener('change', followTone);
 
+function normalizeChatVeil(value) {
+    return typeof value === 'number' && Number.isFinite(value) ? Math.max(0, Math.min(100, Math.round(value))) : 45;
+}
 function normalizeChatFontSize(value) {
     const numeric = Number(value);
     return Number.isFinite(numeric) && numeric > 0 ? Math.min(32, Math.max(12, Math.round(numeric))) : 0;
@@ -2364,6 +2375,9 @@ function applySurfaceSettings() {
     root.style.setProperty('--ilg-sheen-k', S.pSheen);
     root.style.setProperty('--ilg-mes-a', S.mesTint);
     root.classList.toggle('ilg-chat-transparent', S.enabled && S.chatBackground === 'transparent');
+    S.chatVeil = normalizeChatVeil(S.chatVeil);
+    root.style.setProperty('--ilg-reading-level', S.chatVeil / 100);
+    root.classList.toggle('ilg-chat-reading', S.enabled && S.chatBackground !== 'transparent' && S.chatVeil > 0);
     root.style.setProperty('--ilg-scrim-a', S.scrim);
     root.style.setProperty('--ilg-tint', `rgba(255, 255, 255, ${lightBg ? Math.min(.7, S.tint + .08) : S.tint})`);
 }
@@ -2382,7 +2396,7 @@ function applyRoot() {
     normalizeTopStyleSettings(S);
     syncInputMaterial(false);
     if (glassSettingsRaf) { cancelAnimationFrame(glassSettingsRaf); glassSettingsRaf = 0; }
-    if (!S.enabled) cardTone = null;
+    if (!S.enabled) { cardTone = null; clearTopTones(); }
     applyChatFontSize();
     applyProseSpacing();
     root.classList.toggle('ilg', S.enabled);
@@ -2616,10 +2630,14 @@ function buildPanel() {
     ${TOGGLES.filter(([k]) => k !== 'iosSvgTrial' && k !== 'iosMaterial').map(([k, label]) => `<label class="checkbox_label" for="ilg-opt-${k}"><input type="checkbox" id="ilg-opt-${k}"><span>${label}</span></label>`).join('')}
     <div class="ilg-row"><label for="ilg-opt-chatBackground"><span>聊天背景</span></label>
       <select id="ilg-opt-chatBackground" class="text_pole" aria-describedby="ilg-chat-background-hint">
-        <option value="glass">模糊玻璃（原来的效果）</option>
+        <option value="glass">柔光玻璃（阅读滤镜）</option>
         <option value="transparent">透明玻璃（保留边缘与圆角）</option>
       </select>
-      <p class="ilg-hint" id="ilg-chat-background-hint">两档都保留玻璃轮廓。透明档去掉消息的磨砂和底色，保留边缘折射与阴影；卡片自身底色由上方“不透明底”开关控制。</p>
+      <p class="ilg-hint" id="ilg-chat-background-hint">柔光档压低壁纸杂色与明暗干扰，保留背景轮廓；透明档保留原图与玻璃边缘。卡片按原样显示。</p>
+    </div>
+    <div class="ilg-row ilg-reading-filter-row">
+      <label for="ilg-opt-chatVeil"><span>背景滤镜强度</span><output id="ilg-opt-chatVeil-v" for="ilg-opt-chatVeil">45%</output></label>
+      <input type="range" id="ilg-opt-chatVeil" min="0" max="100" step="1" aria-describedby="ilg-chat-background-hint">
     </div>
     <div class="ilg-row">
       <button type="button" id="ilg-card-report-copy" class="menu_button">复制卡片显示诊断</button>
@@ -2793,7 +2811,20 @@ function buildPanel() {
     insetRange.addEventListener('input', () => saveProse('proseInset', Number(insetRange.value)));
     document.getElementById('ilg-prose-leading-reset').addEventListener('click', () => saveProse('proseLeading', 0));
     document.getElementById('ilg-prose-inset-reset').addEventListener('click', () => saveProse('proseInset', 0));
+    const veilRange = document.getElementById('ilg-opt-chatVeil');
+    const syncChatVeil = () => {
+        veilRange.value = S.chatVeil;
+        document.getElementById('ilg-opt-chatVeil-v').textContent = S.chatVeil + '%';
+        veilRange.setAttribute('aria-valuetext', S.chatVeil === 0 ? '关闭背景滤镜' : S.chatVeil + '%');
+        veilRange.disabled = S.chatBackground === 'transparent';
+        veilRange.closest('.ilg-row').hidden = veilRange.disabled;
+    };
+    veilRange.addEventListener('input', () => {
+        S.chatVeil = normalizeChatVeil(Number(veilRange.value));
+        applySurfaceSettings(); syncChatVeil(); scheduleAdapt(); ctx.saveSettingsDebounced();
+    });
     const sync = () => {
+        syncChatVeil();
         syncChatFont();
         syncProseSpacing();
         document.getElementById('ilg-opt-chatBackground').value = S.chatBackground;
@@ -2837,7 +2868,9 @@ function buildPanel() {
     document.getElementById('ilg-opt-chatBackground').addEventListener('change', e => {
         if (!['glass', 'transparent'].includes(e.target.value)) { sync(); return; }
         S.chatBackground = e.target.value;
+        syncChatVeil();
         applySurfaceSettings();
+        scheduleAdapt();
         repaintAll();
         ctx.saveSettingsDebounced();
     });
@@ -2903,14 +2936,9 @@ function buildPanel() {
             ctx.saveSettingsDebounced();
             return;
         }
-        // 这两个只影响正文排版和卡片底色，不必重建玻璃
+        // Text alignment does not require rebuilding glass.
         if (k === 'justifyText') {
             root.classList.toggle('ilg-justify', S.enabled && !!S.justifyText);
-            ctx.saveSettingsDebounced();
-            return;
-        }
-        if (k === 'cardSolid') {
-            queueCards(true);
             ctx.saveSettingsDebounced();
             return;
         }
@@ -2939,8 +2967,44 @@ function buildPanel() {
 
 }
 
-// 顶栏/输入框自适应：采样它们下面滚过的内容，浅色内容滚上来时加深玻璃，白色图标不至于看不见（类似 iOS 26 的自适应玻璃）
-function surfaceLuminance(el) {
+// Top controls sample visible card surfaces first, then the cached wallpaper crop.
+let wallpaperBackdrop = null;
+const isTopSurface = bar => bar.id === 'top-bar' || bar.id === 'ilg-floor' || bar.classList.contains('ilg-island');
+function readWallpaperBackdrop() {
+    if (!currentWallpaperSample) return null;
+    for (const id of ['bg_custom','bg1']) {
+        const el = document.getElementById(id); if (!el) continue;
+        const cs = getComputedStyle(el);
+        const match = /url\(["']?(.*?)["']?\)/.exec(el.style.backgroundImage || cs.backgroundImage || '');
+        if (!match || match[1] !== currentWallpaperSample.url || cs.display === 'none' || +cs.opacity < .98) continue;
+        const layout = wallpaperLayout(currentWallpaperSample.raster, el.getBoundingClientRect(), cs.backgroundSize, cs.backgroundPosition);
+        if (layout && root.classList.contains('ilg-chat-reading') && !root.classList.contains('ilg-home')) {
+            const sheld = document.getElementById('sheld');
+            if (sheld) layout.veil = {rect:sheld.getBoundingClientRect(),level:S.chatVeil/100,light:lightBg,noBlur:document.body.classList.contains('no-blur')};
+        }
+        return layout;
+    }
+    return null;
+}
+function applyTopTone(el, appearance) {
+    if (!appearance) { if (el.dataset?.ilgTopTone) delete el.dataset.ilgTopTone; return; }
+    if (el.dataset.ilgTopTone !== appearance.tone) el.dataset.ilgTopTone = appearance.tone;
+}
+function topIconTones(bars) {
+    const result = [], noBlur = document.body.classList.contains('no-blur');
+    for (const bar of bars) for (const wrapper of bar?.icons || []) {
+        const icon = wrapper.querySelector('.drawer-icon'); if (!icon) continue;
+        const r = icon.getBoundingClientRect();
+        if (!r.width || !r.height) { result.push({el:wrapper,top:null}); continue; }
+        if (noBlur) { result.push({el:wrapper,top:{tone:lightBg?'dark':'light'}}); continue; }
+        const colors = []; let sum = 0, count = 0;
+        for (const f of [.3,.7]) { const l = lumAt(r.left+r.width*f,r.top+r.height*.5,bar,c=>colors.push(c)); if (l !== null) {sum+=l;count++;} }
+        result.push({el:wrapper,top:count?topTone(sum/count,wrapper.dataset.ilgTopTone,colors):null});
+    }
+    return result;
+}
+function clearTopTones() { document.querySelectorAll('[data-ilg-top-tone]').forEach(el => applyTopTone(el,null)); }
+function surfaceLuminance(el, onColor) {
     const view = el.ownerDocument.defaultView;
     for (let n = el; n && n.nodeType === 1; n = n.parentElement) {
         if (n === document.body || n.id === 'chat' || n.id === 'sheld') return null;
@@ -2948,38 +3012,43 @@ function surfaceLuminance(el) {
         if (!m) continue;
         const [r, g, b, a = 1] = m[1].split(',').map(Number);
         if (a < 0.5) continue;
+        onColor?.([r,g,b]);
         return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
     }
     return null;
 }
-function lumAt(x, y, bar) {
+function lumAt(x, y, bar, onColor) {
     for (const el of document.elementsFromPoint(x, y)) {
         if (bar.contains(el) || el.closest('#top-bar, #top-settings-holder, #form_sheld')) continue;
         if (el.tagName === 'IFRAME') {
             try {
                 const r = el.getBoundingClientRect();
                 const inner = el.contentDocument?.elementFromPoint(x - r.left, y - r.top);
-                if (inner) return surfaceLuminance(inner);
+                if (inner) return surfaceLuminance(inner,onColor);
             } catch { /* 跨域 iframe 读不到，跳过 */ }
             return null;
         }
-        const luminance = surfaceLuminance(el);
+        const luminance = surfaceLuminance(el,onColor);
         // Transparent chat/layout containers do not hide the actual card underneath.
         if (luminance !== null) return luminance;
     }
-    return null;
+    const point = isTopSurface(bar) ? wallpaperPoint(wallpaperBackdrop,x,y) : null;
+    if (point) onColor?.([point.r,point.g,point.b]);
+    return point?.luminance ?? null;
 }
 function adaptBar(bar) {
     if (!bar || bar.hidden) return null;
+    const top = isTopSurface(bar);
+    if (top && bar.id !== 'ilg-floor') return {bar,light:false,dark:false,top:null};
     const r = bar.getBoundingClientRect();
-    const ys = [r.top + r.height * 0.35, r.top + r.height * 0.7];
-    let sum = 0, n = 0;
-    for (const f of [0.15, 0.38, 0.62, 0.85]) for (const y of ys) {
-        const l = lumAt(r.left + r.width * f, y, bar);
+    const ys = top ? [r.top+r.height*.5] : [r.top+r.height*.35,r.top+r.height*.7];
+    let sum = 0, n = 0; const colors = [];
+    for (const f of top ? [.2,.5,.8] : [.15,.38,.62,.85]) for (const y of ys) {
+        const l = lumAt(r.left + r.width * f, y, bar,c => colors.push(c));
         if (l !== null) { sum += l; n++; }
     }
     const avg = n ? sum / n : null;
-    return { bar, light: !lightBg && avg !== null && avg > 0.62, dark: lightBg && avg !== null && avg < 0.38 };
+    return { bar, light: !top && !lightBg && avg !== null && avg > .62, dark: !top && lightBg && avg !== null && avg < .38, top: top ? (document.body.classList.contains('no-blur') ? {tone:lightBg?'dark':'light'} : topTone(avg,bar.dataset?.ilgTopTone,colors)) : null };
 }
 // Each input action reads its own backdrop: a bright card in the text area must
 // not turn icons over dark wallpaper dark as well. Unknown pixels use the page tone.
@@ -3019,15 +3088,19 @@ function scheduleAdapt(interval) {
             adaptLast = performance.now();
             const bars = S.islands && islands.length ? islands : [document.getElementById('top-bar')];
             const input = document.querySelector(PILL_SEL);
-            const samples = [...bars, input].map(adaptBar);
-            const actionTones = inputActionTones(input);
+            wallpaperBackdrop = readWallpaperBackdrop();
+            const floor = document.getElementById('ilg-floor');
+            const samples = [...bars, ...(floor && !floor.hidden ? [floor] : []), input].map(adaptBar);
+            const actionTones = inputActionTones(input), iconTones = topIconTones(bars);
             for (const sample of samples) {
                 if (!sample) continue;
-                const { bar, light, dark } = sample;
+                const { bar, light, dark, top } = sample;
+                applyTopTone(bar, top);
                 bar.classList.toggle('ilg-over-light', light);
                 bar.classList.toggle('ilg-over-dark', dark);
                 (bar.icons || []).forEach(d => d.classList.toggle('ilg-icon-over-light', light));
             }
+            for (const { el, top } of iconTones) applyTopTone(el,top);
             for (const { el, tone } of actionTones) {
                 if (tone === null) delete el.dataset.ilgInputTone;
                 else if (el.dataset.ilgInputTone !== tone) el.dataset.ilgInputTone = tone;
@@ -3345,7 +3418,7 @@ function cardDisplayReport() {
         format: 'nvwa-card-display-1', version: '1.4.4',
         viewport: [innerWidth, innerHeight, devicePixelRatio],
         userAgent: navigator.userAgent,
-        enabled: !!S.enabled, chatBackground: S.chatBackground, cardSolid: !!S.cardSolid,
+        enabled: !!S.enabled, chatBackground: S.chatBackground, chatVeil: S.chatVeil,
         compatibilityMode: S.compatibilityMode, engine: S.engine,
         bubble: document.body.classList.contains('bubblechat'), noBlur: document.body.classList.contains('no-blur'),
         messageCount: messages.length, sampledMessages: details,
@@ -3358,10 +3431,7 @@ function blockBg(el, cs = getComputedStyle(el)) {
     if ((!c || c.a < 0.05) && cs.backgroundImage.includes('gradient')) c = parseRgba(cs.backgroundImage);
     return c && c.a >= 0.05 ? c : null;
 }
-// 卡片自己的「实色底」怎么取：
-// 卡片的底色可能写在 background-color、写在渐变里、甚至写在 ::before / ::after 上（模板爱这么干）。
-// 取所有候选里不透明度最高的那个颜色，当铺在下面的一层实色。
-// 还要判断这张卡到底有没有「透」的地方：颜色层看自身不透明度，渐变层看有没有淡到接近 0 的色标。
+// Inspect authored colors, including pseudo-element panels, without replacing their backgrounds.
 const cardColors = el => {
     const cs = getComputedStyle(el);
     const layers = [
@@ -3375,23 +3445,18 @@ const cardColors = el => {
         if (ps.content === 'none' || ps.display === 'none') continue;
         layers.push([ps.backgroundColor, 'color'], [ps.backgroundImage, 'image']);
     }
-    let best = null, translucent = false;
-    for (const [src, kind] of layers) {
+    let best = null;
+    for (const [src] of layers) {
         if (!src || src === 'none') continue;
         const list = String(src).match(/rgba?\([^)]+\)/g);
         if (!list || !list.length) continue;
-        let maxA = 0, minA = 1;
         for (const s of list) {
             const c = parseRgba(s);
             if (!c) continue;
-            maxA = Math.max(maxA, c.a);
-            minA = Math.min(minA, c.a);
             if (c.a >= 0.35 && (!best || c.a > best.a)) best = c;
         }
-        // 渐变：只要有一段淡到几乎透明，这张卡就是「会透」的
-        if (kind === 'image' ? minA < 0.995 : (maxA > 0.02 && maxA < 0.995)) translucent = true;
     }
-    return { best, translucent };
+    return { best };
 };
 function tagCard(text) {
     // 以 <html> 上的 class 为准：CSS 也是按它配色的
@@ -3411,7 +3476,7 @@ function tagCard(text) {
             const panel = frame || k.matches('div, section, article, aside, details, summary, dialog, button, [role="dialog"], [role="button"], [role="menu"], [role="listbox"], [role="option"]');
             const choice = k.matches('button, select, option, input[type="button"], input[type="submit"], [role="button"], [role="option"]');
             // 底色也可能画在 ::before / ::after 上（模板常用这招），这种情况元素自身读不到背景，得一起算进来
-            const card = panel ? cardColors(k) : { best: null, translucent: false };
+            const card = panel ? cardColors(k) : { best: null };
             // 自绘卡片走独立的模糊底层，避开整条消息的 SVG 合成（见 paint()）。
             // 保持既有判据，避免普通正文因伪元素底色而进入额外的卡片兼容路径。
             const renderer = choice || (panel && (!!c || cs.backgroundImage !== 'none' || cs.position === 'fixed'));
@@ -3420,27 +3485,15 @@ function tagCard(text) {
 
             let lum = base;
             if (c) lum = lumOf(c) * c.a + base * (1 - c.a);
-            // 卡片里只要有一处是透的，就用它最实的那个颜色补一层底；全不透明的卡不补。
-            // 算过一次就沿用存下的值：我们自己那条 !important 会把渲染出来的背景色变成实色，
-            // 再按渲染值重算就会误判成“已经不透明了”，于是开关来回跳。
-            const previousSolid = k.style.getPropertyValue('--ilg-card-solid');
-            // Drop the obsolete neutral backing; transparent frame margins belong to the authored card.
-            const kept = previousSolid === 'var(--ilg-card-fallback)' ? '' : previousSolid;
-            const solid = kept || (card.translucent && card.best
-                ? `rgb(${Math.round(card.best.r)}, ${Math.round(card.best.g)}, ${Math.round(card.best.b)})` : '');
-            updates.push({ element: k, surface, lit: !!c && lum > 0.62 && !light, dim: !!c && lum < 0.38 && light, lum, solid });
+            updates.push({ element: k, surface, lit: !!c && lum > 0.62 && !light, dim: !!c && lum < 0.38 && light, lum });
         }
-        for (const { element, surface, lit, dim, solid } of updates) {
+        for (const { element, surface, lit, dim } of updates) {
             element.classList.toggle('ilg-card-surface', surface);
             element.classList.toggle('ilg-lit', lit);
             element.classList.toggle('ilg-dim', dim);
-            const wantSolid = !!solid && S.cardSolid;
-            if (wantSolid) {
-                if (element.style.getPropertyValue('--ilg-card-solid') !== solid) element.style.setProperty('--ilg-card-solid', solid);
-            } else if (element.style.getPropertyValue('--ilg-card-solid')) {
-                element.style.removeProperty('--ilg-card-solid');
-            }
-            element.classList.toggle('ilg-solid', wantSolid);
+            // Remove markers from older builds without changing authored inline backgrounds.
+            if (element.style.getPropertyValue('--ilg-card-solid')) element.style.removeProperty('--ilg-card-solid');
+            element.classList.toggle('ilg-solid', false);
         }
         for (const { element, lum } of updates) if (element.children.length) walk(element, lum);
     };

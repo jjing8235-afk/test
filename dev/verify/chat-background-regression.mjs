@@ -17,19 +17,36 @@ for (const value of [undefined, null, 'invalid', false, 12, 'glass', 'transparen
 }
 const change = source.match(/document.getElementById\('ilg-opt-chatBackground'\).addEventListener\('change', e => \{([\s\S]*?)\n    \}\);/)[1];
 for (const value of ['glass', 'transparent', 'invalid']) {
-    const S = { chatBackground: 'glass', mesBlur: 8, mesTint: .7, cardSolid: false };
+    const S = { chatBackground: 'glass', mesBlur: 8, mesTint: .7, chatVeil: 60 };
     const calls = [];
     vm.runInNewContext('(function(){' + change + '})()', {
         S, e: { target: { value } }, sync() { calls.push('sync'); },
-        applySurfaceSettings() { calls.push('surface'); }, repaintAll() { calls.push('paint'); },
+        syncChatVeil() { calls.push('veil'); }, scheduleAdapt() { calls.push('adapt'); }, applySurfaceSettings() { calls.push('surface'); }, repaintAll() { calls.push('paint'); },
         ctx: { saveSettingsDebounced() { calls.push('save'); } },
     });
     assert.equal(S.chatBackground, value === 'transparent' ? 'transparent' : 'glass');
     assert.equal(S.mesBlur, 8);
     assert.equal(S.mesTint, .7);
-    assert.equal(S.cardSolid, false);
-    assert.deepEqual(calls, value === 'invalid' ? ['sync'] : ['surface', 'paint', 'save']);
+    assert.equal(S.chatVeil, 60);
+    assert.deepEqual(calls, value === 'invalid' ? ['sync'] : ['veil', 'surface', 'adapt', 'paint', 'save']);
 }
+
+const normalizeVeil = vm.runInNewContext(bodyOf('normalizeChatVeil') + ';normalizeChatVeil');
+assert.equal(defaults.chatVeil,45);assert.equal(Object.hasOwn(defaults,'cardSolid'),false);
+for (const [input,expected] of [[undefined,45],[null,45],['60',45],[NaN,45],[Infinity,45],[-10,0],[0,0],[44.6,45],[100,100],[130,100]]) assert.equal(normalizeVeil(input),expected);
+const bookmarkSource=fs.readFileSync(new URL('../../appearance-bookmark.js',import.meta.url),'utf8').replace(/^export /gm,'');
+const bookmark=vm.runInNewContext(bookmarkSource+';createAppearanceBookmark')(defaults);
+const captured=bookmark.capture({...defaults,chatVeil:38,cardSolid:true});assert.equal(captured.values.chatVeil,38);assert(!Object.hasOwn(captured.values,'cardSolid'));
+assert.equal(bookmark.read(captured).chatVeil,38);assert.equal(bookmark.read({...captured,values:{...captured.values,chatVeil:101}}),null);
+const legacy=bookmark.read({...captured,values:{chatBackground:'glass',cardSolid:true}});assert.equal(legacy.chatBackground,'glass');assert(!Object.hasOwn(legacy,'cardSolid'));assert(!Object.hasOwn(legacy,'chatVeil'));
+for(const mode of ['glass','transparent'])for(const enabled of[true,false])for(const level of[0,45,100]){
+    const S={...defaults,enabled,chatBackground:mode,chatVeil:level},classes=new Set(),props={};
+    const root={style:{setProperty(k,v){props[k]=v}},classList:{toggle(k,on){if(on)classes.add(k);else classes.delete(k)}}};
+    vm.runInNewContext(bodyOf('applySurfaceSettings')+';applySurfaceSettings()',{S,root,lightBg:false,normalizeChatVeil:normalizeVeil});
+    assert.equal(classes.has('ilg-chat-reading'),enabled&&mode==='glass'&&level>0);assert.equal(props['--ilg-reading-level'],level/100);
+}
+const strengthChange=source.match(/veilRange.addEventListener\('input', \(\) => \{([^]*?)\n    \}\);/)[1];
+const actions=[],strength={chatVeil:45};vm.runInNewContext('(function(){'+strengthChange+'})()',{S:strength,veilRange:{value:'74'},normalizeChatVeil:normalizeVeil,applySurfaceSettings(){actions.push('surface')},syncChatVeil(){actions.push('sync')},scheduleAdapt(){actions.push('adapt')},ctx:{saveSettingsDebounced(){actions.push('save')}}});assert.equal(strength.chatVeil,74);assert.deepEqual(actions,['surface','sync','adapt','save'],'Strength changes must not request glass-map rebuilds');
 
 function element(classes = []) {
     const tokens = new Set(classes);
@@ -126,6 +143,8 @@ assert.equal(settings.mesBlur, 3, 'Transparent mode must not overwrite the user 
 
 console.log(JSON.stringify({ passed: true, renderingCases: cases, checks: [
     'Settings retain defaults and reject invalid values without overwriting user parameters',
+    'Reading strength is bounded, restores through bookmarks and ignores retired saved options',
+    'Mode/disable/zero gate one shared layer; strength updates avoid message-map rebuilds',
     'Plain, card and fixed-overlay messages use the selected full engine in both modes',
     'Transparent removes message blur without disabling refraction or changing input blur',
     'Card layers are reused and removed when the message stops owning a card',

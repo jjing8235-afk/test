@@ -34,7 +34,8 @@ let luminance = 0.9;
 const adapt = source.slice(source.indexOf('function adaptBar(bar) {'), source.indexOf("chatEl.addEventListener('scroll', scheduleAdapt"));
 const adaptEnv = {
     S: settings, islands: [], PILL_SEL: '#pill', lightBg: false,
-    document: { getElementById: () => bar, querySelector: () => pill, body: { dataset: {} } },
+    isTopSurface:()=>false,readWallpaperBackdrop:()=>null,wallpaperBackdrop:null,applyTopTone(){},topIconTones:()=>[],
+    document: { getElementById: id => id==='ilg-floor'?null:bar, querySelector: () => pill, body: { dataset: {} } },
     lumAt() { samples++; return luminance; }, performance: { now: () => now },
     requestAnimationFrame: fn => later(fn, 16), setTimeout: later,
 };

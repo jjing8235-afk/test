@@ -16,6 +16,31 @@ html.ilg body #chat {
     border-color: transparent;
 }
 
+/* One stationary veil behind the scrolling chat. Text and fixed card overlays stay outside
+   the filtered layer; sheld already owns the host stacking context. No per-message copies. */
+html.ilg.ilg-chat-reading body #sheld::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    border-radius: inherit;
+    background: rgba(18, 21, 28, calc(var(--ilg-reading-level, .45) * .95));
+    -webkit-backdrop-filter: blur(calc(var(--ilg-reading-level, .45) * 4px)) saturate(calc(1 - var(--ilg-reading-level, .45) * .4)) brightness(calc(1 - var(--ilg-reading-level, .45) * .4));
+    backdrop-filter: blur(calc(var(--ilg-reading-level, .45) * 4px)) saturate(calc(1 - var(--ilg-reading-level, .45) * .4)) brightness(calc(1 - var(--ilg-reading-level, .45) * .4));
+}
+html.ilg.ilg-light.ilg-chat-reading body #sheld::before {
+    background: rgba(247, 245, 240, calc(var(--ilg-reading-level, .45) * 1.1));
+    -webkit-backdrop-filter: blur(calc(var(--ilg-reading-level, .45) * 4px)) saturate(calc(1 - var(--ilg-reading-level, .45) * .4));
+    backdrop-filter: blur(calc(var(--ilg-reading-level, .45) * 4px)) saturate(calc(1 - var(--ilg-reading-level, .45) * .4));
+}
+html.ilg.ilg-chat-reading body.no-blur #sheld::before {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+}
+/* The existing home surface supplies its own background; keep the wallpaper view there. */
+html.ilg.ilg-chat-reading.ilg-home body #sheld::before { content: none; }
+
 /* ---------- 悬浮布局：聊天内容从顶栏和输入框下面滚过去 ---------- */
 html.ilg.ilg-float body:not(.movingUI) #sheld {
     top: 0;
@@ -2149,15 +2174,6 @@ html.ilg.ilg-justify body #chat .mes .mes_text > li {
     text-align: justify;
     text-align-last: left;
     text-justify: inter-character;
-}
-
-/* 正文里自带底色的卡片（角色卡的状态栏、模板面板）：它们的底色多半是半透明紫 / 半透明黑，
-   叠在亮壁纸上就「透」了，同一张卡上半实、下半虚。tagCard() 把卡片自己的颜色算出来写进
-   --ilg-card-solid，这里铺一层实色在它自己的渐变下面，壁纸就不再透上来。
-   设置里的「卡片都用不透明底」可以关掉，关掉后恢复原样。 */
-html.ilg body #chat .mes_text .ilg-card-surface.ilg-solid {
-    /* 卡片模板大多把底色写在 style 属性里，行内样式优先级比样式表高，这里必须 !important 才盖得住 */
-    background-color: var(--ilg-card-solid) !important;
 }
 
 /* 3) 预设自带的时间栏（「凝嘤嘤」：两侧一串像素爱心）。大爱心故意画在 SVG 框外
@@ -4636,3 +4652,14 @@ html.ilg body #chat > .mes.ilg-render-away:not(.last_mes):not(.ilg-content-overl
 
 /* Small, bounded overlay layers stay ready for direct manipulation. */
 html.ilg body > :is(#ilg-ball, #ilg-ball-glass, #ilg-ball-glass-shade, #ilg-ball-bridge, #ilg-ball-shade) { will-change: transform; }
+
+/* Only icon/text ink adapts at the top. Glass tint, refraction and transparency
+   continue to use the selected material and preset. Drawer content keeps its own palette. */
+html.ilg body [data-ilg-top-tone="dark"] { --ilg-top-ink:#27313d; }
+html.ilg body [data-ilg-top-tone="light"] { --ilg-top-ink:#f1f4f8; }
+html.ilg.ilg-clear-optics body #top-settings-holder > [data-ilg-top-tone]:not(.ilg-open):not(.ilg-dock-active) > .drawer-toggle > .drawer-icon:not(.openIcon),
+html.ilg.ilg-clear-optics body #top-settings-holder > [data-ilg-top-tone]:not(.ilg-open):not(.ilg-dock-active) > .drawer-icon:not(.openIcon),
+html.ilg.ilg-clear-optics body #top-bar > #ilg-floor[data-ilg-top-tone] {
+    color:var(--ilg-top-ink);
+    filter:none;
+}
