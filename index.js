@@ -25,7 +25,8 @@ window.__ilgLoaded = new URL('.', import.meta.url).pathname;
 
 let studioUI = null;
 const MODULE = 'iosLiquidGlass';
-const BUILD_VERSION = '1.4.5-test.24';
+const BUILD_VERSION = '1.4.5-test.25';
+const ENGINE_NAMES = Object.freeze({performance:'御风性能引擎',refraction:'棱光折射引擎'});
 const NS = 'http://www.w3.org/2000/svg';
 const ctx = SillyTavern.getContext();
 
@@ -1018,7 +1019,7 @@ function measure(el) {
     const w = el.offsetWidth, h = el.offsetHeight;
     return { w, h, r: w && h ? radiusOf(el, w, h) : 0 };
 }
-function paintMany(list) {
+function paintMany(list, measured = null) {
     const jobs = [];
     for (const el of list) {
         const it = items.get(el);
@@ -1031,7 +1032,7 @@ function paintMany(list) {
         }
         jobs.push(el);
     }
-    const geo = jobs.map(measure);
+    const geo = jobs.map(el => measured?.get(el) || measure(el));
     jobs.forEach((el, i) => paint(el, geo[i]));
 }
 function paint(el, geo) {
@@ -1046,6 +1047,10 @@ function paint(el, geo) {
             el.classList.toggle('ilg-adapted', !!panel);
         }
         geo = measure(el);
+    }
+    if (it.kind !== 'mes') {
+        it.visible = !!geo.w && !!geo.h;
+        if (it.visible) visibleItems.add(el); else { visibleItems.delete(el); return; }
     }
     const surface = it.kind === 'mes' ? messageSurface(el, it) : el;
     const control = it.kind === 'bar' && controlSurface(el);
@@ -1124,14 +1129,24 @@ const mesLate = new Set();
 let mesLateTimer = 0;
 const flushMesLate = () => { mesLateTimer = 0; const list = [...mesLate]; mesLate.clear(); if (list.length) paintMany(list); };
 const ro = new ResizeObserver(entries => {
-    const now = [];
+    const now = [], measured = new Map();
     const streaming = document.body.dataset.generating === 'true';
+    // Read before messageRendering changes containment. ResizeObserver already
+    // supplies border dimensions, so reading offsetWidth again would force layout.
+    for (const e of entries) {
+        if (streaming && items.get(e.target)?.kind === 'mes') continue;
+        const box = e.borderBoxSize?.length === 1 ? e.borderBoxSize[0] : null;
+        if (box && getComputedStyle(e.target).writingMode === 'horizontal-tb') {
+            const w = Math.round(box.inlineSize), h = Math.round(box.blockSize);
+            measured.set(e.target, { w, h, r: w && h ? radiusOf(e.target, w, h) : 0 });
+        } else measured.set(e.target, measure(e.target));
+    }
     for (const e of entries) {
         messageRendering.resize(e.target, e.contentRect.height, e.contentRect.width);
         if (streaming && items.get(e.target)?.kind === 'mes') { mesLate.add(e.target); continue; }
         now.push(e.target);
     }
-    if (now.length) paintMany(now);
+    if (now.length) paintMany(now, measured);
     if (mesLate.size && !mesLateTimer) mesLateTimer = setTimeout(flushMesLate, MES_STREAM_GAP);
 });
 new MutationObserver(() => { if (document.body.dataset.generating !== 'true' && mesLate.size) { clearTimeout(mesLateTimer); flushMesLate(); } })
@@ -2076,7 +2091,7 @@ qrToggle.setAttribute('aria-expanded', 'false');
 function applyQrFold() {
     const on = S.enabled && S.qrFold;
     root.classList.toggle('ilg-qrfold', on);
-    if (!on) { setQrOpen(false); qrToggle.remove(); return; }
+    if (!on) { setQrOpen(false); const bar=qrBar();if(bar&&items.has(bar))untrack(bar);qrToggle.remove();return; }
     const left = document.getElementById('leftSendForm');
     if (left && qrToggle.parentElement !== left) left.appendChild(qrToggle);
 }
@@ -2087,7 +2102,10 @@ function setQrOpen(open) {
     root.classList.toggle('ilg-qr-open', open);
     qrToggle.setAttribute('aria-expanded', String(open));
     if (!bar) return;
-    if (open) track(bar, 'panel'); else untrack(bar);
+    if (open) {
+        if (!items.has(bar)) track(bar, 'panel');
+        else { const it=items.get(bar);it.visible=true;visibleItems.add(bar);paint(bar); }
+    } else { const it=items.get(bar);if(it)it.visible=false;visibleItems.delete(bar); }
 }
 qrToggle.addEventListener('click', () => setQrOpen(!root.classList.contains('ilg-qr-open')));
 qrToggle.addEventListener('keydown', e => {
@@ -2158,7 +2176,13 @@ function setHome(on) {
         chat.querySelectorAll(':scope > .ilg-home-hide').forEach(n => n.classList.remove('ilg-home-hide'));
     }
 }
-const hostInteractionState = createHostInteractionState({ holder, form: document.getElementById('form_sheld'), home, qrToggle });
+const hostInteractionState = createHostInteractionState({ holder, form: document.getElementById('form_sheld'), home, qrToggle,
+    onQrBar(previous,next){
+        if(previous&&items.has(previous))untrack(previous);
+        if(next&&S.enabled&&root.classList.contains('ilg-qr-open'))track(next,'panel');
+        if(!next&&root.classList.contains('ilg-qr-open'))setQrOpen(false);
+    },
+});
 function syncHome() { setHome(S.enabled && S.home && !homeDismissed && onWelcome()); }
 new MutationObserver(muts => {
     if (!S.enabled || !S.home) return;
@@ -2644,6 +2668,9 @@ function iosTrialReport() {
         '美化 / 折射 / iOS 实验: ' + !!S.enabled + ' / ' + !!S.refract + ' / ' + !!S.iosSvgTrial,
         '关闭模糊 / 气泡 / 浅色: ' + document.body.classList.contains('no-blur') + ' / ' + document.body.classList.contains('bubblechat') + ' / ' + root.classList.contains('ilg-light'),
         '引擎: ' + S.engine,
+        '性能引擎: ' + ENGINE_NAMES.performance,
+        '折射引擎: ' + ENGINE_NAMES.refraction,
+        '界面轮廓计算: ' + JSON.stringify(reflections.status()),
         '消息渲染: ' + JSON.stringify(messageRendering.status()),
         '悬浮球计算: ' + JSON.stringify((({mode, reason, suspended, active, pending, workerFrames, syncFrames, coalesced, failures, cacheEntries}) => ({mode, reason, suspended, active, pending, workerFrames, syncFrames, coalesced, failures, cacheEntries}))(ballGlass.status())),
         '控件材质: ' + S.glassStyle,
@@ -2752,7 +2779,7 @@ function buildPanel() {
         <option value="line">名片式：小头像放进名字那一行，正文占满气泡</option>
         <option value="side">经典：头像在左边单独一列</option>
       </select></div>
-    <div class="ilg-row"><label for="ilg-opt-engine"><span>折射引擎</span></label>
+    <div class="ilg-row"><label for="ilg-opt-engine"><span>${ENGINE_NAMES.refraction}</span></label>
       <select id="ilg-opt-engine" class="text_pole">
         <option value="physical">新版：物理折射（实验）</option>
         <option value="legacy">旧版：之前一直用的这套</option>
@@ -2818,7 +2845,7 @@ function buildPanel() {
     wrap.querySelector('.inline-drawer-content').append(tiltControls);
     tiltControls.querySelector('#ilg-tilt-state').textContent = lighting.status();
     tiltControls.querySelector('#ilg-tilt-calibrate').addEventListener('click', requestMobileTilt);
-    studioUI = createSettingsPanel({ host, content: wrap, appearance: appearancePanel, version: BUILD_VERSION, settings: S });
+    studioUI = createSettingsPanel({ host, content: wrap, appearance: appearancePanel, version: BUILD_VERSION, settings: S, engines: ENGINE_NAMES });
 
     document.getElementById('ilg-opt-iosReportCopy').textContent = '导出兼容诊断 TXT';
     document.getElementById('ilg-opt-iosReportCopy').addEventListener('click', () => {
@@ -3557,7 +3584,7 @@ function cardDisplayReport() {
         viewport: [innerWidth, innerHeight, devicePixelRatio],
         userAgent: navigator.userAgent,
         enabled: !!S.enabled, chatBackground: S.chatBackground, chatVeil: S.chatVeil,
-        compatibilityMode: S.compatibilityMode, engine: S.engine,
+        compatibilityMode: S.compatibilityMode, engine: S.engine, engineNames: ENGINE_NAMES,
         bubble: document.body.classList.contains('bubblechat'), noBlur: document.body.classList.contains('no-blur'),
         messageCount: messages.length, sampledMessages: details,
     }, null, 2);

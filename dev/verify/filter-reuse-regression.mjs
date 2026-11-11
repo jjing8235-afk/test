@@ -82,7 +82,7 @@ vm.runInNewContext('(function(el, geo){' + paintBody + '})(el)', {
     measure: e => ({ w: e.offsetWidth, h: e.offsetHeight, r: 0 }), messageSurface: e => e,
     controlSurface: () => false, controlReadable: () => false, cssGlassActive: () => false, webStyleEnabled: () => false,
     webGlass: { release() {} }, reflections: { release() {} }, surfaceBlur: () => 1,
-    el: element, items: new Map([[element, hiddenItem]]), trackable: () => true,
+    el: element, visibleItems: new Set([element]), items: new Map([[element, hiddenItem]]), trackable: () => true,
     document: { body: { classList: { contains: () => false } } },
     KIND: { bar: { blur: () => 1 } }, S: { saturate: 1, brightness: 1 },
     setPhys() { painted++; },

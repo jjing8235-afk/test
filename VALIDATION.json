@@ -2634,6 +2634,136 @@
         "All host mutation requests were blocked; no user settings, chats or API data were saved.",
         "Zero input geometry reads refers to value-label updates during the measured drag; host glass work still has its own cost."
       ]
+    },
+    {
+      "version": "1.4.5-test.25",
+      "date": "2026-11-11",
+      "scope": "Yufeng performance and Lengguang refraction naming; owned input overlays and native preset adapter rendering",
+      "engines": {
+        "performance": "御风性能引擎",
+        "refraction": "棱光折射引擎",
+        "storedValues": [
+          "physical",
+          "legacy"
+        ]
+      },
+      "host": {
+        "version": "1.18.0",
+        "browser": "Microsoft Edge headless Chromium"
+      },
+      "automated": {
+        "passed": true,
+        "regressions": 23,
+        "fontRangeCases": 16,
+        "reflectionRawCases": 52,
+        "actualWorkerDecodedPixelCases": 4,
+        "decodedPixelExact": true,
+        "workerLifecycle": [
+          "startup",
+          "deduplication",
+          "stale size",
+          "released and disconnected clients",
+          "disable late result",
+          "queued DPR fallback"
+        ],
+        "readBeforeWriteGeometry": true,
+        "streamingDeferralPreserved": true
+      },
+      "live": {
+        "passed": true,
+        "hostStateChecks": 27,
+        "unrelatedInputMutations": 100,
+        "chatMutations": 100,
+        "membershipQueries": 0,
+        "qr": {
+          "filterRetained": true,
+          "replyExecuted": true,
+          "expander": true,
+          "hiddenNoBlur": true,
+          "hiddenEngineChange": true,
+          "disableReenable": true,
+          "foldingOff": true,
+          "replacement": true,
+          "removal": true
+        },
+        "preset": {
+          "synthetic": true,
+          "nativeRegisteredPopup": true,
+          "controls": 20,
+          "tabChanges": 6,
+          "filterAndImageNodesRetained": true,
+          "cleanup": true
+        },
+        "namingViewports": [
+          [
+            320,
+            844
+          ],
+          [
+            844,
+            390
+          ],
+          [
+            1440,
+            900
+          ]
+        ],
+        "previousRangeShortcutsAndReadingChecks": true,
+        "writes": "All mutation requests blocked; save failures from the intentional block excluded from extension error checks"
+      },
+      "performance": {
+        "viewport": [
+          390,
+          844
+        ],
+        "floors": 240,
+        "cpuThrottle": 4,
+        "metric": "Two requestAnimationFrame opportunities after a toggle; not INP or device FPS",
+        "menus": [
+          {
+            "button": "options_button",
+            "beforeColdMs": 305.3,
+            "afterColdMs": 269.3,
+            "coldReductionPct": 11.8,
+            "warmMaxMs": 57.7,
+            "pngBefore": 9,
+            "pngAfter": 8
+          },
+          {
+            "button": "extensionsMenuButton",
+            "beforeColdMs": 516.5,
+            "afterColdMs": 156.1,
+            "coldReductionPct": 69.8,
+            "warmMaxMs": 49.1,
+            "pngBefore": 1,
+            "pngAfter": 0
+          }
+        ],
+        "quickReplies": {
+          "beforeWarmMeanMs": 50.56,
+          "afterWarmMeanMs": 36.9,
+          "reductionPct": 27
+        },
+        "warmBudgetMs": 80,
+        "warmBudgetMet": true,
+        "cold80msMet": false,
+        "workerOnlyTrial": "Reduced main-thread PNG encodes but did not materially reduce cold latency; CJK subset invalidation fixed the dominant wand stall"
+      },
+      "sourceHashes": {
+        "index.js": "e64c52828c3a7387019eec2f0f7a1f6517c343cb8a04a21706680c3ee9ffff5c",
+        "reflection-raster.js": "2c240ed640ba90893e778210c1ea0ee8d41acd2ba55014592836a318a036f153",
+        "glass-worker.js": "5500e779a9f8572d9931c209718ffb1c24ab5a841b30ad5799a337f08e8a1515",
+        "glass-reflections.js": "d86a404a4e7030b5d564e3d3a5693810e30887a76c7d38cbe02c3ee5d4880555",
+        "host-interaction-state.js": "0a82e6d326256a2f7c5f65f842a494041a90b37da3090281dd934094a55f27d3",
+        "message-rendering.js": "511e9667b56412f2144c0d2c076eab0d6ac65af4aed456c7f28b2e11cd11b89a",
+        "settings-panel.js": "fd6b5411f4f84aeeb84c147a730b163c21537b083b5101e48b47030f122b1253"
+      },
+      "limitations": [
+        "Desktop throttling and browser emulation are not physical iOS, Android or TT acceptance.",
+        "First open remains above 80ms; host animation, style, layout and glass rendering retain measurable cost.",
+        "Preset acceptance uses a synthetic supported content root in a registered native Popup, not the third-party preset script.",
+        "Measurements are bounded same-machine before/after samples; no hardware performance access or global host scheduling patches."
+      ]
     }
   ]
 }

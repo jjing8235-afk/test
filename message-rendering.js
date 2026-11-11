@@ -1,3 +1,29 @@
+// Conservative unicode-range check; no font metric changes are skipped on unknown metadata.
+export function fontLoadMayChangeText(faces, texts) {
+    const list = Array.from(faces || []);
+    if (!list.length) return true;
+    const ranges = [];
+    for (const face of list) {
+        if (typeof face.unicodeRange !== 'string' || !face.unicodeRange.trim()) return true;
+        for (const token of face.unicodeRange.split(',')) {
+            const match = /^\s*U\+([0-9a-f?]{1,6})(?:-([0-9a-f]{1,6}))?\s*$/i.exec(token);
+            if (!match || (match[2] && match[1].includes('?'))) return true;
+            const lo = parseInt(match[1].replace(/\?/g, '0'), 16);
+            const hi = parseInt(match[2] || match[1].replace(/\?/g, 'f'), 16);
+            if (lo > hi || hi > 0x10ffff) return true;
+            ranges.push([lo, hi]);
+        }
+    }
+    // Standard list markers and generated quotation marks also affect plain prose.
+    const characters = new Set('0123456789.()•◦▪“”‘’«»');
+    for (const text of texts) for (const character of text || '') characters.add(character);
+    for (const character of characters) {
+        const point = character.codePointAt(0);
+        if (ranges.some(([lo, hi]) => point >= lo && point <= hi)) return true;
+    }
+    return false;
+}
+
 // Preserve message DOM and exact measured heights while the browser skips distant plain text.
 const MARK = 'ilg-render-away', SIZE = '--ilg-message-height';
 const TAGS = new Set('P BR Q EM I B STRONG S DEL U A UL OL LI BLOCKQUOTE H1 H2 H3 H4 H5 H6 HR CODE PRE SPAN'.split(' '));
@@ -42,7 +68,12 @@ export function createMessageRendering(chat, { onReset = () => {} } = {}) {
     }
     const changed = () => { const key = environmentKey(); if (key !== environment) { environment = key; invalidateAll(); } };
     const observer = new win.MutationObserver(changed);
-    const fontsChanged = () => invalidateAll();
+    // A menu can load an unrelated CJK font subset. Only a subset containing
+    // message characters can invalidate measured message heights. Missing or
+    // malformed range metadata always takes the conservative invalidation path.
+    const fontsChanged = event => {
+        if (fontLoadMayChangeText(event?.fontfaces, [...states.keys()].map(el => el.textContent))) invalidateAll();
+    };
     function listen(on) {
         if (on) {
             environment = environmentKey();

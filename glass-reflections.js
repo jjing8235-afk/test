@@ -1,65 +1,28 @@
-// Shared surface lighting. Distance/normal sampling follows the actual rounded
-// contour, so long capsules do not inherit a conic gradient's uniform white frame.
+// Preserve exact contour pixels while large native overlays rasterise off the UI thread.
+import {reflectionPixel,reflectionGeometry,rasterReflection} from './reflection-raster.js';
+import {createGlassPerformance} from './glass-performance.js';
 const cache = new Map();
 let pixels = 0;
-const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
-// Returns straight RGBA reflection colour and alpha in out. The centre has no coating.
-export function reflectionPixel(depth, nx, ny, out) {
-    if (depth < 0 || depth > 7) { out[3] = 0; return out; }
-    const facing = -nx * .573576 - ny * .819152;
-    const key = Math.pow(Math.max(0, facing), 7);
-    const bounce = Math.pow(Math.max(0, -facing), 10);
-    const crest = Math.exp(-(((depth - .55) / .43) ** 2));
-    const shoulder = Math.exp(-(((depth - 1.65) / 1.1) ** 2));
-    const returnBand = Math.exp(-(((depth - 2.5) / .9) ** 2));
-    const shine = crest * (.025 + .72 * key + .2 * bounce) + shoulder * (.11 * key + .025 * bounce);
-    const cool = returnBand * bounce * .07;
-    const shade = Math.exp(-(((depth - 1.45) / .65) ** 2)) * (.025 + .045 * Math.max(0, -facing));
-    const total = shine + cool + shade;
-    out[0] = total ? (shine * 252 + cool * 216 + shade * 12) / total : 0;
-    out[1] = total ? (shine * 254 + cool * 238 + shade * 24) / total : 0;
-    out[2] = total ? (shine * 255 + cool * 255 + shade * 38) / total : 0;
-    out[3] = clamp(total, 0, .86) * 255;
-    return out;
-}
-function roundedReflection(width, height, radius) {
-    const w = Math.max(1, Math.round(width)), h = Math.max(1, Math.round(height));
-    const r = clamp(radius, 0, Math.min(w, h) / 2);
-    const scale = Math.min(2, Math.max(1, window.devicePixelRatio || 1), 1536 / w, 768 / h);
-    const key = [w, h, r, scale].join(':');
-    if (cache.has(key)) { const item = cache.get(key); cache.delete(key); cache.set(key, item); return item.url; }
-    const cw = Math.max(2, Math.round(w * scale)), ch = Math.max(2, Math.round(h * scale));
-    const canvas = document.createElement('canvas'); canvas.width = cw; canvas.height = ch;
-    const ctx = canvas.getContext('2d'); if (!ctx) return null;
-    const image = ctx.createImageData(cw, ch), data = image.data, out = [0, 0, 0, 0];
-    // Only the seven-pixel contour can contain colour. Skip the guaranteed
-    // transparent centre, retaining the original sample positions and RGBA math.
-    const band = Math.max(7, r);
-    let leftEnd = 0, rightStart = cw;
-    while (leftEnd < cw && (leftEnd + .5) * w / cw <= band) leftEnd++;
-    while (rightStart > leftEnd && (rightStart - .5) * w / cw >= w - band) rightStart--;
-    for (let y = 0; y < ch; y++) for (let x = 0; x < cw; x++) {
-        const row = (y + .5) * h / ch;
-        if (row > band && row < h - band && x === leftEnd) x = rightStart;
-        if (x >= cw) break;
-        const p = (y * cw + x) * 4;
-        const px = (x + .5) * w / cw - w / 2, py = (y + .5) * h / ch - h / 2;
-        const qx = Math.abs(px) - w / 2 + r, qy = Math.abs(py) - h / 2 + r;
-        const ex = Math.max(qx, 0), ey = Math.max(qy, 0), length = Math.hypot(ex, ey);
-        const depth = r - length - Math.min(Math.max(qx, qy), 0);
-        if (depth < 0 || depth > 7) continue;
-        const nx = length ? Math.sign(px) * ex / length : qx > qy ? Math.sign(px) : 0;
-        const ny = length ? Math.sign(py) * ey / length : qy >= qx ? Math.sign(py) : 0;
-        reflectionPixel(depth, nx, ny, out);
-        for (let c = 0; c < 4; c++) data[p + c] = out[c];
+const clamp = (v,a,b) => Math.min(b,Math.max(a,v));
+function rememberReflection(key,url,count) {
+    if(cache.has(key)){pixels-=cache.get(key).pixels;cache.delete(key);}
+    while(cache.size&&(cache.size>=24||pixels+count>2097152)){
+        const first=cache.keys().next().value;pixels-=cache.get(first).pixels;cache.delete(first);
     }
-    ctx.putImageData(image, 0, 0);
-    const url = canvas.toDataURL('image/png'); canvas.width = canvas.height = 0;
-    while (cache.size && (cache.size >= 24 || pixels + cw * ch > 2097152)) {
-        const first = cache.keys().next().value; pixels -= cache.get(first).pixels; cache.delete(first);
-    }
-    cache.set(key, {url, pixels: cw * ch}); pixels += cw * ch;
+    cache.set(key,{url,pixels:count});pixels+=count;
     return url;
+}
+function roundedReflection(width,height,radius,dpr=window.devicePixelRatio||1) {
+    const geometry=reflectionGeometry(width,height,radius,dpr);
+    const {key,cw,ch}=geometry;
+    if(cache.has(key)){const item=cache.get(key);cache.delete(key);cache.set(key,item);return item.url;}
+    const canvas=document.createElement('canvas');canvas.width=cw;canvas.height=ch;
+    const ctx=canvas.getContext('2d');if(!ctx)return null;
+    const image=ctx.createImageData(cw,ch);
+    rasterReflection(width,height,radius,dpr,image.data);
+    ctx.putImageData(image,0,0);
+    const url=canvas.toDataURL('image/png');canvas.width=canvas.height=0;
+    return rememberReflection(key,url,cw*ch);
 }
 export function createGlassReflections() {
     const known = new Set(), motion = matchMedia('(prefers-reduced-motion: reduce)');
@@ -68,17 +31,58 @@ export function createGlassReflections() {
     function reset() { active?.el.classList.remove('ilg-reflection-pressed'); active = null; }
     function release(el) {
         if (active?.el === el) reset();
+        const key=wanted.get(el);jobs.get(key)?.clients.delete(el);wanted.delete(el);
         known.delete(el); el.classList.remove('ilg-reflection', 'ilg-reflection-pressed');
         for (const key of ['--ilg-reflection-map', '--ilg-reflection-x', '--ilg-reflection-y']) el.style.removeProperty(key);
     }
-    function paint(el, width, height, radius) {
+    const wanted=new Map(),jobs=new Map();
+    let activeKey='',waitTimer=0;
+    function apply(el,key,url) {
+        if(!enabled||!el.isConnected||wanted.get(el)!==key)return;
+        const image='url("'+url+'")';
+        if(el.style.getPropertyValue('--ilg-reflection-map')!==image)el.style.setProperty('--ilg-reflection-map',image);
+        if(!el.classList.contains('ilg-reflection'))el.classList.add('ilg-reflection');
+        known.add(el);
+    }
+    function pump() {
+        clearTimeout(waitTimer);waitTimer=0;
+        if(!enabled||activeKey||!jobs.size)return;
+        if(background.status().mode==='starting'){waitTimer=setTimeout(pump,24);return;}
+        for(const [key,entry] of jobs){
+            if(!entry.clients.size){jobs.delete(key);continue;}
+            activeKey=key;background.request(entry.job);return;
+        }
+    }
+    const background=createGlassPerformance({
+        computeSync:job=>({url:roundedReflection(job.width,job.height,job.radius,job.dpr)}),
+        onResult(job,frame){
+            const entry=jobs.get(job.key);jobs.delete(job.key);activeKey='';
+            if(frame?.url){
+                const geometry=reflectionGeometry(job.width,job.height,job.radius,job.dpr);
+                rememberReflection(job.key,frame.url,geometry.cw*geometry.ch);
+                for(const el of entry?.clients||[])apply(el,job.key,frame.url);
+            }
+            pump();
+        },
+        onError(){const entry=jobs.get(activeKey);jobs.delete(activeKey);activeKey='';for(const el of entry?.clients||[])release(el);pump();},
+    });
+    function paint(el,width,height,radius) {
         try {
-            const url = roundedReflection(width, height, radius);
-            if (!url) { release(el); return; }
-            const image = `url("${url}")`;
-            if (el.style.getPropertyValue('--ilg-reflection-map') !== image) el.style.setProperty('--ilg-reflection-map', image);
-            el.classList.add('ilg-reflection'); known.add(el);
-        } catch { release(el); /* Keep the CSS contour when canvas is restricted. */ }
+            const dpr=window.devicePixelRatio||1,{key}=reflectionGeometry(width,height,radius,dpr);
+            const previous=wanted.get(el);
+            if(previous!==key)jobs.get(previous)?.clients.delete(el);
+            wanted.set(el,key);known.add(el);
+            const item=cache.get(key);
+            if(item){cache.delete(key);cache.set(key,item);apply(el,key,item.url);return;}
+            const overlay=el.matches('#options .options-content, #extensionsMenu, #qr--bar, dialog.popup.ilg-adapted');
+            if(overlay&&width*height>=16000){
+                let entry=jobs.get(key);
+                if(!entry){entry={job:{kind:'reflection',key,width,height,radius,dpr},clients:new Set()};jobs.set(key,entry);}
+                entry.clients.add(el);background.prepare();pump();return;
+            }
+            const url=roundedReflection(width,height,radius);
+            if(url)apply(el,key,url);else release(el);
+        } catch { release(el); }
     }
     function press(event) {
         if (!enabled || reduced() || document.body.classList.contains('no-blur') || active) return;
@@ -104,8 +108,11 @@ export function createGlassReflections() {
         enabled = on;
         for (const [name, listener] of events) document[on ? 'addEventListener' : 'removeEventListener'](name, listener, {passive:true});
         window[on ? 'addEventListener' : 'removeEventListener']('blur', reset);
-        if (!on) { reset(); [...known].forEach(release); cache.clear(); pixels = 0; }
+        if (on) { background.resume(); background.prepare(); }
+        else { clearTimeout(waitTimer);waitTimer=0;background.pause();jobs.clear();activeKey='';reset(); [...known].forEach(release);cache.clear();pixels=0; }
     }
     motion.addEventListener('change', reset);
-    return {paint, release, setEnabled};
+    return {paint, release, setEnabled,status:()=>({...background.status(),queued:jobs.size,waitingSurfaces:wanted.size,cacheEntries:cache.size})};
 }
+
+export {reflectionPixel};

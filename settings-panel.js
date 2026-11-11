@@ -14,9 +14,10 @@ export function downloadDiagnostic(text, kind = '兼容诊断') {
  const link = document.createElement('a');link.href=url;link.download='NVWA-'+kind+'-'+new Date().toISOString().slice(0,19).replaceAll(':','-')+'.txt';link.hidden=true;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 const copy={mobileTilt:['手机姿态高光','开启后自动申请并恢复；倾斜手机时边缘反光随之变化'],enabled:['启用',''],float:['悬浮输入区','顶栏与输入框浮在聊天内容上方'],icons:['简洁图标','使用统一风格的线性图标'],refract:['边缘折射','按当前环境能力启用背景位移'],refractMes:['消息折射','长聊天性能不足时可关闭'],font:['统一字体','思源黑体；Apple 设备使用苹方'],firstLineIndent:['首行缩进','普通段落缩进两个汉字'],justifyText:['两端对齐','只调整普通正文的左右边缘'],islands:['分组悬浮岛','把顶栏按功能分组'],fold:['收起顶栏设置','设置图标归入左上角菜单'],qrFold:['折叠快捷回复','收进输入框左侧按钮'],toneBtn:['显示外观切换','顶栏单击循环白天、黑夜、自定义'],home:['简洁首页','保留问候语与最近聊天入口'],orb:['思考提示','生成时显示点阵小球'],panelRead:['面板加厚','抽屉和弹窗底色更实、模糊更重，花壁纸上也看得清字'],floatBall:['显示悬浮小球','液态玻璃小球，点一下打开本面板；不喜欢就关掉'],ballSnap:['松手吸边','拖到中间松开会回到最近的左 / 右边；关掉就停在原地'],ballFuse:['边缘融合','拖到顶栏或输入框旁边，两块玻璃之间长出液体颈部并贴住'],iosMaterial:['iOS 兼容材质','使用系统模糊，不依赖 SVG 折射'],iosSvgTrial:['iOS 折射实验','依赖 WebKit；实际效果需要真机确认']};
-export function createSettingsPanel({host, content, appearance, version, settings}) {
+export function createSettingsPanel({host, content, appearance, version, settings, engines = {}}) {
  const dialog=document.createElement('dialog');dialog.id='ilg-studio';dialog.className='ilg-studio';dialog.setAttribute('aria-labelledby','ilg-studio-title');
  dialog.innerHTML='<div class="ilg-studio-layout"><aside class="ilg-studio-rail"><div class="ilg-studio-brand"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M4 14Q16 1 28 14Q16 27 4 14Zm0 5Q16 6 28 19Q16 32 4 19Z"/></svg><div><h1 id="ilg-studio-title">液态玻璃</h1><p>NVWA 外观工作台</p></div></div><nav class="ilg-studio-nav" role="tablist" aria-label="设置分类"></nav><div class="ilg-studio-power"><span class="ilg-studio-state" role="status"></span><div class="ilg-studio-master"></div></div></aside><main class="ilg-studio-body"></main></div><button type="button" class="ilg-appearance-close ilg-studio-close" aria-label="关闭玻璃设置"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 7 10 10M17 7 7 17"/></svg></button>';
+ dialog.querySelector('.ilg-studio-brand p').textContent='NVWA · '+(engines.performance||'外观工作台');
  const groups=[['glass','外观与材质','选一种玻璃，留一份自己的外观。'],['layout','界面布局','安排顶栏、输入区与首页。'],['text','阅读文字','为长时间阅读留出舒服的节奏。'],['diagnostics','高级与兼容','基础效果、性能与环境适配。']];
  const pages=new Map(), nav=dialog.querySelector('nav'), main=dialog.querySelector('main');
  content.querySelector('.inline-drawer-header')?.remove();const old=content.querySelector('.inline-drawer-content');const oldNodes=[...old.childNodes];old.replaceChildren();content.replaceChildren();content.classList.add('ilg-studio-settings');main.append(content);
@@ -83,7 +84,7 @@ export function createSettingsPanel({host, content, appearance, version, setting
  const fontRow=opt('chatFontSize');
  card('text','排版',[opt('firstLineIndent'),opt('justifyText'),fontRow],pickHint(fontRow,'ilg-chat-font-hint'));
  const status=['ilg-status','ilg-opt-themeStatus'].map(id=>staging.querySelector('#'+id));
- disclosure('diagnostics','基础效果与性能',[opt('refract'),opt('refractMes'),opt('engine'),opt('icons'),opt('float'),opt('font')],'通常保持默认即可；遇到卡顿或样式冲突时，在这里单独调整。');
+ disclosure('diagnostics',engines.performance||'基础效果与性能',[opt('refract'),opt('refractMes'),opt('engine'),opt('icons'),opt('float'),opt('font')],'优先响应交互，复用玻璃资源；基础效果和回退选项也可在这里调整。');
  card('diagnostics','当前状态',status);
  card('diagnostics','环境适配',[staging.querySelector('#ilg-ios-material-setting'),opt('iosSvgTrial')]);
  const reportWrap=staging.querySelector('#ilg-opt-iosReportWrap'),cardReport=block('ilg-card-report-copy');

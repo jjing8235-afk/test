@@ -1,4 +1,5 @@
 import { rasterBall, packBallFrame } from './ball-raster.js';
+import { rasterReflection } from './reflection-raster.js';
 
 async function encode(image) {
     const canvas = new OffscreenCanvas(image.w, image.h);
@@ -27,6 +28,11 @@ self.onmessage = async event => {
     if (type !== 'render') return;
     try {
         if (!await capable) throw new Error('Canvas unavailable');
+        if (job.kind === 'reflection') {
+            const image=rasterReflection(job.width,job.height,job.radius,job.dpr);
+            self.postMessage({type:'result',id,frame:{url:await encode(image)}});
+            return;
+        }
         const result = rasterBall(job), urls = [];
         for (const image of result.images) urls.push(await encode(image));
         self.postMessage({ type: 'result', id, frame: packBallFrame(result, urls) });
