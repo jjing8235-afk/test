@@ -25,7 +25,7 @@ window.__ilgLoaded = new URL('.', import.meta.url).pathname;
 
 let studioUI = null;
 const MODULE = 'iosLiquidGlass';
-const BUILD_VERSION = '1.4.5-test.22';
+const BUILD_VERSION = '1.4.5-test.23';
 const NS = 'http://www.w3.org/2000/svg';
 const ctx = SillyTavern.getContext();
 
@@ -603,7 +603,7 @@ const PRESETS_PREVIOUS = {
 };
 const DEFAULTS = {
     chatBackground: 'glass', chatVeil: 45, chatFontSize: 0, firstLineIndent: false, justifyText: false, compatibilityMode: 'auto', androidWebViewRefract: false, iosSvgTrial: false, iosMaterial: true,
-    enabled: true, float: true, islands: true, fold: true, qrFold: true, home: true, toneBtn: true, homeName: 'NVWA 用户', icons: true, refract: true, refractMes: true, font: true, tone: 'time', dayStart: 7, dayEnd: 19, avatar: 'line', orb: true, panelRead: true, dock: false, floatBall: true, ballSnap: true, ballFuse: true, ballSide: 'right', ballY: 0.62, ballFx: 0.92, ballFy: 0.6, ballDock: false,
+    enabled: true, float: true, islands: true, fold: true, topShortcut1: '', topShortcut2: '', qrFold: true, home: true, toneBtn: true, homeName: 'NVWA 用户', icons: true, refract: true, refractMes: true, font: true, tone: 'time', dayStart: 7, dayEnd: 19, avatar: 'line', orb: true, panelRead: true, dock: false, floatBall: true, ballSnap: true, ballFuse: true, ballSide: 'right', ballY: 0.62, ballFx: 0.92, ballFy: 0.6, ballDock: false,
     webPreset: 'clear', mobileTilt: false, glassStyle: 'original', engine: 'physical', follow: true, pLight: 135, customTextTone: 'auto', customWallpaper: '', readingStyle: 'warm', proseLeading: 0, proseInset: 0,
     // 自然弧度没写的参数（厚度、折射率等，只给物理折射截面用）沿用清透立体的
     ...PRESETS.depth[1], ...PRESETS.natural[1],
@@ -676,11 +676,15 @@ S.chatBackground = S.chatBackground === 'transparent' ? 'transparent' : 'glass';
 S.readingStyle = normalizeReadingStyle(S.readingStyle);
 S.iosMaterial = S.iosMaterial === true;
 S.glassStyle = S.glassStyle === 'liquid-web' ? 'liquid-web' : 'original';
-// 顶栏只保留折叠与全部铺开；旧的分组、长栏设置迁回折叠，已选的全部铺开保留。
+// Folded toolbar is the sole layout; retain legacy fields for saved looks.
 function normalizeTopStyleSettings(settings) {
-    const dock = settings.islands !== false && settings.dock === true;
-    const changed = settings.islands !== true || settings.dock !== dock || settings.fold !== !dock;
-    Object.assign(settings, { islands: true, dock, fold: !dock });
+    const values = [settings.topShortcut1, settings.topShortcut2].map(value =>
+        typeof value === 'string' && /^[A-Za-z][\w:.-]{0,119}$/.test(value) &&
+        !['ilg-fold-button', 'ilg-tone-button', 'persona-management-button', 'rightNavHolder'].includes(value) ? value : '');
+    if (values[0] === values[1]) values[1] = '';
+    const next = { islands: true, dock: false, fold: true, topShortcut1: values[0], topShortcut2: values[1] };
+    const changed = Object.entries(next).some(([key, value]) => settings[key] !== value);
+    Object.assign(settings, next);
     return changed;
 }
 if (normalizeTopStyleSettings(S)) ctx.saveSettingsDebounced();
@@ -1059,7 +1063,8 @@ function paint(el, geo) {
         return;
     }
     const blur = surfaceBlur(it, el);
-    const tail = `blur(${blur}px) saturate(${S.saturate}) brightness(${S.brightness})`;
+    const reading = it.kind === 'mes' ? ' var(--ilg-reading-filter, blur(0px))' : '';
+    const tail = `blur(${blur}px) saturate(${S.saturate}) brightness(${S.brightness})` + reading;
     const { w, h, r } = geo;
     // A closed drawer has no pixels to update; retain its last valid filter for reopening.
     if (!w || !h) return;
@@ -1070,7 +1075,7 @@ function paint(el, geo) {
         if (it.kind === 'mes') lightBlur = S.chatBackground === 'transparent' ? 0 : Math.max(1.5, Math.min(6, blur));
         else if (control) lightBlur = controlReadable(el) ? (el.id === 'nonQRFormItems' ? 3.5 : 4) : Math.max(.75, Math.min(1.5, blur));
         else lightBlur = Math.max(1, Math.min(it.kind === 'panel' || it.kind === 'toast' ? 8 : 3, blur));
-        const filter = lightBlur ? `blur(${lightBlur}px) saturate(${Math.max(1, Math.min(1.35, S.saturate))})` : 'none';
+        const filter = (lightBlur ? `blur(${lightBlur}px) saturate(${Math.max(1, Math.min(1.35, S.saturate))})` : reading ? 'blur(0px)' : 'none') + reading;
         surface.style.backdropFilter = filter;
         surface.style.webkitBackdropFilter = filter;
         return;
@@ -1092,8 +1097,8 @@ function paint(el, geo) {
     if (canRefract() && !isIOS) surface.style.webkitBackdropFilter = '';
     if (phys) {
         buildPhysical(it, el, w, h, r);
-        surface.style.backdropFilter = `url(#${it.id})`;
-        if (isIOS) surface.style.webkitBackdropFilter = `url(#${it.id})`;
+        surface.style.backdropFilter = `url(#${it.id})` + reading;
+        if (isIOS) surface.style.webkitBackdropFilter = `url(#${it.id})` + reading;
     } else if (refractAllowed(it)) {
         buildFilter(it, w, h, r, el);
         surface.style.backdropFilter = `url(#${it.id}) ${tail}`;
@@ -1203,6 +1208,10 @@ const islandRO = new ResizeObserver(() => requestAnimationFrame(layoutIslands));
 function iconGroups() {
     // 全部铺开：所有图标一座岛
     if (dockOn()) return [[...holder.children]];
+    if (S.fold) {
+        const shortcuts = [S.topShortcut1, S.topShortcut2].map(id => [...holder.children].find(d => d.id === id && d.classList.contains('ilg-fold-shortcut'))).filter(Boolean);
+        return [[foldBtn, ...shortcuts], [...holder.children].filter(d => FOLD_KEEP.includes(d.id) && !d.classList.contains('ilg-folded'))].filter(g => g.length);
+    }
     const groups = [[]];
     for (const d of holder.children) {
         // 折叠时：菜单键自己一座岛，剩下没收起来的图标一座岛
@@ -1298,17 +1307,6 @@ function clearDock() {
     holder.style.removeProperty('--ilg-dock-count');
     holder.querySelectorAll(':scope > .ilg-dock-sep, :scope > .ilg-dock-active').forEach(d => d.classList.remove('ilg-dock-sep', 'ilg-dock-active'));
 }
-// 顶栏样式二选一（工作台 → 界面布局），沿用旧字段保持存档兼容。
-const TOP_STYLES = [
-    ['fold', '折叠菜单', '设置收进左上角，顶上最干净',
-        '<rect x="2" y="5" width="14" height="10" rx="5"/><rect x="58" y="5" width="40" height="10" rx="5"/><path d="M6 8.5h6M6 11.5h6" class="ink"/>'],
-    ['dock', '全部铺开', '图标按组排开，楼层独立在下方',
-        '<rect x="2" y="2" width="96" height="11" rx="4"/><path d="M10 5v5m9-5v5m9-5v5m13-5v5m13-5v5m9-5v5m9-5v5m13-5v5" class="ink"/><rect x="39" y="16" width="22" height="4" rx="2"/>'],
-];
-const topStyleOf = () => S.dock ? 'dock' : 'fold';
-function applyTopStyle(v) {
-    Object.assign(S, { islands: true, dock: v === 'dock', fold: v !== 'dock' });
-}
 // 顶栏折叠（参考支付宝 AI 对话页）：左上角一个菜单键，设置类图标收进它弹出的玻璃菜单；角色卡、人设留在右边。
 // 原来的图标和抽屉都不挪位置（抽屉的开关事件绑在原元素上），只是把图标隐藏，菜单里的按钮替它点一下
 const FOLD_KEEP = ['ilg-tone-button', 'persona-management-button', 'rightNavHolder'];
@@ -1316,6 +1314,62 @@ const FOLD_LABELS = {
     'ai-config-button': 'AI 回复设置', 'sys-settings-button': 'API 连接', 'advanced-formatting-button': '高级格式',
     'WI-SP-button': '世界书', 'user-settings-button': '用户设置', 'backgrounds-button': '背景', 'extensions-settings-button': '扩展',
 };
+// Read native icon metadata only when toolbar/settings state changes.
+function topShortcutChoices() {
+    return [...holder.querySelectorAll(':scope > .drawer')].flatMap(drawer => {
+        const icon = drawer.querySelector(':scope > .drawer-toggle .drawer-icon');
+        if (!icon || !drawer.id || FOLD_KEEP.includes(drawer.id)) return [];
+        return [{ id: drawer.id, label: FOLD_LABELS[drawer.id] || icon.title || drawer.id,
+            mask: S.icons ? getComputedStyle(icon).getPropertyValue('--ilg-icon').trim() : '',
+            fa: [...icon.classList].filter(c => c.startsWith('fa')).join(' ') }];
+    });
+}
+function shortcutGlyph(entry) {
+    const glyph = document.createElement('span');
+    glyph.className = 'ilg-shortcut-glyph';
+    glyph.setAttribute('aria-hidden', 'true');
+    if (entry?.mask) glyph.style.setProperty('--ilg-shortcut-icon', entry.mask);
+    else glyph.classList.add('ilg-shortcut-fa', ...(entry?.fa || 'fa-solid fa-puzzle-piece').split(' ').filter(Boolean));
+    return glyph;
+}
+function syncTopShortcuts() {
+    const picker = document.getElementById('ilg-opt-topShortcuts');
+    if (!picker) return;
+    const selected = [S.topShortcut1, S.topShortcut2].filter(Boolean);
+    const choices = topShortcutChoices();
+    for (const id of selected) if (!choices.some(c => c.id === id)) choices.push({ id, label: (FOLD_LABELS[id] || id) + '（暂不可用）', unavailable: true });
+    const grid = picker.querySelector('.ilg-shortcut-grid');
+    const signature = JSON.stringify(choices);
+    if (grid.dataset.choices !== signature) {
+        const focused = grid.contains(document.activeElement) ? document.activeElement.dataset.shortcutId : '';
+        grid.replaceChildren(...choices.map(entry => {
+            const button = document.createElement('button');
+            button.type = 'button'; button.className = 'ilg-shortcut-tile';
+            button.dataset.shortcutId = entry.id;
+            button.title = entry.label; button.setAttribute('aria-label', entry.label);
+            button.classList.toggle('is-unavailable', !!entry.unavailable);
+            button.append(shortcutGlyph(entry));
+            return button;
+        }));
+        grid.dataset.choices = signature;
+        if (focused) [...grid.children].find(b => b.dataset.shortcutId === focused)?.focus({preventScroll:true});
+    }
+    for (const button of grid.children) {
+        const order = selected.indexOf(button.dataset.shortcutId);
+        button.setAttribute('aria-pressed', String(order >= 0));
+        button.setAttribute('aria-disabled', String(order < 0 && selected.length === 2));
+        button.dataset.order = order >= 0 ? String(order + 1) : '';
+    }
+    picker.querySelector('.ilg-shortcut-count').textContent = selected.length + ' / 2';
+    picker.querySelector('.ilg-shortcut-status').textContent = selected.length === 2 ? '已选两个，点亮的图标可取消。' : '点选图标，留在顶栏左侧；再次点选可取消。';
+    const preview = picker.querySelector('.ilg-shortcut-preview-left');
+    preview.replaceChildren(...[0, 1].map(i => {
+        const slot = document.createElement('span'); slot.className = 'ilg-shortcut-slot';
+        const entry = choices.find(c => c.id === selected[i]);
+        if (entry) { slot.classList.add('is-filled'); slot.append(shortcutGlyph(entry)); }
+        return slot;
+    }));
+}
 // “玻璃设置”图标：一滴水珠，里面一道折射弧。线宽和 Ionicons 轮廓图标一致（512 画布，描边 40）
 const GLASS_ICON = `url("data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none" stroke="#000" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"><path d="M256 56C256 56 120 210 120 318a136 136 0 0 0 272 0C392 210 256 56 256 56Z"/><path d="M190 322a68 68 0 0 0 58 64"/></svg>')}")`;
 const foldBtn = document.createElement('div');
@@ -1340,7 +1394,7 @@ function applyFold() {
     if (!on) {
         closeFoldMenu();
         foldBtn.remove();
-        holder.querySelectorAll(':scope > .ilg-folded, :scope > .ilg-fold-keep').forEach(d => d.classList.remove('ilg-folded', 'ilg-fold-keep'));
+        holder.querySelectorAll(':scope > .ilg-folded, :scope > .ilg-fold-keep').forEach(d => d.classList.remove('ilg-folded', 'ilg-fold-keep', 'ilg-fold-shortcut', 'ilg-fold-second'));
         if (items.has(foldMenu)) untrack(foldMenu);
         syncSheetHeads();
         return;
@@ -1348,12 +1402,16 @@ function applyFold() {
     if (holder.firstElementChild !== foldBtn) holder.prepend(foldBtn);
     for (const d of holder.children) {
         if (d === foldBtn) continue;
-        const keep = FOLD_KEEP.includes(d.id);
+        const keep = FOLD_KEEP.includes(d.id) || [S.topShortcut1, S.topShortcut2].includes(d.id) && !!d.id && !!d.querySelector(':scope > .drawer-toggle .drawer-icon');
         d.classList.toggle('ilg-fold-keep', keep);
+        d.classList.toggle('ilg-fold-shortcut', keep && !FOLD_KEEP.includes(d.id));
+        d.classList.toggle('ilg-fold-second', !!d.id && d.id === S.topShortcut2);
         d.classList.toggle('ilg-folded', !keep);
     }
     syncSheetHeads();
     syncFold();
+    syncTopShortcuts();
+    if (!foldMenu.hidden) buildFoldTiles();
 }
 // 菜单打开、或者收起来的某个抽屉开着时，菜单键变成蓝色的 ×，再点一下就关掉
 function syncFold() {
@@ -2377,6 +2435,8 @@ function applySurfaceSettings() {
     root.classList.toggle('ilg-chat-transparent', S.enabled && S.chatBackground === 'transparent');
     S.chatVeil = normalizeChatVeil(S.chatVeil);
     root.style.setProperty('--ilg-reading-level', S.chatVeil / 100);
+    const reading = S.enabled && S.chatBackground !== 'transparent' ? S.chatVeil / 100 : 0;
+    root.style.setProperty('--ilg-reading-filter', `blur(${reading * 4}px) saturate(${1 - reading * .4}) brightness(calc(1 - ${reading * .4} * var(--ilg-reading-dark, 1)))`);
     root.classList.toggle('ilg-chat-reading', S.enabled && S.chatBackground !== 'transparent' && S.chatVeil > 0);
     root.style.setProperty('--ilg-scrim-a', S.scrim);
     root.style.setProperty('--ilg-tint', `rgba(255, 255, 255, ${lightBg ? Math.min(.7, S.tint + .08) : S.tint})`);
@@ -2633,10 +2693,10 @@ function buildPanel() {
         <option value="glass">柔光玻璃（阅读滤镜）</option>
         <option value="transparent">透明玻璃（保留边缘与圆角）</option>
       </select>
-      <p class="ilg-hint" id="ilg-chat-background-hint">柔光档压低壁纸杂色与明暗干扰，保留背景轮廓；透明档保留原图与玻璃边缘。卡片按原样显示。</p>
+      <p class="ilg-hint" id="ilg-chat-background-hint">柔光档只在每条消息框内柔化背景，框外壁纸保持原样；透明档保留原图与玻璃边缘。卡片按原样显示。</p>
     </div>
     <div class="ilg-row ilg-reading-filter-row">
-      <label for="ilg-opt-chatVeil"><span>背景滤镜强度</span><output id="ilg-opt-chatVeil-v" for="ilg-opt-chatVeil">45%</output></label>
+      <label for="ilg-opt-chatVeil"><span>消息背景滤镜强度</span><output id="ilg-opt-chatVeil-v" for="ilg-opt-chatVeil">45%</output></label>
       <input type="range" id="ilg-opt-chatVeil" min="0" max="100" step="1" aria-describedby="ilg-chat-background-hint">
     </div>
     <div class="ilg-row">
@@ -2679,7 +2739,13 @@ function buildPanel() {
     <div class="ilg-row" data-tone="time"><label for="ilg-opt-dayStart"><span>白天时段</span></label>
       <span class="ilg-hours"><input type="number" id="ilg-opt-dayStart" class="text_pole" min="0" max="23" step="1" aria-label="白天从几点开始"> 点到
       <input type="number" id="ilg-opt-dayEnd" class="text_pole" min="1" max="24" step="1" aria-label="白天到几点结束"> 点</span></div>
-    <fieldset class="ilg-top-choice" id="ilg-opt-topStyle"><legend>顶栏样式</legend>${TOP_STYLES.map(([v, name, detail, art]) => `<label><input type="radio" name="ilg-top-style" value="${v}"><span><svg viewBox="0 0 100 20" aria-hidden="true">${art}</svg><strong>${name}</strong><small>${detail}</small></span></label>`).join('')}</fieldset>
+    <div id="ilg-opt-topStyle" class="ilg-top-summary"><strong>折叠菜单</strong><p class="ilg-hint">设置收进左上角。可以再选最多两个常用入口，显示在顶栏左侧。</p></div>
+    <div id="ilg-opt-topShortcuts" class="ilg-shortcut-picker">
+      <div class="ilg-shortcut-preview" aria-hidden="true"><div class="ilg-shortcut-preview-start"><span class="ilg-shortcut-menu"><i></i><i></i></span><div class="ilg-shortcut-preview-left"></div></div><div class="ilg-shortcut-preview-end"><i></i><i></i><i></i></div></div>
+      <div class="ilg-shortcut-heading"><span>常用入口</span><span class="ilg-shortcut-count">0 / 2</span></div>
+      <div class="ilg-shortcut-grid" role="group" aria-label="选择最多两个顶栏入口" aria-describedby="ilg-top-shortcuts-hint"></div>
+      <p id="ilg-top-shortcuts-hint" class="ilg-shortcut-status" role="status" aria-live="polite">点选图标，留在顶栏左侧；再次点选可取消。</p>
+    </div>
     <div class="ilg-row"><label for="ilg-opt-avatar"><span>聊天头像</span></label>
       <select id="ilg-opt-avatar" class="text_pole">
         <option value="line">名片式：小头像放进名字那一行，正文占满气泡</option>
@@ -2831,7 +2897,7 @@ function buildPanel() {
         TOGGLES.forEach(([k]) => { document.getElementById(`ilg-opt-${k}`).checked = !!S[k]; });
         // 小球关着时，吸边 / 融合两个子开关变灰
         ['ballSnap', 'ballFuse'].forEach(k => { const i = document.getElementById(`ilg-opt-${k}`); i.disabled = !S.floatBall; i.closest('label')?.classList.toggle('ilg-row-off', !S.floatBall); });
-        wrap.querySelectorAll('[name="ilg-top-style"]').forEach(el => { el.checked = el.value === topStyleOf(); });
+        syncTopShortcuts();
         SLIDERS.forEach(([k, , , , step, unit]) => {
             document.getElementById(`ilg-opt-${k}`).value = S[k];
             document.getElementById(`ilg-opt-${k}-v`).textContent = fmt(step, unit, S[k]);
@@ -2918,11 +2984,25 @@ function buildPanel() {
         Object.assign(S, PRESETS[b.dataset.preset][1]);
         queueGlassSettings(); sync(); ctx.saveSettingsDebounced();
     }));
-    wrap.querySelectorAll('[name="ilg-top-style"]').forEach(el => el.addEventListener('change', () => {
-        if (!el.checked) return;
-        applyTopStyle(el.value);
-        clearAll(); applyRoot(); sync(); ctx.saveSettingsDebounced();
-    }));
+    document.getElementById('ilg-opt-topShortcuts').addEventListener('click', e => {
+        const button = e.target.closest('.ilg-shortcut-tile');
+        if (!button) return;
+        const id = button.dataset.shortcutId;
+        const selected = [S.topShortcut1, S.topShortcut2].filter(Boolean);
+        const index = selected.indexOf(id);
+        if (index >= 0) selected.splice(index, 1);
+        else {
+            if (!topShortcutChoices().some(c => c.id === id)) return;
+            if (selected.length === 2) {
+                document.querySelector('#ilg-opt-topShortcuts .ilg-shortcut-status').textContent = '最多选择两个；先点一下已选图标，把位置空出来。';
+                return;
+            }
+            selected.push(id);
+        }
+        [S.topShortcut1, S.topShortcut2] = [selected[0] || '', selected[1] || ''];
+        normalizeTopStyleSettings(S);
+        closeFoldMenu(); applyFold(); layoutIslands(); sync(); ctx.saveSettingsDebounced();
+    });
     TOGGLES.forEach(([k]) => document.getElementById(`ilg-opt-${k}`).addEventListener('change', e => {
         if (k === 'iosSvgTrial' && !iosSvgEligible) { e.target.checked = !!S[k]; return; }
         S[k] = e.target.checked;
@@ -2978,10 +3058,6 @@ function readWallpaperBackdrop() {
         const match = /url\(["']?(.*?)["']?\)/.exec(el.style.backgroundImage || cs.backgroundImage || '');
         if (!match || match[1] !== currentWallpaperSample.url || cs.display === 'none' || +cs.opacity < .98) continue;
         const layout = wallpaperLayout(currentWallpaperSample.raster, el.getBoundingClientRect(), cs.backgroundSize, cs.backgroundPosition);
-        if (layout && root.classList.contains('ilg-chat-reading') && !root.classList.contains('ilg-home')) {
-            const sheld = document.getElementById('sheld');
-            if (sheld) layout.veil = {rect:sheld.getBoundingClientRect(),level:S.chatVeil/100,light:lightBg,noBlur:document.body.classList.contains('no-blur')};
-        }
         return layout;
     }
     return null;
@@ -3227,10 +3303,10 @@ iconLink.rel = 'stylesheet';
 iconLink.href = new URL('./icons.css', import.meta.url).href;
 document.head.appendChild(iconLink);
 
-// 滑块左边那段蓝色：CSS 读不到滑块当前值，所以把进度写进 --ilg-fill（按圆钮的中心算，蓝条正好止于圆钮下面）
+// Keep the filled track aligned with the native 20px thumb, including the workbench dialog.
 const RANGE_THUMB = 20; // 和 CSS 里 ::-webkit-slider-thumb 的宽高一致
 function paintRange(el) {
-    if (!el.closest(HOST_UI_SEL) || el.closest('dialog, .popup, [role="dialog"]:not(.ilg-recent)')) return;
+    if (!el.closest('#ilg-studio') && (!el.closest(HOST_UI_SEL) || el.closest('dialog, .popup, [role="dialog"]:not(.ilg-recent)'))) return;
     const min = Number(el.min || 0), max = Number(el.max || 100), v = Number(el.value);
     const p = max > min ? Math.min(1, Math.max(0, (v - min) / (max - min))) : 0;
     const fill = `calc(${p.toFixed(4)} * (100% - ${RANGE_THUMB}px) + ${RANGE_THUMB / 2}px)`;

@@ -2435,6 +2435,123 @@
         "Pure RGB cases compare foreground choices and hysteresis; high transparency cannot guarantee fixed contrast against every arbitrary wallpaper pixel",
         "Cross-origin/unavailable image pixels fall back to existing UI tone; authored iframe contents remain unchanged"
       ]
+    },
+    {
+      "version": "1.4.5-test.23",
+      "date": "2026-11-11",
+      "scope": "Folded-only toolbar with up to two icon-selected shortcuts on the left; precision sliders; message-local reading filter",
+      "host": {
+        "version": "1.18.0",
+        "browser": "Microsoft Edge headless Chromium"
+      },
+      "automated": {
+        "passed": true,
+        "regressions": 19,
+        "renderCases": 72,
+        "manifest": true
+      },
+      "live": {
+        "passed": true,
+        "viewports": [
+          [
+            320,
+            740
+          ],
+          [
+            390,
+            844
+          ],
+          [
+            844,
+            390
+          ]
+        ],
+        "controlsViewports": [
+          [
+            390,
+            844
+          ],
+          [
+            1440,
+            900
+          ]
+        ],
+        "checks": [
+          "Legacy expanded toolbar migrates to folded mode; expanded-mode chooser removed",
+          "Reading blur and tint stay inside messages; strength updates retain glass-map identity and scroll position",
+          "Transparent mode and host no-blur preference remain effective",
+          "Card messages reuse an independent glass layer; fixed overlays and authored gradients/iframe remain intact",
+          "Light/dark tint and physical/legacy/CSS message paths retain the same reading scope",
+          "Zero/one/two native shortcuts display immediately; third selection is rejected",
+          "Both pinned controls open and close their original host drawers through native clicks",
+          "Unpin returns the entry to the menu; selected shortcuts do not repeat in the menu; toolbar remains aligned",
+          "Dynamic plugin entries become selectable; unavailable choices retain their saved identity",
+          "Icon-only palette uses two selection badges, live left preview, native clicks and Space without losing focus",
+          "Touch taps select and deselect graphic shortcuts",
+          "Redesigned ranges have native keyboard/touch input, 36px hit area and progress synchronized in the workbench",
+          "Live appearance save/restore includes both shortcuts",
+          "Disable restores native toolbar; re-enable restores shortcuts and message-only reading",
+          "Host AI settings sliders use the same ivory thumb and warm progress; native keyboard updates remain synchronized",
+          "Icon palette and live preview fit dark and light workbench on mobile/desktop",
+          "Foreign dialog controls retain their original appearance and receive no progress writes"
+        ],
+        "topForegroundChecks": [
+          320,
+          390
+        ],
+        "writes": "Blocked during all browser checks"
+      },
+      "performance": {
+        "scenario": "1000 synthetic ordinary messages, 390x844, CPU4x, 170 measured frames; same-machine test.22 backup vs test.23",
+        "before": {
+          "frames": 170,
+          "mean": 58.31823529411765,
+          "p95": 129.20000000000073,
+          "max": 212.60000000000036,
+          "height": 190303,
+          "finalHeight": 190303,
+          "veil": "\"\"",
+          "culled": 991
+        },
+        "after": {
+          "frames": 170,
+          "mean": 56.18529411764707,
+          "p95": 129.1999999999971,
+          "max": 216.70000000000073,
+          "height": 190303,
+          "finalHeight": 190303,
+          "veil": "none",
+          "culled": 991
+        },
+        "physicalPhone": false
+      },
+      "sourceHashes": {
+        "index.js": "f039cafe0d15c71530af64271c2a8873853d88e4d9a5e20d4ed82a5d81b970d3",
+        "style.css": "2d766d8a09a11e7ef74d8e0c2b2753e36710903976a87da1a1cf4efd00fe8ef7",
+        "settings-panel.js": "09a171b427d4a8aaa08fe8d95089619d0afa929c0bf5e58343fcde69e25174b1",
+        "settings-panel.css": "67e04f0226c46e7e6facd830ee9407d3842f141f79966c7116cd3cdd17f2a3d0"
+      },
+      "unchangedModules": [
+        "glass-lighting.js",
+        "glass2.js",
+        "control-material.js",
+        "ball-glass.js",
+        "ball-raster.js",
+        "glass-performance.js",
+        "glass-worker.js",
+        "glass-reflections.js",
+        "message-rendering.js",
+        "fixed-position.js",
+        "web-presets.js",
+        "optics-settings.js",
+        "appearance-bookmark.js",
+        "wallpaper-sampling.js"
+      ],
+      "limitations": [
+        "Touch and viewport checks run on desktop Edge; physical iOS/Android/TT acceptance remains open.",
+        "Host mutation requests were blocked. Appearance save/restore was exercised in memory; no user settings, chats or API data were saved.",
+        "One same-machine 1000-message CPU4x comparison is not phone FPS or INP; long-tail pauses remain."
+      ]
     }
   ]
 }

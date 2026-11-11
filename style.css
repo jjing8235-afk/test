@@ -2,6 +2,7 @@
 /* iOS 液态玻璃 · 所有规则都挂在 html.ilg 下，关掉扩展开关即全部失效 */
 html.ilg {
     --ilg-radius: 22px;
+    --ilg-reading-dark: 1;
     --ilg-tint: rgba(255, 255, 255, 0.08);
     --ilg-hl: 0.55;
     --ilg-gap: 8px;
@@ -15,31 +16,6 @@ html.ilg body #chat {
     background-color: transparent;
     border-color: transparent;
 }
-
-/* One stationary veil behind the scrolling chat. Text and fixed card overlays stay outside
-   the filtered layer; sheld already owns the host stacking context. No per-message copies. */
-html.ilg.ilg-chat-reading body #sheld::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-    border-radius: inherit;
-    background: rgba(18, 21, 28, calc(var(--ilg-reading-level, .45) * .95));
-    -webkit-backdrop-filter: blur(calc(var(--ilg-reading-level, .45) * 4px)) saturate(calc(1 - var(--ilg-reading-level, .45) * .4)) brightness(calc(1 - var(--ilg-reading-level, .45) * .4));
-    backdrop-filter: blur(calc(var(--ilg-reading-level, .45) * 4px)) saturate(calc(1 - var(--ilg-reading-level, .45) * .4)) brightness(calc(1 - var(--ilg-reading-level, .45) * .4));
-}
-html.ilg.ilg-light.ilg-chat-reading body #sheld::before {
-    background: rgba(247, 245, 240, calc(var(--ilg-reading-level, .45) * 1.1));
-    -webkit-backdrop-filter: blur(calc(var(--ilg-reading-level, .45) * 4px)) saturate(calc(1 - var(--ilg-reading-level, .45) * .4));
-    backdrop-filter: blur(calc(var(--ilg-reading-level, .45) * 4px)) saturate(calc(1 - var(--ilg-reading-level, .45) * .4));
-}
-html.ilg.ilg-chat-reading body.no-blur #sheld::before {
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-}
-/* The existing home surface supplies its own background; keep the wallpaper view there. */
-html.ilg.ilg-chat-reading.ilg-home body #sheld::before { content: none; }
 
 /* ---------- 悬浮布局：聊天内容从顶栏和输入框下面滚过去 ---------- */
 html.ilg.ilg-float body:not(.movingUI) #sheld {
@@ -714,7 +690,7 @@ html.ilg.ilg-fold body #top-settings-holder > .drawer.ilg-fold-keep { flex: 0 0 
 html.ilg.ilg-fold body #top-settings-holder > .drawer.ilg-fold-keep.ilg-group-start,
 html.ilg.ilg-fold.ilg-islands body #top-settings-holder > .drawer.ilg-fold-keep.ilg-group-start { margin-left: auto; }
 /* 留在右边的第一个图标（切换键、人设或角色卡，看哪个开着）把整组推到右边 */
-html.ilg.ilg-fold body #top-settings-holder > .ilg-fold-keep:not(.ilg-fold-keep ~ .ilg-fold-keep) { margin-left: auto; }
+html.ilg.ilg-fold body #top-settings-holder > .ilg-fold-shortcut { margin-left: 0; }
 
 /* ---------- 白 / 黑壁纸切换键：当前是瓷白显示太阳，墨黑显示月亮 ---------- */
 html.ilg body {
@@ -1519,44 +1495,43 @@ html.ilg body .menu_button:not(.disabled):not([disabled]):not(.redWarningBG):is(
     background-color: var(--ilg-btn-hover);
 }
 
-/* 滑块：细轨道 + 白圆点；左边是填色，右边是灰轨道 */
+/* Precision sliders: an ivory thumb, warm filled track, and a generous transparent hit area. */
+html.ilg { --ilg-range-accent:#dfad72; --ilg-range-track:var(--ilg-track,rgba(150,155,165,.22)); --ilg-range-knob:#faf6ef; --ilg-range-rim:#c6a075; }
+html.ilg.ilg-light { --ilg-range-accent:#b97941; --ilg-range-rim:#b97941; }
 html.ilg body input[type="range"]:where(#top-bar, #top-bar *, #top-settings-holder, #top-settings-holder *, #sheld, #sheld *, #options, #options *, #extensionsMenu, #extensionsMenu *, #toast-container, #toast-container *, #ilg-fold-menu, #ilg-fold-menu *, dialog.popup.ilg-glass, dialog.popup.ilg-glass > .popup-body > .popup-controls *):where(:not(.popup:not(.ilg-glass), .popup:not(.ilg-glass) *, dialog:not(.ilg-glass), dialog:not(.ilg-glass) *, [role="dialog"]:not(.ilg-recent):not(.ilg-glass), [role="dialog"]:not(.ilg-recent):not(.ilg-glass) *, .popup-content, .popup-content *)),
+#ilg-studio input[type="range"] {
+    appearance:none;-webkit-appearance:none;box-sizing:border-box;
+    width:100%;height:32px;min-height:32px;margin:0;padding:0;border:0;border-radius:10px;outline-offset:2px;
+    background:linear-gradient(var(--ilg-range-accent),var(--ilg-range-accent)) left center / var(--ilg-fill,0%) 3px no-repeat,linear-gradient(var(--ilg-range-track),var(--ilg-range-track)) left center / 100% 3px no-repeat !important;
+    box-shadow:none !important;filter:none !important;transition:none !important;cursor:pointer;
+}
 html.ilg body .neo-range-slider:where(#top-bar, #top-bar *, #top-settings-holder, #top-settings-holder *, #sheld, #sheld *, #options, #options *, #extensionsMenu, #extensionsMenu *, #toast-container, #toast-container *, #ilg-fold-menu, #ilg-fold-menu *, dialog.popup.ilg-glass, dialog.popup.ilg-glass > .popup-body > .popup-controls *):where(:not(.popup:not(.ilg-glass), .popup:not(.ilg-glass) *, dialog:not(.ilg-glass), dialog:not(.ilg-glass) *, [role="dialog"]:not(.ilg-recent):not(.ilg-glass), [role="dialog"]:not(.ilg-recent):not(.ilg-glass) *, .popup-content, .popup-content *)) {
-    background: linear-gradient(var(--ilg-accent), var(--ilg-accent)) 0 0 / var(--ilg-fill, 0%) 100% no-repeat, var(--ilg-track) !important;
-    box-shadow: none !important;
-    filter: none !important;
-    height: 4px;
+    background:linear-gradient(var(--ilg-range-accent),var(--ilg-range-accent)) left center / var(--ilg-fill,0%) 3px no-repeat,linear-gradient(var(--ilg-range-track),var(--ilg-range-track)) left center / 100% 3px no-repeat !important;
+    height:4px;box-shadow:none !important;filter:none !important;
 }
-html.ilg body .neo-range-slider:where(#top-bar, #top-bar *, #top-settings-holder, #top-settings-holder *, #sheld, #sheld *, #options, #options *, #extensionsMenu, #extensionsMenu *, #toast-container, #toast-container *, #ilg-fold-menu, #ilg-fold-menu *, dialog.popup.ilg-glass, dialog.popup.ilg-glass > .popup-body > .popup-controls *):where(:not(.popup:not(.ilg-glass), .popup:not(.ilg-glass) *, dialog:not(.ilg-glass), dialog:not(.ilg-glass) *, [role="dialog"]:not(.ilg-recent):not(.ilg-glass), [role="dialog"]:not(.ilg-recent):not(.ilg-glass) *, .popup-content, .popup-content *)) { border-radius: 4px !important; }
-html.ilg body input[type="range"]:hover:where(#top-bar, #top-bar *, #top-settings-holder, #top-settings-holder *, #sheld, #sheld *, #options, #options *, #extensionsMenu, #extensionsMenu *, #toast-container, #toast-container *, #ilg-fold-menu, #ilg-fold-menu *, dialog.popup.ilg-glass, dialog.popup.ilg-glass > .popup-body > .popup-controls *):where(:not(.popup:not(.ilg-glass), .popup:not(.ilg-glass) *, dialog:not(.ilg-glass), dialog:not(.ilg-glass) *, [role="dialog"]:not(.ilg-recent):not(.ilg-glass), [role="dialog"]:not(.ilg-recent):not(.ilg-glass) *, .popup-content, .popup-content *)) { filter: none; }
-html.ilg body input[type="range"]:where(#top-bar, #top-bar *, #top-settings-holder, #top-settings-holder *, #sheld, #sheld *, #options, #options *, #extensionsMenu, #extensionsMenu *, #toast-container, #toast-container *, #ilg-fold-menu, #ilg-fold-menu *, dialog.popup.ilg-glass, dialog.popup.ilg-glass > .popup-body > .popup-controls *):where(:not(.popup:not(.ilg-glass), .popup:not(.ilg-glass) *, dialog:not(.ilg-glass), dialog:not(.ilg-glass) *, [role="dialog"]:not(.ilg-recent):not(.ilg-glass), [role="dialog"]:not(.ilg-recent):not(.ilg-glass) *, .popup-content, .popup-content *))::-webkit-slider-thumb {
-    width: 20px;
-    height: 20px;
-    background: #fff;
-    border: 0.5px solid rgba(0, 0, 0, 0.06);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.22), 0 3px 8px rgba(0, 0, 0, 0.14);
+html.ilg body input[type="range"]:where(#top-bar, #top-bar *, #top-settings-holder, #top-settings-holder *, #sheld, #sheld *, #options, #options *, #extensionsMenu, #extensionsMenu *, #toast-container, #toast-container *, #ilg-fold-menu, #ilg-fold-menu *, dialog.popup.ilg-glass, dialog.popup.ilg-glass > .popup-body > .popup-controls *):where(:not(.popup:not(.ilg-glass), .popup:not(.ilg-glass) *, dialog:not(.ilg-glass), dialog:not(.ilg-glass) *, [role="dialog"]:not(.ilg-recent):not(.ilg-glass), [role="dialog"]:not(.ilg-recent):not(.ilg-glass) *, .popup-content, .popup-content *))::-webkit-slider-runnable-track,
+#ilg-studio input[type="range"]::-webkit-slider-runnable-track {height:3px;border:0;border-radius:999px;background:transparent;box-shadow:none;}
+html.ilg body input[type="range"]:where(#top-bar, #top-bar *, #top-settings-holder, #top-settings-holder *, #sheld, #sheld *, #options, #options *, #extensionsMenu, #extensionsMenu *, #toast-container, #toast-container *, #ilg-fold-menu, #ilg-fold-menu *, dialog.popup.ilg-glass, dialog.popup.ilg-glass > .popup-body > .popup-controls *):where(:not(.popup:not(.ilg-glass), .popup:not(.ilg-glass) *, dialog:not(.ilg-glass), dialog:not(.ilg-glass) *, [role="dialog"]:not(.ilg-recent):not(.ilg-glass), [role="dialog"]:not(.ilg-recent):not(.ilg-glass) *, .popup-content, .popup-content *))::-webkit-slider-thumb,
+#ilg-studio input[type="range"]::-webkit-slider-thumb {
+    appearance:none;-webkit-appearance:none;box-sizing:border-box;width:20px;height:20px;margin-top:-8.5px;border-radius:50%;
+    background:var(--ilg-range-knob);border:1.5px solid var(--ilg-range-rim);
+    box-shadow:0 1px 2px rgba(0,0,0,.16),0 3px 7px rgba(0,0,0,.12);transition:box-shadow .16s,border-color .16s;
 }
-html.ilg body input[type="range"]:where(#top-bar, #top-bar *, #top-settings-holder, #top-settings-holder *, #sheld, #sheld *, #options, #options *, #extensionsMenu, #extensionsMenu *, #toast-container, #toast-container *, #ilg-fold-menu, #ilg-fold-menu *, dialog.popup.ilg-glass, dialog.popup.ilg-glass > .popup-body > .popup-controls *):where(:not(.popup:not(.ilg-glass), .popup:not(.ilg-glass) *, dialog:not(.ilg-glass), dialog:not(.ilg-glass) *, [role="dialog"]:not(.ilg-recent):not(.ilg-glass), [role="dialog"]:not(.ilg-recent):not(.ilg-glass) *, .popup-content, .popup-content *))::-moz-range-thumb {
-    width: 20px;
-    height: 20px;
-    background: #fff;
-    border: 0.5px solid rgba(0, 0, 0, 0.06);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.22), 0 3px 8px rgba(0, 0, 0, 0.14);
+html.ilg body input[type="range"]:where(#top-bar, #top-bar *, #top-settings-holder, #top-settings-holder *, #sheld, #sheld *, #options, #options *, #extensionsMenu, #extensionsMenu *, #toast-container, #toast-container *, #ilg-fold-menu, #ilg-fold-menu *, dialog.popup.ilg-glass, dialog.popup.ilg-glass > .popup-body > .popup-controls *):where(:not(.popup:not(.ilg-glass), .popup:not(.ilg-glass) *, dialog:not(.ilg-glass), dialog:not(.ilg-glass) *, [role="dialog"]:not(.ilg-recent):not(.ilg-glass), [role="dialog"]:not(.ilg-recent):not(.ilg-glass) *, .popup-content, .popup-content *))::-moz-range-track,
+#ilg-studio input[type="range"]::-moz-range-track {height:3px;border:0;border-radius:999px;background:transparent;box-shadow:none;}
+html.ilg body input[type="range"]:where(#top-bar, #top-bar *, #top-settings-holder, #top-settings-holder *, #sheld, #sheld *, #options, #options *, #extensionsMenu, #extensionsMenu *, #toast-container, #toast-container *, #ilg-fold-menu, #ilg-fold-menu *, dialog.popup.ilg-glass, dialog.popup.ilg-glass > .popup-body > .popup-controls *):where(:not(.popup:not(.ilg-glass), .popup:not(.ilg-glass) *, dialog:not(.ilg-glass), dialog:not(.ilg-glass) *, [role="dialog"]:not(.ilg-recent):not(.ilg-glass), [role="dialog"]:not(.ilg-recent):not(.ilg-glass) *, .popup-content, .popup-content *))::-moz-range-progress,
+#ilg-studio input[type="range"]::-moz-range-progress {height:3px;background:transparent;}
+html.ilg body input[type="range"]:where(#top-bar, #top-bar *, #top-settings-holder, #top-settings-holder *, #sheld, #sheld *, #options, #options *, #extensionsMenu, #extensionsMenu *, #toast-container, #toast-container *, #ilg-fold-menu, #ilg-fold-menu *, dialog.popup.ilg-glass, dialog.popup.ilg-glass > .popup-body > .popup-controls *):where(:not(.popup:not(.ilg-glass), .popup:not(.ilg-glass) *, dialog:not(.ilg-glass), dialog:not(.ilg-glass) *, [role="dialog"]:not(.ilg-recent):not(.ilg-glass), [role="dialog"]:not(.ilg-recent):not(.ilg-glass) *, .popup-content, .popup-content *))::-moz-range-thumb,
+#ilg-studio input[type="range"]::-moz-range-thumb {
+    box-sizing:border-box;width:20px;height:20px;border-radius:50%;background:var(--ilg-range-knob);border:1.5px solid var(--ilg-range-rim);
+    box-shadow:0 1px 2px rgba(0,0,0,.16),0 3px 7px rgba(0,0,0,.12);transition:box-shadow .16s,border-color .16s;
 }
-
-/* 我自己的设置面板：把滑块命中区抬起来，视觉轨道仍然只有 4px。
-   原来 input 整个盒子就是 4px 高，手机上要精确压在那一条上才拖得动，摸偏一点就点到别处；
-   现在盒子 28px、两条 4px 的色带用 background-position: center 居中，看到的样子没变，手指能压住的地方变大了。
-   touch-action: pan-y 让竖着划屏幕时浏览器继续滚抽屉，只有横向拖才改值，减少滚动时误改。 */
-html.ilg body .ilg-settings input[type="range"] {
-    height: 28px;
-    margin: 0;
-    background:
-        linear-gradient(var(--ilg-accent), var(--ilg-accent)) 0 center / var(--ilg-fill, 0%) 4px no-repeat,
-        linear-gradient(var(--ilg-track), var(--ilg-track)) 0 center / 100% 4px no-repeat !important;
-    border-radius: 999px;
-    touch-action: pan-y;
-}
+html.ilg body input[type="range"]:where(#top-bar, #top-bar *, #top-settings-holder, #top-settings-holder *, #sheld, #sheld *, #options, #options *, #extensionsMenu, #extensionsMenu *, #toast-container, #toast-container *, #ilg-fold-menu, #ilg-fold-menu *, dialog.popup.ilg-glass, dialog.popup.ilg-glass > .popup-body > .popup-controls *):where(:not(.popup:not(.ilg-glass), .popup:not(.ilg-glass) *, dialog:not(.ilg-glass), dialog:not(.ilg-glass) *, [role="dialog"]:not(.ilg-recent):not(.ilg-glass), [role="dialog"]:not(.ilg-recent):not(.ilg-glass) *, .popup-content, .popup-content *)):active::-webkit-slider-thumb,
+#ilg-studio input[type="range"]:active::-webkit-slider-thumb {border-color:var(--ilg-range-accent);box-shadow:0 0 0 4px var(--ilg-range-halo,rgba(223,173,114,.16)),0 2px 5px rgba(0,0,0,.16);}
+html.ilg body input[type="range"]:where(#top-bar, #top-bar *, #top-settings-holder, #top-settings-holder *, #sheld, #sheld *, #options, #options *, #extensionsMenu, #extensionsMenu *, #toast-container, #toast-container *, #ilg-fold-menu, #ilg-fold-menu *, dialog.popup.ilg-glass, dialog.popup.ilg-glass > .popup-body > .popup-controls *):where(:not(.popup:not(.ilg-glass), .popup:not(.ilg-glass) *, dialog:not(.ilg-glass), dialog:not(.ilg-glass) *, [role="dialog"]:not(.ilg-recent):not(.ilg-glass), [role="dialog"]:not(.ilg-recent):not(.ilg-glass) *, .popup-content, .popup-content *)):active::-moz-range-thumb,
+#ilg-studio input[type="range"]:active::-moz-range-thumb {border-color:var(--ilg-range-accent);box-shadow:0 0 0 4px var(--ilg-range-halo,rgba(223,173,114,.16)),0 2px 5px rgba(0,0,0,.16);}
+html.ilg body .ilg-settings input[type="range"],#ilg-studio input[type="range"] {height:36px;min-height:36px;touch-action:pan-y;}
+html.ilg body input[type="range"]:where(#top-bar, #top-bar *, #top-settings-holder, #top-settings-holder *, #sheld, #sheld *, #options, #options *, #extensionsMenu, #extensionsMenu *, #toast-container, #toast-container *, #ilg-fold-menu, #ilg-fold-menu *, dialog.popup.ilg-glass, dialog.popup.ilg-glass > .popup-body > .popup-controls *):where(:not(.popup:not(.ilg-glass), .popup:not(.ilg-glass) *, dialog:not(.ilg-glass), dialog:not(.ilg-glass) *, [role="dialog"]:not(.ilg-recent):not(.ilg-glass), [role="dialog"]:not(.ilg-recent):not(.ilg-glass) *, .popup-content, .popup-content *)):disabled,#ilg-studio input[type="range"]:disabled {opacity:.4;cursor:default;}
 
 /* 勾选框：没勾是空心方框，勾上是蓝底白勾。原来浅色下不管勾没勾都是一个黑方块 */
 html.ilg body input[type="checkbox"]:where(#top-bar, #top-bar *, #top-settings-holder, #top-settings-holder *, #sheld, #sheld *, #options, #options *, #extensionsMenu, #extensionsMenu *, #toast-container, #toast-container *, #ilg-fold-menu, #ilg-fold-menu *, dialog.popup.ilg-glass, dialog.popup.ilg-glass > .popup-body > .popup-controls *):where(:not(.popup:not(.ilg-glass), .popup:not(.ilg-glass) *, dialog:not(.ilg-glass), dialog:not(.ilg-glass) *, [role="dialog"]:not(.ilg-recent):not(.ilg-glass), [role="dialog"]:not(.ilg-recent):not(.ilg-glass) *, .popup-content, .popup-content *)) {
@@ -4663,3 +4638,24 @@ html.ilg.ilg-clear-optics body #top-bar > #ilg-floor[data-ilg-top-tone] {
     color:var(--ilg-top-ink);
     filter:none;
 }
+
+/* Reading treatment belongs to each message surface; gaps and chrome retain the wallpaper. */
+html.ilg.ilg-chat-reading:not(.ilg-light) body.bubblechat #chat .mes.ilg-glass {
+    --ilg-reading-alpha: calc(1 - (1 - var(--ilg-mes-a, .12)) * (1 - var(--ilg-reading-level, .45) * .95));
+    --SmartThemeBotMesBlurTintColor: rgba(18, 21, 28, var(--ilg-reading-alpha));
+    --SmartThemeUserMesBlurTintColor: rgba(22, 36, 57, var(--ilg-reading-alpha));
+}
+html.ilg.ilg-chat-reading.ilg-light body.bubblechat #chat .mes.ilg-glass {
+    --ilg-reading-alpha: clamp(0, calc(1 - (1 - var(--ilg-mes-a, .12)) * (1 - var(--ilg-reading-level, .45) * 1.1)), 1);
+    --SmartThemeBotMesBlurTintColor: rgba(247, 245, 240, var(--ilg-reading-alpha));
+    --SmartThemeUserMesBlurTintColor: rgba(231, 240, 255, var(--ilg-reading-alpha));
+}
+
+html.ilg.ilg-light { --ilg-reading-dark: 0; }
+/* Keep selected native controls next to the menu without moving host drawer nodes. */
+html.ilg.ilg-fold body #top-settings-holder > #ilg-fold-button { order: 0; }
+html.ilg.ilg-fold body #top-settings-holder > .ilg-fold-shortcut { order: 1; }
+html.ilg.ilg-fold body #top-settings-holder > .ilg-fold-shortcut.ilg-fold-second { order: 2; }
+html.ilg.ilg-fold body #top-settings-holder > .ilg-fold-keep:not(.ilg-fold-shortcut) { order: 3; }
+
+html.ilg.ilg-fold body #top-settings-holder > .ilg-fold-keep.ilg-group-start:not(.ilg-fold-shortcut) { margin-left: auto; }

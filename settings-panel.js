@@ -73,10 +73,10 @@ export function createSettingsPanel({host, content, appearance, version, setting
  card('glass','我的外观',[saved]);
  card('layout','悬浮小球',[opt('floatBall')]);
  const ballDetails=disclosure('layout','拖动与融合',[opt('ballSnap'),opt('ballFuse')]);
- // 顶栏用两张卡片选择；旧的 islands / fold 控件只用于设置绑定与存档兼容。
+ // Folded layout with two optional shortcuts; legacy controls retain saved-look bindings.
  const topChoice=staging.querySelector('#ilg-opt-topStyle');topChoice?.querySelector('legend')?.classList.add('ilg-sr-only');
  const legacyTop=document.createElement('div');legacyTop.hidden=true;[opt('islands'),opt('fold')].filter(Boolean).forEach(n=>legacyTop.append(n));
- card('layout','顶栏',[topChoice,opt('toneBtn'),legacyTop]);
+ card('layout','顶栏',[topChoice,staging.querySelector('#ilg-opt-topShortcuts'),opt('toneBtn'),legacyTop]);
  card('layout','输入区',[opt('qrFold')]);
  card('layout','首页与聊天',[opt('home'),opt('homeName'),opt('avatar'),opt('orb')]);
  if(reading){const style=reading.querySelector('.ilg-reading-choice');style?.querySelector('legend')?.classList.add('ilg-sr-only');const g=card('text','文字风格',[reading]);g?.classList.add('ilg-reading-group');}
