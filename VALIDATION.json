@@ -2552,6 +2552,88 @@
         "Host mutation requests were blocked. Appearance save/restore was exercised in memory; no user settings, chats or API data were saved.",
         "One same-machine 1000-message CPU4x comparison is not phone FPS or INP; long-tail pauses remain."
       ]
+    },
+    {
+      "version": "1.4.5-test.24",
+      "date": "2026-11-11",
+      "scope": "Capsule sliders with scale marks, grip handles, thumb focus halos and one shared value label",
+      "host": {
+        "version": "1.18.0",
+        "browser": "Microsoft Edge headless Chromium"
+      },
+      "automated": {
+        "passed": true,
+        "regressions": 20,
+        "valueLabelGeometryCases": 48
+      },
+      "live": {
+        "passed": true,
+        "controlsViewports": [
+          [
+            390,
+            844
+          ],
+          [
+            1440,
+            900
+          ]
+        ],
+        "touchViewports": [
+          [
+            320,
+            844
+          ],
+          [
+            844,
+            390
+          ]
+        ],
+        "integrationViewport": [
+          390,
+          844
+        ],
+        "checks": [
+          "Value label follows keyboard changes without layout reads; focus uses a thumb halo and blur hides the shared label",
+          "Host AI settings sliders use the same ivory thumb and warm progress; native keyboard updates remain synchronized",
+          "Icon palette and live preview fit dark and light workbench on mobile/desktop",
+          "Foreign dialog controls retain their original appearance and receive no progress writes",
+          "Workbench value label appears above the modal top layer and stays within the viewport",
+          "Native touch drag updates the shared label with zero input geometry reads; releasing dismisses it",
+          "Coarse-pointer track taps retain the original accidental-touch protection",
+          "Relevant scrolling and extension disable dismiss the label; keyboard input restores it",
+          "Browsers without the Popover API receive a correctly positioned label inside the modal"
+        ],
+        "layoutReadsDuringLabelDrag": 0,
+        "writes": "Blocked during all browser checks"
+      },
+      "sourceHashes": {
+        "index.js": "f6c8af0246e160e37a693a86ce6ab6438d5900b24d2dd5f680bd6b7fc812d370",
+        "style.css": "9b968414c840d6d7de80066fe93ddce4ad3810eba5cd46185b0704d792479009",
+        "settings-panel.css": "080b318beb37e6a5c927919e4cd0168986c15b4b42dcf8de0837a843be3d8ef1"
+      },
+      "unchangedModules": [
+        "settings-panel.js",
+        "glass-lighting.js",
+        "glass2.js",
+        "control-material.js",
+        "ball-glass.js",
+        "ball-raster.js",
+        "glass-performance.js",
+        "glass-worker.js",
+        "glass-reflections.js",
+        "message-rendering.js",
+        "fixed-position.js",
+        "web-presets.js",
+        "optics-settings.js",
+        "appearance-bookmark.js",
+        "wallpaper-sampling.js"
+      ],
+      "unchangedComparison": "Normalized historical line endings and final newline against test.23",
+      "limitations": [
+        "Desktop Edge emulation, native injected touch, and API fallback fixtures are not physical iOS/Android/TT acceptance.",
+        "All host mutation requests were blocked; no user settings, chats or API data were saved.",
+        "Zero input geometry reads refers to value-label updates during the measured drag; host glass work still has its own cost."
+      ]
     }
   ]
 }

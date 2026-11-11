@@ -79,7 +79,7 @@ body.no-blur #ilg-studio[data-tone=light] {--s-sheet:#f7f5f0;}
 #ilg-studio[data-tone=light] select option {background:#fff;color:#1f1d1a;}
 #ilg-studio .ilg-hours {display:flex;align-items:center;gap:8px;font-size:13px;color:var(--s-muted);}
 #ilg-studio .ilg-hours input {width:64px;text-align:center;}
-#ilg-studio input[type=range] {--ilg-range-accent:var(--s-accent);--ilg-range-rim:var(--s-accent);--ilg-range-track:var(--s-fill-hi);--ilg-range-knob:#faf6ef;--ilg-range-halo:var(--s-accent-soft);width:100%;margin:0;}
+#ilg-studio input[type=range] {--ilg-range-accent:#cc9b62;--ilg-range-fill-end:#ecc693;--ilg-range-rim:#c5a27a;--ilg-range-track:var(--s-fill-hi);--ilg-range-knob:#faf6ef;--ilg-range-tick:rgba(50,40,25,.35);--ilg-range-halo:var(--s-accent-soft);width:100%;margin:0;}
 #ilg-studio .ilg-row output {min-width:38px;padding:2px 7px;border-radius:7px;background:var(--s-accent-soft);text-align:center;font-size:11.5px;line-height:1.5;}
 #ilg-studio textarea {width:100%;max-width:100%;margin-top:10px;border:0;border-radius:11px;background:var(--s-fill);padding:10px 12px;font-size:12px;}
 /* Buttons */

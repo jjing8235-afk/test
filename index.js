@@ -25,7 +25,7 @@ window.__ilgLoaded = new URL('.', import.meta.url).pathname;
 
 let studioUI = null;
 const MODULE = 'iosLiquidGlass';
-const BUILD_VERSION = '1.4.5-test.23';
+const BUILD_VERSION = '1.4.5-test.24';
 const NS = 'http://www.w3.org/2000/svg';
 const ctx = SillyTavern.getContext();
 
@@ -2452,6 +2452,7 @@ function queueGlassSettings() {
 }
 
 function applyRoot() {
+    if (!S.enabled) hideRangeValue();
     hostInteractionState.setEnabled(S.enabled);
     normalizeTopStyleSettings(S);
     syncInputMaterial(false);
@@ -3304,7 +3305,7 @@ iconLink.href = new URL('./icons.css', import.meta.url).href;
 document.head.appendChild(iconLink);
 
 // Keep the filled track aligned with the native 20px thumb, including the workbench dialog.
-const RANGE_THUMB = 20; // 和 CSS 里 ::-webkit-slider-thumb 的宽高一致
+const RANGE_THUMB = 20; // Match the CSS grip width; its height is independent.
 function paintRange(el) {
     if (!el.closest('#ilg-studio') && (!el.closest(HOST_UI_SEL) || el.closest('dialog, .popup, [role="dialog"]:not(.ilg-recent)'))) return;
     const min = Number(el.min || 0), max = Number(el.max || 100), v = Number(el.value);
@@ -3314,6 +3315,49 @@ function paintRange(el) {
 }
 const paintRanges = () => document.querySelectorAll('input[type="range"]').forEach(paintRange);
 
+// One shared value label; geometry is read once on activation, never on drag updates.
+const rangeValue = document.createElement('output');
+rangeValue.id = 'ilg-range-value'; rangeValue.hidden = true;
+rangeValue.setAttribute('aria-hidden', 'true'); rangeValue.setAttribute('popover', 'manual');
+document.body.append(rangeValue);
+let rangeValueInput = null, rangeValueGeometry = null, rangeValuePopover = false;
+function hideRangeValue() {
+    if (rangeValuePopover) { try { rangeValue.hidePopover(); } catch { /* The browser may already have closed it. */ } }
+    rangeValue.hidden = true; rangeValueInput = null; rangeValueGeometry = null; rangeValuePopover = false;
+}
+function updateRangeValue(el) {
+    if (rangeValueInput !== el || !rangeValueGeometry) return;
+    const {rect, originX, originY} = rangeValueGeometry;
+    const min = Number(el.min || 0), max = Number(el.max || 100);
+    const ratio = max > min ? Math.max(0, Math.min(1, (Number(el.value) - min) / (max - min))) : 0;
+    const x = Math.max(64, Math.min(innerWidth - 64, rect.left + RANGE_THUMB / 2 + ratio * (rect.width - RANGE_THUMB)));
+    rangeValue.style.left = (x - originX) + 'px';
+    const output = el.id && document.getElementById(el.id + '-v');
+    const label = (output?.textContent || el.value).slice(0, 24);
+    if (rangeValue.textContent !== label) rangeValue.textContent = label;
+    rangeValue.dataset.target = el.id;
+}
+function showRangeValue(el) {
+    if (!S.enabled || el.disabled || !el.closest('#ilg-studio') && (!el.closest(HOST_UI_SEL) || el.closest('dialog, .popup, [role="dialog"]:not(.ilg-recent)'))) return;
+    if (rangeValueInput === el) { updateRangeValue(el); return; }
+    hideRangeValue();
+    const rect = el.getBoundingClientRect(), dialog = el.closest('dialog');
+    let originX = 0, originY = 0;
+    if (rangeValue.parentElement !== document.body) document.body.append(rangeValue);
+    rangeValue.hidden = false;
+    try { if (typeof rangeValue.showPopover === 'function') { rangeValue.showPopover(); rangeValuePopover = true; } } catch { /* Use the local positioning fallback. */ }
+    if (!rangeValuePopover && dialog) {
+        dialog.append(rangeValue);
+        const outer = dialog.getBoundingClientRect(); originX = outer.left; originY = outer.top;
+    }
+    rangeValue.style.position = !rangeValuePopover && dialog ? 'absolute' : 'fixed';
+    const above = rect.top + rect.height / 2 - 29;
+    rangeValue.dataset.side = above > 45 ? 'top' : 'bottom';
+    rangeValue.style.top = ((above > 45 ? above : rect.bottom + 12) - originY) + 'px';
+    rangeValue.dataset.tone = root.classList.contains('ilg-light') ? 'light' : 'dark';
+    rangeValueInput = el; rangeValueGeometry = {rect, originX, originY};
+    updateRangeValue(el);
+}
 // 手机上一扒拉就改值：原生滑块只要手指落在轨道任何位置就立刻跳值，滚动聊天/抽屉时蹭到就中招。
 // 改成「只有按在圆点附近才算拖动」：按在轨道别处、或者按在圆点上却是竖着划，值一律还原。
 // 电脑上用鼠标的不受影响（鼠标点轨道还是照常跳，那是精确调节的便利）。
@@ -3331,9 +3375,11 @@ document.addEventListener('pointerdown', e => {
     // 按下去这一刻 value 还没被浏览器改，用它算圆点位置
     const nearThumb = Math.abs(e.clientX - thumbCenter(el)) <= RANGE_THUMB * 0.9;
     rangeGuards.set(el, { value: el.value, skip: coarsePointer.matches && !nearThumb });
+    if (!rangeGuards.get(el).skip) showRangeValue(el);
 }, true);
 ['pointerup', 'pointercancel'].forEach(t => document.addEventListener(t, e => {
     if (e.target instanceof HTMLInputElement && e.target.type === 'range') rangeGuards.delete(e.target);
+    hideRangeValue();
 }, true));
 ['input', 'change'].forEach(t => document.addEventListener(t, e => {
     const el = e.target;
@@ -3350,6 +3396,22 @@ document.addEventListener('pointerdown', e => {
     }
     paintRange(el);
 }, true));
+// Bubble after the target's setting handler so the formatted value is current.
+for (const type of ['input', 'change']) document.addEventListener(type, e => {
+    const el = e.target;
+    if (!(el instanceof HTMLInputElement) || el.type !== 'range') return;
+    if (e.type === 'input' && document.activeElement === el && !rangeValueInput) showRangeValue(el);
+    else updateRangeValue(el);
+});
+document.addEventListener('focusin', e => {
+    if (e.target instanceof HTMLInputElement && e.target.type === 'range' && !rangeGuards.get(e.target)?.skip) showRangeValue(e.target);
+}, true);
+document.addEventListener('focusout', e => { if (e.target === rangeValueInput) hideRangeValue(); }, true);
+document.addEventListener('scroll', e => {
+    if (rangeValueInput && (e.target === document || e.target instanceof Element && e.target !== rangeValue && e.target.contains(rangeValueInput))) hideRangeValue();
+}, true);
+window.addEventListener('resize', hideRangeValue);
+document.addEventListener('visibilitychange', () => { if (document.hidden) hideRangeValue(); });
 // 酒馆读预设时是直接改 value（不发 input 事件），所以打开抽屉、切预设之后再统一刷一遍
 document.addEventListener('click', e => { if (e.target.closest?.('.drawer-toggle, .inline-drawer-toggle')) requestAnimationFrame(paintRanges); }, true);
 ['APP_READY', 'SETTINGS_LOADED', 'OAI_PRESET_CHANGED_AFTER', 'PRESET_CHANGED'].forEach(t => {
