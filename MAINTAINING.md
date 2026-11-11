@@ -1,3 +1,19 @@
+# 2.0 正式版维护入口（2026-11-11）
+
+当前正式产品版本为 **2.0**（扩展清单使用规范版本号 2.0.0，工作台显示 2.0），来源为测试仓库 1.4.5-test.25，提交 7e779dfd79b6a620926c91e211a6e1e31a15016c。正式整理只变更产品版本、正式仓库标识与文档；功能实现沿用该验证基线。下方旧版说明保留为历史，其中 1.4.4 / local / test 的“当前”状态不代表本次版本。
+
+- 设置命名空间仍为 extensionSettings.iosLiquidGlass，设置迁移版本仍为 9；产品版本 2.0 不要求重置设置。
+- 御风性能引擎与棱光折射引擎是显示名，physical / legacy、glassStyle 及 readingStyle 的存储值保留。
+- 当前已移除 cardSolid 开关及强制实色底路径，保留卡片作者原有背景和透明度；阅读滤镜限定在消息背景。不要按下方旧说明恢复已删除开关。
+- 正式 install/ 安装器、配套主题与相关资源逐字节保留；不要用测试副本覆盖安装边界。
+- 离线入口：node dev/verify/*-regression.mjs；浏览器夹具使用隔离页面或拦截写入的宿主测试，不触碰聊天、卡片、预设、主题与账号配置。
+- 最近验证、性能场景和物理手机限制见 VALIDATION.json 的正式发布记录及 test.25 followup。桌面模拟不等于真机验收，预设夹具不等于实际第三方脚本验收。
+- 备份 / 恢复在独立副本中进行；旧的正式与测试记录是历史，不是未来自动发布授权。
+
+---
+
+## 以下为保留的历史维护记录
+
 # Current local maintenance · 1.4.4-local.9
 
 Date: 2026-11-05. Development started: 2026-11-04. Baseline: local.8. Local-only installation; no GitHub publishing. Older sections below are historical contracts.

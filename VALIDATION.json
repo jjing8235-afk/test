@@ -1,6 +1,6 @@
 {
-  "currentVersion": "2.0.1-test.2",
-  "currentDisplayVersion": "2.0.1-test.2",
+  "currentVersion": "2.0.4-test.1",
+  "currentDisplayVersion": "2.0.4-test.1",
   "date": "2026-11-05",
   "version": "1.4.4-local.9",
   "baseline": "1.4.4-local.8",
@@ -2953,6 +2953,134 @@
     "limits": [
       "Physical TT Android and iPhone acceptance pending",
       "Isolated full extension fixture is not current live SillyTavern verification"
+    ]
+  },
+  "diagnostics201": {
+    "date": "2026-11-11",
+    "schema": "nvwa-interaction-2",
+    "offlineRegressions": 27,
+    "real15SecondCapture": [
+      "chromium",
+      "webkit"
+    ],
+    "bounded": {
+      "checkpoints": 17,
+      "timeline": 80,
+      "worstStalls": 8,
+      "drags": 12
+    },
+    "checks": [
+      "structured-appearance-and-wallpaper-markers",
+      "per-second-windows",
+      "intermediate-render-state",
+      "coverage-missing-actions",
+      "observer-drain",
+      "visibility-pagehide-cancel-cleanup",
+      "single-txt-no-duplicate-capture",
+      "no-event-text-url-message-or-stack",
+      "opt-in-no-auto-upload"
+    ],
+    "physicalPhoneVerified": false
+  },
+  "captureUI202": {
+    "date": "2026-11-12",
+    "version": "2.0.2",
+    "passed": true,
+    "engines": [
+      "chromium",
+      "webkit"
+    ],
+    "themes": [
+      "light",
+      "dark"
+    ],
+    "widths": [
+      320,
+      394
+    ],
+    "minButtonTextContrast": 4.5,
+    "minButtonHeight": 44,
+    "sceneInstructions": 4,
+    "full15SecondTimeoutAndSingleTxt": true,
+    "offlineRegressions": 27,
+    "physicalPhoneVerified": false
+  },
+  "wallpaperAndBookshelf203": {
+    "date": "2026-11-12",
+    "passed": true,
+    "wallpaperCases": 16,
+    "engines": [
+      "chromium",
+      "webkit"
+    ],
+    "nativeAPIs": {
+      "sourceVersion": "SillyTavern 1.18.0",
+      "symbols": [
+        "background_settings",
+        "loadBackgroundSettings",
+        "getBackgroundPath"
+      ],
+      "isolatedInstalledFunctionBodies": true,
+      "liveST": false
+    },
+    "preserved": [
+      "background-fitting",
+      "background-animation",
+      "sort-order",
+      "thumbnail-columns",
+      "locked-chat-background",
+      "latest-choice"
+    ],
+    "bookshelf": {
+      "repository": "ayan-atelier/yantai-bookshelf",
+      "commit": "cefca0a81c4d10ee42eeb9cbce8d1272172569eb",
+      "version": "1.4.5",
+      "verified": "full-pinned-css plus native welcome fixture open-close-row-click",
+      "thirdPartyJSExecuted": false
+    },
+    "offlineRegressions": 27,
+    "physicalPhoneVerified": false,
+    "additionalIOSReport": {
+      "reportedBuild": "2.0.2",
+      "capturedSeconds": 15.011,
+      "chatScrollEvents": 60,
+      "ballDrags": 1,
+      "ballMoves": 29,
+      "composerInputs": 0,
+      "visualViewportEvents": 0,
+      "wallpaperFailure": "verified files but no gallery entries, repeated unavailable light selection",
+      "largestCallbackGapMs": 1252,
+      "largestGapNearVisibleSurfaceRemoval": true,
+      "stallCauseConfirmed": false,
+      "perfectIOSCompatibilityConfirmed": false
+    }
+  },
+  "iosWallpaperTest204": {
+    "date": "2026-11-12",
+    "baseline": "2.0.3",
+    "scope": "iOS wallpaper refraction follows normal edge-refraction switch; test release only",
+    "browsers": [
+      "desktop WebKit",
+      "desktop Chromium"
+    ],
+    "fullExtensionFixture": true,
+    "extraExperimentRequired": false,
+    "newIOSDefault": "liquid-web",
+    "savedPreferencesPreserved": true,
+    "offlineRegressions": 28,
+    "physicalPhoneVerified": false,
+    "fullBackdropRefraction": false,
+    "verified": [
+      "enable-disable-cleanup",
+      "wallpaper-change",
+      "orientation-resize",
+      "image-failure-fallback-and-recovery",
+      "draft-preservation",
+      "no-chat-content-refraction"
+    ],
+    "pending": [
+      "physical iPhone visual comparison",
+      "real-device scroll keyboard and drag response"
     ]
   }
 }

@@ -1,8 +1,8 @@
 // NVWA 液态玻璃 · 酒馆助手安装脚本
 // 打开这个脚本后：没装美化扩展就问一句要不要装，装好自动刷新；装过了就什么都不做。脚本按钮“检查更新”可以手动更新
 // 构建：node install/build.mjs 会把这个文件包成酒馆助手能导入的 JSON
-const REPO = 'https://github.com/jjing8235-afk/test';
-const ID = 'test';
+const REPO = 'https://github.com/jjing8235-afk/NVWA-Liquid-Glass';
+const ID = 'NVWA-Liquid-Glass';
 const TITLE = 'NVWA 液态玻璃';
 
 const reload = () => setTimeout(() => window.parent.location.reload(), 2000);

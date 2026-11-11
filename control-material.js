@@ -34,4 +34,4 @@ export function controlCoreFilter(source, width, height, radius, blur = 5.5) {
         '<feComposite in="ilg-control-soft" in2="ilg-control-mask" operator="in" result="ilg-control-centre"/>' +
         `<feComposite in="${source}" in2="ilg-control-mask" operator="out" result="ilg-control-rim"/>` +
         '<feMerge><feMergeNode in="ilg-control-rim"/><feMergeNode in="ilg-control-centre"/></feMerge>';
-}
+}

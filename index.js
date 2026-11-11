@@ -3,6 +3,7 @@
    折射引擎有两套：新版物理折射（glass2.js，实验台 v2 移植）和旧版（本文件里的 makeMap / buildFilter） */
 import { getMaps, clearMaps, physicalFilter, resizePhysicalFilter } from './glass2.js';
 import { makeOrb } from './orb.js';
+import { createIOSWallpaperRefraction } from './ios-wallpaper-refraction.js';
 import { createBundledWallpapers } from './bundled-wallpapers.js';
 import { largeWebViewMessage } from './surface-policy.js';
 import { createInteractionDiagnostics } from './interaction-diagnostics.js';
@@ -28,7 +29,7 @@ window.__ilgLoaded = new URL('.', import.meta.url).pathname;
 
 let studioUI = null;
 const MODULE = 'iosLiquidGlass';
-const BUILD_VERSION = '2.0.1-test.2';
+const BUILD_VERSION = '2.0.4-test.1';
 const ENGINE_NAMES = Object.freeze({performance:'御风性能引擎',refraction:'棱光折射引擎'});
 const NS = 'http://www.w3.org/2000/svg';
 const ctx = SillyTavern.getContext();
@@ -668,6 +669,9 @@ const TOGGLES = [
     ['ballFuse', '小球拖到顶栏或输入框旁边时和那块玻璃边缘融合'],
 ];
 
+// Apply platform defaults before merging saved preferences. Explicit saved choices win.
+if (window.__TAURITAVERN_HOST__?.platform === 'ios' || /iPad|iPhone|iPod/.test(navigator.userAgent)
+    || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) DEFAULTS.glassStyle = 'liquid-web';
 ctx.extensionSettings[MODULE] = Object.assign({}, DEFAULTS, ctx.extensionSettings[MODULE]);
 const S = ctx.extensionSettings[MODULE];
 // Retired option: authored card colors and transparency always remain in control.
@@ -759,7 +763,7 @@ function canRefract() {
 // This material uses CSS blur and light, never background pixel displacement.
 function iosMaterialActive() {
     return S.enabled && !cssGlassActive() && iosBlurEligible && S.iosMaterial === true
-        && !document.body.classList.contains('no-blur') && !(S.refract && canRefract());
+        && !document.body.classList.contains('no-blur') && (!(S.refract && canRefract()) || S.glassStyle==='liquid-web');
 }
 function compatibilityHint() {
     return cssGlassActive()
@@ -836,6 +840,11 @@ svg.innerHTML = '<defs></defs>';
 document.body.appendChild(svg);
 const defs = svg.firstChild;
 
+const iosWallpaper=createIOSWallpaperRefraction({background:()=>{
+    for(const id of ['bg_custom','bg1']){const el=document.getElementById(id);if(el&&/^url\(/.test(getComputedStyle(el).backgroundImage))return el;}
+    return null;
+},onReady:()=>requestAnimationFrame(()=>{repaintVisible();const status=document.getElementById('ilg-status');if(status)status.textContent=statusText();})});
+const iosWallpaperRequested=()=>isIOS&&S.refract&&S.compatibilityMode!=='blur'&&webStyleEnabled()&&!document.body.classList.contains('no-blur');
 const items = new Map();
 // Host UI state changes only need surfaces near the viewport; other messages update on intersection.
 const visibleItems = new Set();
@@ -991,6 +1000,7 @@ function buildFilter(it, w, h, r, el) {
 
 function refractAllowed(it) {
     if (!S.enabled || !S.refract || !canRefract() || document.body.classList.contains('no-blur')) return false;
+    if(isIOS&&iosWallpaperRequested())return false;
     if (it.kind === 'mes') return S.refractMes && it.visible;
     return true;
 }
@@ -1053,7 +1063,7 @@ function paint(el, geo) {
     }
     if (it.kind !== 'mes') {
         it.visible = !!geo.w && !!geo.h;
-        if (it.visible) visibleItems.add(el); else { visibleItems.delete(el); return; }
+        if (it.visible) visibleItems.add(el); else { visibleItems.delete(el); iosWallpaper.release(el); return; }
     }
     const surface = it.kind === 'mes' ? messageSurface(el, it) : el;
     const control = it.kind === 'bar' && controlSurface(el);
@@ -1064,6 +1074,7 @@ function paint(el, geo) {
     el.classList.toggle('ilg-css-surface', cssMode);
     const useWeb = it.kind === 'bar' && webStyleEnabled();
     if (!useWeb) webGlass.release(el);
+    if (!useWeb||!iosWallpaperRequested()) iosWallpaper.release(el);
     if (document.body.classList.contains('no-blur')) {
         it.renderPath = 'no-blur';
         reflections.release(el);
@@ -1098,10 +1109,12 @@ function paint(el, geo) {
         it.renderPath = 'web-compatible';
         setPhys(el, it, false);
         webGlass.paint(el, it, { width: w, height: h,
-            refract: S.refract && canRefract() && !isIOS,
+            refract: S.refract && (canRefract() || iosWallpaperRequested()),
+            sourcePlane: iosWallpaperRequested()?value=>iosWallpaper.paint(el,value):null,
             filter: () => filterOf(it, w, h, 'webFilter'), radius: r, preset: S.webPreset, refractionScale: foldedMenuSurface(el) ? .82 : 1, controlCore: control && controlReadable(el), controlBlur: el.id === 'nonQRFormItems' ? 3 : 5.5,
             // 输入胶囊上下两条边的折射圈加厚一点（用户 2026-11-05 要求），岛保持上游原样
             bendY: el.id === 'nonQRFormItems' ? 1.5 : 1 });
+        if(iosWallpaperRequested()&&el.querySelector(':scope > .ilg-ios-wallpaper-plane'))it.renderPath='web-wallpaper';
         return;
     }
     it.largeWebView = largeWebViewMessage({webView:androidWebView,kind:it.kind,width:w,height:h,dpr:devicePixelRatio,previous:it.largeWebView});
@@ -1199,6 +1212,7 @@ function untrack(el) {
     messageRendering.release(el);
     reflections.release(el);
     webGlass.release(el);
+    iosWallpaper.release(el);
     const it = items.get(el);
     if (!it) return;
     it.filter?.remove();
@@ -1657,7 +1671,7 @@ function syncAppearancePanel() {
     appearancePanel.querySelectorAll('[name="ilg-glass-style"]').forEach(el => { el.checked = el.value === S.glassStyle; });
     const hint = appearancePanel.querySelector('.ilg-web-style-hint');
     if (hint) hint.textContent = cssGlassActive() ? '通用仿液态玻璃正在使用 CSS 材质；映卿与漾卿的参数会保留。' : S.glassStyle === 'liquid-web'
-        ? (!webStyleEnabled() ? '当前环境暂不支持漾卿，已使用兼容材质。' : isIOS ? 'iOS 只用系统模糊与调色；真实背景折射尚未验证。' : !S.refract || !canRefract() ? '当前只用模糊与调色；开启可用的边缘折射后可见弯曲效果。' : '漾卿用于顶栏、输入区与悬浮小球。')
+        ? (!webStyleEnabled() ? '当前环境暂不支持漾卿，已使用兼容材质。' : iosWallpaperRequested() ? 'iOS 壁纸折射：仅折射壁纸，不包含聊天正文；关闭边缘折射可恢复兼容模糊。' : isIOS ? 'iOS 当前使用兼容模糊；开启边缘折射可尝试壁纸折射。' : !S.refract || !canRefract() ? '当前只用模糊与调色；开启可用的边缘折射后可见弯曲效果。' : '漾卿用于顶栏、输入区与悬浮小球。')
         : '映卿保留独立弧度；两种材质可随时切换。';
     appearancePanel.querySelector('.ilg-web-presets').hidden = S.glassStyle !== 'liquid-web';
     appearancePanel.querySelectorAll('[name="ilg-web-preset"]').forEach(el => { el.checked = el.value === S.webPreset; });
@@ -2054,14 +2068,37 @@ function openWallpaperPicker() {
     else toastr.info('请从菜单 → 背景中选择一张壁纸。', '选择自定义壁纸');
 }
 let appearanceSelection = 0;
+let lastAppearanceAction = null;
+function finishAppearance(outcome, mode, details={}) {
+    lastAppearanceAction = {mode, outcome, ...details};
+    interactionDiagnostics.mark('appearance-result', {mode, outcome, ...details});
+}
+// ST's exported settings loader saves through the host even when its gallery is filtered or absent.
+// Clone every existing background preference and change only the selected owned file.
+async function selectVerifiedBundledWallpaper(mode, selection) {
+    try {
+        const backgrounds=await import('/scripts/backgrounds.js');
+        if(selection!==appearanceSelection||!S.enabled)return {ok:false,code:'superseded'};
+        if(chatBgLocked())return {ok:false,code:'chat-background-locked'};
+        if(typeof backgrounds.loadBackgroundSettings!=='function'||!backgrounds.background_settings||typeof backgrounds.background_settings!=='object')return {ok:false,code:'native-api-unavailable'};
+        const file=TONE_WALLS[mode];if(!file)return {ok:false,code:'native-api-unavailable'};
+        const url=typeof backgrounds.getBackgroundPath==='function'?backgrounds.getBackgroundPath(file):'backgrounds/'+encodeURIComponent(file);
+        backgrounds.loadBackgroundSettings({background:{...backgrounds.background_settings,name:file,url:'url('+JSON.stringify(url)+')'}});
+        if(wallpaperKey(wallpaperUrl()).split('/').pop()!==file)return {ok:false,code:'background-not-applied'};
+        return {ok:true};
+    } catch {return {ok:false,code:'native-selection-failed'};}
+}
 async function selectAppearance(mode) {
     const selection = ++appearanceSelection;
+    lastAppearanceAction = {mode, outcome:'requested'};
+    interactionDiagnostics.mark('appearance-request', {mode});
     const current = wallpaperUrl();
     if (current && !onToneWall()) rememberCustomWallpaper(current);
-    let thumb;
+    let thumb, nativeApplied=false;
     if (mode === 'custom') {
         thumb = customWallThumb();
         if (!thumb && appearanceMode() !== 'custom') {
+            finishAppearance('unavailable', mode);
             syncAppearancePanel();
             openWallpaperPicker();
             return;
@@ -2071,15 +2108,21 @@ async function selectAppearance(mode) {
         if (!thumb) {
             toastr.info('正在检查并恢复配套壁纸…','NVWA 液态玻璃');
             const result=await ensureWalls();
-            if(selection!==appearanceSelection||!S.enabled)return;
-            if(!result.ok){toastr.warning('配套壁纸恢复未完成，请检查网络或宿主的背景上传功能，再点一次重试。','NVWA 液态玻璃');return;}
+            if(selection!==appearanceSelection||!S.enabled){interactionDiagnostics.mark('appearance-result',{mode,outcome:'superseded'});return;}
+            if(!result.ok){finishAppearance('unavailable',mode);toastr.warning('配套壁纸恢复未完成，请检查网络或宿主的背景上传功能，再点一次重试。','NVWA 液态玻璃');return;}
             thumb=wallThumb(mode);
-            if(!thumb){toastr.warning('配套壁纸已在背景库中，请清除背景列表筛选或刷新酒馆后再切换。','NVWA 液态玻璃');return;}
+            if(!thumb){
+                const selected=await selectVerifiedBundledWallpaper(mode,selection);
+                if(selection!==appearanceSelection||!S.enabled)return;
+                if(!selected.ok){finishAppearance('unavailable',mode,{route:'host-settings',code:selected.code});toastr.warning(selected.code==='chat-background-locked'?'当前聊天的背景已锁定，请在酒馆背景面板中切换或先解除锁定。':'配套壁纸已在背景库，但当前宿主未完成切换，请导出兼容诊断。','NVWA 液态玻璃');return;}
+                nativeApplied=true;
+            }
         }
     }
     S.tone = mode === 'custom' ? 'auto' : mode;
     toneOverride = null;
     thumb?.click();
+    finishAppearance('dispatched', mode, {route:nativeApplied?'host-settings':'thumbnail'});
     void applyTone();
     const select = document.getElementById('ilg-opt-tone');
     if (select) select.value = S.tone;
@@ -2416,6 +2459,7 @@ function followTone() {
 }
 async function applyTone() {
     const request = ++toneRequest, url = wallpaperUrl(), custom = !!url && !onToneWall();
+    if(iosWallpaperRequested())iosWallpaper.refresh();
     if (currentWallpaperSample?.url !== url) currentWallpaperSample = null;
     let sampled = null;
     root.classList.toggle('ilg-custom-wallpaper', S.enabled && custom);
@@ -2523,6 +2567,7 @@ function applyRoot() {
     root.classList.toggle('ilg-css-glass', cssGlassActive());
     root.classList.toggle('ilg-liquid-web', webStyleEnabled());
     webGlass.setEnabled(webStyleEnabled());
+    iosWallpaper.setEnabled(iosWallpaperRequested());
     reflections.setEnabled(S.enabled && !cssGlassActive());
     syncMobileTilt();
     root.classList.toggle('ilg-ios-experiment', S.enabled && isIOS);
@@ -2672,7 +2717,7 @@ function statusText() {
     if (!S.enabled) return '美化已关闭。';
     if (document.body.classList.contains('no-blur')) return '你开了酒馆的“关闭模糊”，所以玻璃和折射都暂停了。';
     if (cssGlassActive()) return '澄卿 · 通用仿液态玻璃：CSS 轻模糊、细亮边与柔和投影；SVG 折射与轮廓贴图已停用。';
-    if (S.glassStyle === 'liquid-web') return '漾卿 · 顶栏与输入区。' + (isIOS ? 'iOS 使用模糊与光感，不宣称真实折射。' : S.refract && canRefract() ? '已请求弯曲背景折射。' : '当前使用模糊与光感。');
+    if (S.glassStyle === 'liquid-web') return '漾卿 · 顶栏与输入区。' + (iosWallpaperRequested() ? (iosWallpaper.status().surfaces>0?'iOS 壁纸折射图层已启用：仅壁纸，不包含聊天正文；实际位移仍需真机确认。':iosWallpaper.status().reason==='loading-wallpaper'?'iOS 壁纸图层准备中，暂用兼容模糊。':iosWallpaper.status().reason==='image-unavailable'?'iOS 壁纸图层加载失败，已保留兼容模糊。':'iOS 壁纸折射尚未就绪，暂用兼容模糊。') : isIOS ? 'iOS 使用模糊与光感，不宣称真实折射。' : S.refract && canRefract() ? '已请求弯曲背景折射。' : '当前使用模糊与光感。');
     if (iosMaterialActive()) return 'iOS 兼容玻璃：系统模糊与边缘光感已启用，此模式不包含真实背景折射。';
     if (!S.refract) return '边缘折射已关闭，现在只有模糊。';
     if (isIOS && iosTrialRequested()) return 'iOS SVG 折射实验已请求；不代表背景位移已显示，请对比画面确认。关闭实验开关即可恢复模糊。';
@@ -2691,13 +2736,51 @@ function statusText() {
 function viewportDiagnostic() {
     const vv=window.visualViewport;
     const rect=id=>{const el=document.getElementById(id);if(!el)return null;const r=el.getBoundingClientRect();return{x:Math.round(r.x),y:Math.round(r.y),width:Math.round(r.width),height:Math.round(r.height)};};
+    const paths={},surfaces=[];let large=0;
+    for(const [el,it] of items){const path=it.renderPath||'pending';paths[path]=(paths[path]||0)+1;if(it.fallbackReason==='large-webview-message')large++;
+        if(surfaces.length<3&&it.visible&&el.matches('.mes')){const r=el.getBoundingClientRect();surfaces.push({width:Math.round(r.width),height:Math.round(r.height),path,fallbackReason:it.fallbackReason||''});}}
     return{layout:{width:innerWidth,height:innerHeight,dpr:devicePixelRatio},visual:vv?{width:vv.width,height:vv.height,offsetTop:vv.offsetTop,offsetLeft:vv.offsetLeft,scale:vv.scale}:null,
         composerFocused:document.activeElement===document.getElementById('send_textarea'),keyboard:keyboard.status(),composer:rect('nonQRFormItems'),form:rect('form_sheld'),ball:{shown:S.enabled&&S.floatBall,keyboardHidden:root.classList.contains('ilg-kb-open'),rect:rect('ilg-ball')},
-        rendering:{iosCompatible:iosMaterialActive(),engineRequested:S.engine,largeWebViewMessages:[...items.values()].filter(it=>it.fallbackReason==='large-webview-message').length},lighting:lighting.status(),captureNote:'Frame intervals describe page callbacks, not display flicker detection'};
+        rendering:{iosCompatible:iosMaterialActive(),engineRequested:S.engine,largeWebViewMessages:large,paths,surfaces},
+        appearance:{requested:S.tone,actual:appearanceMode(),lightThumbnail:!!wallThumb('light'),darkThumbnail:!!wallThumb('dark'),customThumbnail:!!customWallThumb(),chatBackgroundLocked:chatBgLocked(),lastAction:lastAppearanceAction},
+        wallpapers:bundledWallpapers.status(),wallpaperRefraction:iosWallpaper.status(),workers:{reflections:reflections.status(),ball:((({mode,reason,suspended,pending,failures})=>({mode,reason,suspended,pending,failures}))(ballGlass.status()))},lighting:lighting.status(),captureNote:'Frame intervals describe page callbacks, not display flicker detection'};
 }
-const interactionDiagnostics=createInteractionDiagnostics({snapshot:viewportDiagnostic,onFinish(result){
-    const status=document.getElementById('ilg-capture-state');if(status)status.textContent='采集已结束（'+(result.durationMs/1000).toFixed(1)+' 秒），请导出兼容诊断。';
+const CAPTURE_SCENARIOS = {
+    general: ['综合交互', ['上下滑动聊天几次，停一下，再来回滑动。', '拖动悬浮小球几次，观察是否跟手；未开启小球时可跳过。', '点输入框打几个字，收起键盘，再拖动一次小球。']],
+    appearance: ['黑白切换 / 壁纸', ['点击右上角的太阳、月亮或调色盘图标。', '连续切换两三次；如提示正在恢复壁纸，留在页面等待结果。', '观察壁纸和文字颜色是否变化，以及有没有错误提示。']],
+    rendering: ['屏闪 / 折射', ['停在原来会闪的卡片处，先静止约 3 秒，观察静止时是否也闪。', '上下滑动这张卡片几次，再停住，观察屏闪或卡顿出现的时机。', '方便时另录约 10 秒视频；反馈时说明静止、滚动或打字时是否闪。']],
+    keyboard: ['键盘 / 拖动', ['拖动悬浮小球几次，观察是否跟手；先确认小球已开启。', '点输入框打几个字，观察输入框有没有被键盘挡住。', '收起键盘，再拖动小球，观察位置和跟手是否恢复。']],
+};
+function updateCaptureInstructions() {
+    const controls=document.getElementById('ilg-interaction-diagnostics');if(!controls)return;
+    const scenario=controls.querySelector('select').value;
+    controls.querySelector('#ilg-capture-steps').replaceChildren(...CAPTURE_SCENARIOS[scenario][1].map(text=>{const li=document.createElement('li');li.textContent=text;return li;}));
+}
+
+function exportCompatibilityDiagnostic() {
+    if(interactionDiagnostics.status().recording)interactionDiagnostics.stop('exported');
+    const text=iosTrialReport()+'\n\n'+cardDisplayReport({includeCapture:false});
+    const field=document.getElementById('ilg-opt-iosReport');if(field)field.value=text;
+    downloadDiagnostic(text);
+}
+function captureBadge() {
+    let badge=document.getElementById('ilg-capture-badge');if(badge)return badge;
+    badge=document.createElement('aside');badge.id='ilg-capture-badge';badge.setAttribute('aria-label','交互诊断采集');
+    badge.innerHTML='<span role="status" aria-live="polite"></span><button type="button" data-action="main">提前结束</button><button type="button" data-action="close" aria-label="收起采集提示" hidden>×</button>';
+    badge.querySelector('[data-action="main"]').addEventListener('click',()=>{if(interactionDiagnostics.status().recording)interactionDiagnostics.stop('manual');else exportCompatibilityDiagnostic();});
+    badge.querySelector('[data-action="close"]').addEventListener('click',()=>badge.remove());document.body.append(badge);return badge;
+}
+const interactionDiagnostics=createInteractionDiagnostics({snapshot:viewportDiagnostic,onProgress(progress){
+    const badge=captureBadge();badge.querySelector('span').textContent='采集中 · '+Math.ceil(progress.remainingMs/1000)+' 秒';badge.querySelector('[data-action="main"]').textContent='提前结束';badge.querySelector('[data-action="close"]').hidden=true;
+},onFinish(result){
+    const missing=result.coverage.missing.length;
+    const labels={chatScroll:'滚动聊天',ballDrag:'拖动小球',composerInput:'输入文字',visualViewportChange:'视口变化',appearanceAttempt:'外观切换'};
+    const reason=result.quality.fullDuration?'15 秒采集完成':({manual:'已手动提前结束',hidden:'切到后台，采集已中断',pagehide:'离开页面，采集已中断',disabled:'美化已关闭，采集已停止',exported:'已在导出时提前结束'}[result.reason]||'采集已提前结束');
+    const text=reason+'（实际 '+(result.durationMs/1000).toFixed(1)+' 秒）。'+(missing?'未记录到：'+result.coverage.missing.map(key=>labels[key]||key).join('、')+'。建议按上方步骤重新采集；如果已复现问题，也可导出这次结果。':'点击屏幕提示条的“导出诊断”，把下载的 TXT 文件发回即可。');
+    const scenario=document.getElementById('ilg-capture-scenario');if(scenario)scenario.disabled=false;
+    const status=document.getElementById('ilg-capture-state');if(status)status.textContent=text;
     const button=document.getElementById('ilg-capture-start');if(button)button.textContent='重新采集 15 秒';
+    const badge=captureBadge();badge.querySelector('span').textContent=missing?'采集结束 · 有未测操作':'采集结束';badge.querySelector('[data-action="main"]').textContent='导出诊断';badge.querySelector('[data-action="close"]').hidden=false;
 }});
 
 function iosTrialReport() {
@@ -2895,17 +2978,24 @@ function buildPanel() {
     tiltControls.querySelector('#ilg-tilt-state').textContent = lighting.status();
     tiltControls.querySelector('#ilg-tilt-calibrate').addEventListener('click', requestMobileTilt);
     const captureControls=document.createElement('div');captureControls.id='ilg-interaction-diagnostics';captureControls.className='ilg-tilt-controls';
-    captureControls.innerHTML='<button type="button" id="ilg-capture-start">开始 15 秒交互采集</button><p id="ilg-capture-state" role="status" aria-live="polite">仅手动采集；开始后设置会收起。可滚动聊天、拖动小球、弹出并收起键盘，再导出兼容诊断。只记录耗时与次数，不记录文字。</p>';
-    captureControls.querySelector('button').addEventListener('click',()=>{if(interactionDiagnostics.status().recording){interactionDiagnostics.stop('manual');return;}if(!S.enabled)return;if(interactionDiagnostics.start()){captureControls.querySelector('button').textContent='结束采集';captureControls.querySelector('p').textContent='正在采集，15 秒后自动结束；完成后回来导出兼容诊断。';studioUI?.close(false);}});
+    captureControls.innerHTML='<label for="ilg-capture-scenario">这次要复测什么？</label><select id="ilg-capture-scenario" class="text_pole">'+Object.entries(CAPTURE_SCENARIOS).map(([key,[label]])=>'<option value="'+key+'">'+label+'</option>').join('')+'</select><p class="ilg-capture-instruction-title">点击开始后，回到聊天按顺序操作：</p><ol id="ilg-capture-steps"></ol><p class="ilg-capture-export-help">采集中请留在酒馆页面，不要刷新或切后台。15 秒后自动结束，点击屏幕提示条的“导出诊断”，把下载的 TXT 发回即可。</p><button type="button" id="ilg-capture-start" aria-describedby="ilg-capture-steps ilg-capture-state">开始 15 秒采集</button><p id="ilg-capture-state" role="status" aria-live="polite">准备好后点击开始，设置面板会自动收起。想采满 15 秒，请不要重复点击“提前结束”。</p><p class="ilg-capture-privacy">仅手动采集，不记录聊天正文、输入内容或私人壁纸地址，不自动上传。</p>';
+    captureControls.querySelector('select').addEventListener('change',updateCaptureInstructions);
+    captureControls.querySelector('button').addEventListener('click',()=>{
+        if(interactionDiagnostics.status().recording){interactionDiagnostics.stop('manual');return;}
+        if(!S.enabled)return;
+        if(interactionDiagnostics.start({scenario:captureControls.querySelector('select').value})){
+            captureControls.querySelector('select').disabled=true;
+            captureControls.querySelector('button').textContent='提前结束采集';
+            captureControls.querySelector('#ilg-capture-state').textContent='正在采集。请按上方步骤操作，15 秒后自动结束；结束后点击屏幕提示条的“导出诊断”。';
+            studioUI?.close(false);
+        }
+    });
     wrap.querySelector('.inline-drawer-content').append(captureControls);
     studioUI = createSettingsPanel({ host, content: wrap, appearance: appearancePanel, version: BUILD_VERSION, settings: S, engines: ENGINE_NAMES });
+    updateCaptureInstructions();
 
     document.getElementById('ilg-opt-iosReportCopy').textContent = '导出兼容诊断 TXT';
-    document.getElementById('ilg-opt-iosReportCopy').addEventListener('click', () => {
-        const text = iosTrialReport() + '\n\n' + cardDisplayReport();
-        document.getElementById('ilg-opt-iosReport').value = text;
-        downloadDiagnostic(text);
-    });
+    document.getElementById('ilg-opt-iosReportCopy').addEventListener('click', exportCompatibilityDiagnostic);
     document.getElementById('ilg-card-report-copy').textContent = '导出卡片显示诊断 TXT';
     document.getElementById('ilg-card-report-copy').addEventListener('click', () => {
         const text = cardDisplayReport();
@@ -3585,7 +3675,7 @@ let cardTimer = 0;
 const parseRgba = s => { const m = s && s.match(/rgba?\(([^)]+)\)/); if (!m) return null; const p = m[1].split(/[\s,/]+/).filter(Boolean).map(Number); return { r: p[0], g: p[1], b: p[2], a: p.length > 3 ? p[3] : 1 }; };
 const lumOf = c => (0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b) / 255;
 // Computed display metadata only: never include message text, frame URLs or settings payloads.
-function cardDisplayReport() {
+function cardDisplayReport({includeCapture=true}={}) {
     const describe = el => {
         const win = el.ownerDocument.defaultView;
         const cs = win.getComputedStyle(el);
@@ -3636,7 +3726,7 @@ function cardDisplayReport() {
     return JSON.stringify({
         format: 'nvwa-card-display-1', version: BUILD_VERSION,
         environment: {isIOS,androidWebView,iosCompatible:iosMaterialActive(),trueRefractionConfirmed:false},
-        viewportState: viewportDiagnostic(), interactionCapture: interactionDiagnostics.report(),
+        viewportState: viewportDiagnostic(), ...(includeCapture ? {interactionCapture: interactionDiagnostics.report()} : {}),
         bundledWallpapers: bundledWallpapers.status(),
         viewport: [innerWidth, innerHeight, devicePixelRatio],
         userAgent: navigator.userAgent,
@@ -3866,7 +3956,12 @@ const bundledWallpapers=createBundledWallpapers({
     async refresh(){const backgrounds=await import('/scripts/backgrounds.js');if(typeof backgrounds.getBackgrounds!=='function')throw new Error('refresh-unavailable');await backgrounds.getBackgrounds();},
     onReady(){if(!S.wallsReady){S.wallsReady=true;ctx.saveSettingsDebounced();}},
 });
-async function ensureWalls() { return bundledWallpapers.ensure(); }
+async function ensureWalls() {
+    interactionDiagnostics.mark('wallpaper-recovery', {phase:'checking'});
+    const result = await bundledWallpapers.ensure();
+    interactionDiagnostics.mark('wallpaper-recovery', {phase:result.phase,code:result.error});
+    return result;
+}
 let wallsStartupQueued=false;
 function queueEnsureWalls(){if(wallsStartupQueued)return;wallsStartupQueued=true;setTimeout(()=>{if(S.enabled)void ensureWalls();},1500);}
 ctx.eventSource.on(ctx.eventTypes.APP_READY,queueEnsureWalls);

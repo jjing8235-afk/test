@@ -136,8 +136,9 @@ export function createLiquidGlassWeb() {
                     item.web = { key, filter };
                 }
                 const value = `url(#${item.web.filter.id}) blur(${control ? Math.max(1.1, recipe.blur) : recipe.blur}px) ${tone}`;
-                el.style.backdropFilter = value; el.style.webkitBackdropFilter = value;
-                return;
+                if(options.sourcePlane){
+                    if(options.sourcePlane(value)){el.style.backdropFilter='none';el.style.webkitBackdropFilter='none';return;}
+                }else{el.style.backdropFilter = value; el.style.webkitBackdropFilter = value;return;}
             } catch (error) {
                 failed = true;
                 console.warn('[NVWA Liquid Glass Web] Displacement unavailable; retaining the filter chain without refraction.', error);
