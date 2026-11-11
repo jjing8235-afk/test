@@ -1,4 +1,6 @@
 {
+  "currentVersion": "2.0.1-test.1",
+  "currentDisplayVersion": "2.0.1-test.1",
   "date": "2026-11-05",
   "version": "1.4.4-local.9",
   "baseline": "1.4.4-local.8",
@@ -2764,6 +2766,150 @@
         "Preset acceptance uses a synthetic supported content root in a registered native Popup, not the third-party preset script.",
         "Measurements are bounded same-machine before/after samples; no hardware performance access or global host scheduling patches."
       ]
+    },
+    {
+      "version": "2.0.1-test.1",
+      "date": "2026-11-11",
+      "scope": "Mobile compatibility trial with iOS keyboard lifecycle, Android WebView large-message policy, and opt-in aggregate capture",
+      "userEvidence": {
+        "ios": {
+          "reportedOS": "18.7",
+          "viewport": [
+            402,
+            778,
+            3
+          ],
+          "messages": 20,
+          "compatibleMaterialActive": true,
+          "actualDisplacement": false,
+          "ttBuildProvided": false
+        },
+        "android": {
+          "reportedDevice": "iQOO15",
+          "uaModel": "V2505A",
+          "uaWebView": "156.0.8078.47",
+          "viewport": [
+            360,
+            792,
+            4
+          ],
+          "messages": 3,
+          "tallMessageHeight": 9531,
+          "selectedEngine": "physical",
+          "userAB": "New physical engine flashes; legacy does not",
+          "screenRecordingProvided": false
+        }
+      },
+      "changes": [
+        "Use BUILD_VERSION in card report",
+        "Record effective per-message rendering path and conservative viewport intersection",
+        "Coalesce VisualViewport keyboard scroll updates; cancel stale blur work; local listener cleanup",
+        "Large Android WebView messages use a local legacy path with hysteresis; global engine unchanged",
+        "Explicit 15-second aggregate capture; no text, keys, URLs, settings payloads or persistent upload"
+      ],
+      "verification": {
+        "offlineRegressions": 26,
+        "keyboardRedGreen": "Old viewport handler schedules 100 callbacks for 100 scroll events; current handler schedules one",
+        "desktopEngines": [
+          "Microsoft Edge Chromium",
+          "Playwright Windows WebKit 26.5"
+        ],
+        "fullExtensionFixtures": [
+          "iOS 402x778 DPR3",
+          "Android WebView 360x792 DPR4 with synthetic 9531px message"
+        ],
+        "capturePrivacyAndCleanup": true,
+        "liveSillyTavern": "Not rerun: the previously used localhost:8090 service was not listening; full extension exercised in isolated host-DOM fixtures instead",
+        "phoneFlickerReproduced": false,
+        "actualDeviceChipInterference": "Not established; no native chip APIs are used by NVWA"
+      },
+      "limits": [
+        "No physical iPhone or iQOO acceptance in this turn",
+        "The large-surface guard is a conservative NVWA budget, not a detected GPU limit or proven flicker root cause",
+        "Default iOS compatible material still does not provide background pixel displacement",
+        "rAF intervals are not GPU FPS, touch latency, INP or display-flicker detection",
+        "TT exact build remains unprovided; request updated capture and about-page version for both devices"
+      ]
     }
-  ]
+  ],
+  "formalRelease": {
+    "displayVersion": "2.0",
+    "manifestVersion": "2.0.0",
+    "date": "2026-11-11",
+    "officialRepository": "jjing8235-afk/NVWA-Liquid-Glass",
+    "previousOfficial": "b9aa19d815ac633eda9f27970c418be42858a370",
+    "testedBaseline": {
+      "repository": "jjing8235-afk/test",
+      "version": "1.4.5-test.25",
+      "sha": "7e779dfd79b6a620926c91e211a6e1e31a15016c"
+    },
+    "scope": "Promote tested runtime with formal product version, publication docs and preserved installer assets",
+    "checks": {
+      "manifest": true,
+      "offlineRegressions": 23,
+      "rootJavaScriptSyntaxFiles": 23,
+      "otherBaselineFilesCompared": 195,
+      "runtimeDifference": "Only BUILD_VERSION changes; historical line endings in control-material.js are normalized without code changes",
+      "protectedInstallerFiles": 4,
+      "liveSmoke": {
+        "browser": "Microsoft Edge headless Chromium",
+        "host": "SillyTavern 1.18.0",
+        "viewport": [
+          390,
+          844
+        ],
+        "workbenchVersion": "2.0",
+        "enginesNamed": true,
+        "nativeMenus": [
+          "options",
+          "extensionsMenu"
+        ],
+        "overflow": false,
+        "extensionErrors": []
+      },
+      "formattingOnlyFiles": [
+        "control-material.js",
+        "dev/verify/appearance-browser.mjs"
+      ]
+    },
+    "preserved": {
+      "settingsNamespace": "iosLiquidGlass",
+      "settingsVersion": 9,
+      "materialStoredValues": true,
+      "originalInstallerAndTheme": true,
+      "physicalLegacyValues": true
+    },
+    "sourceHashes": {
+      "appearance-bookmark.js": "03aeeda32c0def17af18d381296a487412f93f655c453b9872b298332c7ee281",
+      "ball-glass.js": "e8f84f99d17296bdb660e72e2e041eef5500945bbdd685fdd7e5413226ff86f2",
+      "ball-raster.js": "5d4873340a5afa9e3ba6a7099e0b70933e3538d724e01fbf3c47852f6bfe8fc8",
+      "card-clarity.js": "8c84011aa74d37898411f8e8088b6cf707dc765ee7995acf381f5eb9ae8358be",
+      "control-material.js": "e14b197e590c530677ef31a9d02ae2dd46c7b14388198e50dfd8a1c9ce385efd",
+      "fixed-position.js": "9cc8a2ab2b1680c41497c1af3f5fe987621929f916a809bb62e712169663eead",
+      "glass-lighting.js": "00bf9835ce8d8687612f774ad4a13658bacda03c47c6f27a0f713a493eb1f0f3",
+      "glass-performance.js": "68b93eb4fd5b03e31c9f559da8cf1fd1685179826707c124b67d58fe15773484",
+      "glass-reflections.js": "20b82d183c98692d0db7bf9818e5f36219e44d489840dfcf3c6871e598765b64",
+      "glass-worker.js": "f26ef77efa25bf668aaaf340e608886dcd7234cb2e48bf9bf6f253ef32828456",
+      "glass2.js": "6cc1ecd2244eb003dd0e75a8644b4450b49fc5278a3326ae577547490732f98b",
+      "host-interaction-state.js": "0a82e6d326256a2f7c5f65f842a494041a90b37da3090281dd934094a55f27d3",
+      "index.js": "3440cc97eb32f6ff9f3dc4b01e9e330170cc4a02c13afd2187f4566ebdac9c0d",
+      "liquid-glass-web.js": "9a13aae6fd8de099bd6e09bfe6e97c070e8858480ef95ef97517d96d416bdb58",
+      "mes-icons.js": "b5e9223c70d014f91267bd443c45bf5508f710208c11e22e68bc9bade56fb8b9",
+      "message-rendering.js": "75acfd4d881af5b7859fe63aad00a183beacd8652d5168f544da329b44c4bd1d",
+      "optics-settings.js": "c2ea4b338eed590e31e14f9efceca0dfad28c462d9c96f03e19faa4ac7d19e1e",
+      "orb.js": "75bee096898163cf426766ad0949f454201b61d34fc4690357d04223383daf0c",
+      "reflection-raster.js": "2c240ed640ba90893e778210c1ea0ee8d41acd2ba55014592836a318a036f153",
+      "settings-panel.js": "fd6b5411f4f84aeeb84c147a730b163c21537b083b5101e48b47030f122b1253",
+      "viewport.js": "e1574ee74f1c939b132a982fcc076d12537fa13298fd120cffdd3de8fac58ef8",
+      "wallpaper-sampling.js": "29b0238e5f9d331a9f88b5510f861c6393cc5a25e474a8c46bb52de254eee699",
+      "web-presets.js": "c51b9d2c67e451faa3a17c76c212bdc7957017e4f85be78bb1b230418b99c04f",
+      "style.css": "9b968414c840d6d7de80066fe93ddce4ad3810eba5cd46185b0704d792479009",
+      "settings-panel.css": "080b318beb37e6a5c927919e4cd0168986c15b4b42dcf8de0837a843be3d8ef1"
+    },
+    "limitations": [
+      "Performance numbers are inherited from the identical test.25 runtime; the promotion smoke was rerun against formal sources.",
+      "Desktop emulation does not establish physical iOS/Android/TT FPS or long-term acceptance.",
+      "Preset adapter baseline used synthetic content in a registered native Popup; actual third-party preset scripts were not exercised."
+    ]
+  }
 }

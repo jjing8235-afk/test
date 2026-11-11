@@ -3,6 +3,8 @@
    折射引擎有两套：新版物理折射（glass2.js，实验台 v2 移植）和旧版（本文件里的 makeMap / buildFilter） */
 import { getMaps, clearMaps, physicalFilter, resizePhysicalFilter } from './glass2.js';
 import { makeOrb } from './orb.js';
+import { largeWebViewMessage } from './surface-policy.js';
+import { createInteractionDiagnostics } from './interaction-diagnostics.js';
 import { positionFixed } from './fixed-position.js';
 import { createMessageRendering } from './message-rendering.js';
 import { createHostInteractionState } from './host-interaction-state.js';
@@ -25,7 +27,7 @@ window.__ilgLoaded = new URL('.', import.meta.url).pathname;
 
 let studioUI = null;
 const MODULE = 'iosLiquidGlass';
-const BUILD_VERSION = '1.4.5-test.25';
+const BUILD_VERSION = '2.0.1-test.1';
 const ENGINE_NAMES = Object.freeze({performance:'御风性能引擎',refraction:'棱光折射引擎'});
 const NS = 'http://www.w3.org/2000/svg';
 const ctx = SillyTavern.getContext();
@@ -1056,11 +1058,13 @@ function paint(el, geo) {
     const control = it.kind === 'bar' && controlSurface(el);
     el.classList.toggle('ilg-control-surface', control);
     el.classList.toggle('ilg-control-readable', control && controlReadable(el));
+    it.renderPath = 'pending'; it.fallbackReason = '';
     const cssMode = cssGlassActive();
     el.classList.toggle('ilg-css-surface', cssMode);
     const useWeb = it.kind === 'bar' && webStyleEnabled();
     if (!useWeb) webGlass.release(el);
     if (document.body.classList.contains('no-blur')) {
+        it.renderPath = 'no-blur';
         reflections.release(el);
         setPhys(el, it, false);
         surface.style.backdropFilter = 'none';
@@ -1074,6 +1078,7 @@ function paint(el, geo) {
     // A closed drawer has no pixels to update; retain its last valid filter for reopening.
     if (!w || !h) return;
     if (cssMode) {
+        it.renderPath = 'css';
         // CSS material owns its rim; skip displacement maps and canvas reflections.
         setPhys(el, it, false);
         let lightBlur;
@@ -1089,6 +1094,7 @@ function paint(el, geo) {
     if (it.kind === 'mes' && !it.visible) reflections.release(el);
     else reflections.paint(el, w, h, r);
     if (useWeb) {
+        it.renderPath = 'web-compatible';
         setPhys(el, it, false);
         webGlass.paint(el, it, { width: w, height: h,
             refract: S.refract && canRefract() && !isIOS,
@@ -1097,18 +1103,24 @@ function paint(el, geo) {
             bendY: el.id === 'nonQRFormItems' ? 1.5 : 1 });
         return;
     }
-    const phys = refractAllowed(it) && S.engine === 'physical';
+    it.largeWebView = largeWebViewMessage({webView:androidWebView,kind:it.kind,width:w,height:h,dpr:devicePixelRatio,previous:it.largeWebView});
+    const guarded = S.engine === 'physical' && it.largeWebView;
+    const phys = refractAllowed(it) && S.engine === 'physical' && !guarded;
+    if(guarded&&refractAllowed(it))it.fallbackReason='large-webview-message';
     setPhys(el, it, phys);
     if (canRefract() && !isIOS) surface.style.webkitBackdropFilter = '';
     if (phys) {
+        it.renderPath = 'physical';
         buildPhysical(it, el, w, h, r);
         surface.style.backdropFilter = `url(#${it.id})` + reading;
         if (isIOS) surface.style.webkitBackdropFilter = `url(#${it.id})` + reading;
     } else if (refractAllowed(it)) {
+        it.renderPath = 'legacy';
         buildFilter(it, w, h, r, el);
         surface.style.backdropFilter = `url(#${it.id}) ${tail}`;
         if (isIOS) surface.style.webkitBackdropFilter = `url(#${it.id}) ${tail}`;
     } else {
+        it.renderPath = iosMaterialActive() ? 'ios-compatible' : 'blur';
         const fallback = control && controlReadable(el) ? `blur(${Math.max(3.5, blur)}px) saturate(${S.saturate}) brightness(${S.brightness})` : tail;
         surface.style.backdropFilter = fallback;
         if (isIOS || !canRefract()) surface.style.webkitBackdropFilter = fallback;
@@ -2477,6 +2489,7 @@ function queueGlassSettings() {
 
 function applyRoot() {
     if (!S.enabled) hideRangeValue();
+    if (!S.enabled) interactionDiagnostics.stop('disabled');
     hostInteractionState.setEnabled(S.enabled);
     normalizeTopStyleSettings(S);
     syncInputMaterial(false);
@@ -2654,9 +2667,21 @@ function statusText() {
     return `已请求折射（${route}，${tone}），实际画面以当前设备为准。${document.body.classList.contains('bubblechat') ? '' : '消息卡片玻璃只在“气泡”样式下生效。'}`;
 }
 
+function viewportDiagnostic() {
+    const vv=window.visualViewport;
+    const rect=id=>{const el=document.getElementById(id);if(!el)return null;const r=el.getBoundingClientRect();return{x:Math.round(r.x),y:Math.round(r.y),width:Math.round(r.width),height:Math.round(r.height)};};
+    return{layout:{width:innerWidth,height:innerHeight,dpr:devicePixelRatio},visual:vv?{width:vv.width,height:vv.height,offsetTop:vv.offsetTop,offsetLeft:vv.offsetLeft,scale:vv.scale}:null,
+        composerFocused:document.activeElement===document.getElementById('send_textarea'),keyboard:keyboard.status(),composer:rect('nonQRFormItems'),form:rect('form_sheld'),ball:{shown:S.enabled&&S.floatBall,keyboardHidden:root.classList.contains('ilg-kb-open'),rect:rect('ilg-ball')},
+        rendering:{iosCompatible:iosMaterialActive(),engineRequested:S.engine,largeWebViewMessages:[...items.values()].filter(it=>it.fallbackReason==='large-webview-message').length},lighting:lighting.status(),captureNote:'Frame intervals describe page callbacks, not display flicker detection'};
+}
+const interactionDiagnostics=createInteractionDiagnostics({snapshot:viewportDiagnostic,onFinish(result){
+    const status=document.getElementById('ilg-capture-state');if(status)status.textContent='采集已结束（'+(result.durationMs/1000).toFixed(1)+' 秒），请导出兼容诊断。';
+    const button=document.getElementById('ilg-capture-start');if(button)button.textContent='重新采集 15 秒';
+}});
+
 function iosTrialReport() {
     const rows = [
-        'NVWA 液态玻璃 ' + BUILD_VERSION + ' · iOS 诊断',
+        'NVWA 液态玻璃 ' + BUILD_VERSION + ' · 兼容诊断',
         'UA: ' + navigator.userAgent,
         '平台 / 触摸点: ' + navigator.platform + ' / ' + navigator.maxTouchPoints,
         '视口 / DPR: ' + innerWidth + ' × ' + innerHeight + ' / ' + devicePixelRatio,
@@ -2673,6 +2698,8 @@ function iosTrialReport() {
         '界面轮廓计算: ' + JSON.stringify(reflections.status()),
         '消息渲染: ' + JSON.stringify(messageRendering.status()),
         '悬浮球计算: ' + JSON.stringify((({mode, reason, suspended, active, pending, workerFrames, syncFrames, coalesced, failures, cacheEntries}) => ({mode, reason, suspended, active, pending, workerFrames, syncFrames, coalesced, failures, cacheEntries}))(ballGlass.status())),
+        '视口与键盘: ' + JSON.stringify(viewportDiagnostic()),
+        '短时交互采集: ' + JSON.stringify(interactionDiagnostics.report()),
         '控件材质: ' + S.glassStyle,
         'Web 预设: ' + WEB_PRESETS[S.webPreset].label,
         '状态: ' + statusText(),
@@ -2845,6 +2872,10 @@ function buildPanel() {
     wrap.querySelector('.inline-drawer-content').append(tiltControls);
     tiltControls.querySelector('#ilg-tilt-state').textContent = lighting.status();
     tiltControls.querySelector('#ilg-tilt-calibrate').addEventListener('click', requestMobileTilt);
+    const captureControls=document.createElement('div');captureControls.id='ilg-interaction-diagnostics';captureControls.className='ilg-tilt-controls';
+    captureControls.innerHTML='<button type="button" id="ilg-capture-start">开始 15 秒交互采集</button><p id="ilg-capture-state" role="status" aria-live="polite">仅手动采集；开始后设置会收起。可滚动聊天、拖动小球、弹出并收起键盘，再导出兼容诊断。只记录耗时与次数，不记录文字。</p>';
+    captureControls.querySelector('button').addEventListener('click',()=>{if(interactionDiagnostics.status().recording){interactionDiagnostics.stop('manual');return;}if(!S.enabled)return;if(interactionDiagnostics.start()){captureControls.querySelector('button').textContent='结束采集';captureControls.querySelector('p').textContent='正在采集，15 秒后自动结束；完成后回来导出兼容诊断。';studioUI?.close(false);}});
+    wrap.querySelector('.inline-drawer-content').append(captureControls);
     studioUI = createSettingsPanel({ host, content: wrap, appearance: appearancePanel, version: BUILD_VERSION, settings: S, engines: ENGINE_NAMES });
 
     document.getElementById('ilg-opt-iosReportCopy').textContent = '导出兼容诊断 TXT';
@@ -3547,6 +3578,7 @@ function cardDisplayReport() {
             tag: el.tagName.toLowerCase(),
             classes: [...el.classList].slice(0, 8).map(c => c.slice(0, 80)),
             size: [Math.round(rect.width), Math.round(rect.height)],
+            intersectsViewport: rect.width > 0 && rect.height > 0 && rect.bottom > 0 && rect.right > 0 && rect.top < win.innerHeight && rect.left < win.innerWidth,
             visible: !!rect.width && !!rect.height && cs.display !== 'none' && cs.visibility !== 'hidden',
             position: cs.position,
             background: style(cs),
@@ -3554,7 +3586,7 @@ function cardDisplayReport() {
             after: style(win.getComputedStyle(el, '::after')),
             solid: el.classList.contains('ilg-solid'),
         };
-        if (el.matches('.mes')) result.glass = style(win.getComputedStyle(el.querySelector(':scope > .ilg-message-glass') || el));
+        if (el.matches('.mes')) { result.glass = style(win.getComputedStyle(el.querySelector(':scope > .ilg-message-glass') || el)); const it=items.get(el);result.rendering={path:it?.renderPath||'not-tracked',fallbackReason:it?.fallbackReason||'',nearViewport:it?.visible===true}; }
         if (el.tagName === 'IFRAME') {
             try {
                 const doc = el.contentDocument;
@@ -3580,7 +3612,9 @@ function cardDisplayReport() {
         return { message: describe(message), candidates: candidates.length, sampled: sampled.map(describe), truncated: sampled.length < candidates.length };
     });
     return JSON.stringify({
-        format: 'nvwa-card-display-1', version: '1.4.4',
+        format: 'nvwa-card-display-1', version: BUILD_VERSION,
+        environment: {isIOS,androidWebView,iosCompatible:iosMaterialActive(),trueRefractionConfirmed:false},
+        viewportState: viewportDiagnostic(), interactionCapture: interactionDiagnostics.report(),
         viewport: [innerWidth, innerHeight, devicePixelRatio],
         userAgent: navigator.userAgent,
         enabled: !!S.enabled, chatBackground: S.chatBackground, chatVeil: S.chatVeil,
