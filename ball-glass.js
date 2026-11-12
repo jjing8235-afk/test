@@ -25,7 +25,7 @@ export function createBallGlass({ workerFactory, onError = () => {} } = {}) {
     const canvas = document.createElement('canvas'), frames = new Map();
     let flip = 0, lastKey = '', litTarget = null, cachedPixels = 0, cachedChars = 0;
     let wanted = null, displayed = null, circle = null, listening = false;
-    const engine = createGlassPerformance({ workerFactory, computeSync, onResult: complete, onError, isBusy: () => document.body.dataset?.generating === 'true' });
+    const engine = createGlassPerformance({ workerFactory, graphics: true, computeSync, onResult: complete, onError, isBusy: () => document.body.dataset?.generating === 'true' });
     function computeSync(job) {
         const result = rasterBall(job);
         const urls = result.images.map(image => {

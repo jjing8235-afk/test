@@ -30,7 +30,7 @@ window.__ilgLoaded = new URL('.', import.meta.url).pathname;
 
 let studioUI = null;
 const MODULE = 'iosLiquidGlass';
-const BUILD_VERSION = '2.0.5-test.1';
+const BUILD_VERSION = '2.0.6-test.1';
 const ENGINE_NAMES = Object.freeze({performance:'御风性能引擎',refraction:'棱光折射引擎'});
 const NS = 'http://www.w3.org/2000/svg';
 const ctx = SillyTavern.getContext();
@@ -2760,7 +2760,7 @@ function viewportDiagnostic() {
         composerFocused:document.activeElement===document.getElementById('send_textarea'),keyboard:keyboard.status(),composer:rect('nonQRFormItems'),form:rect('form_sheld'),ball:{shown:S.enabled&&S.floatBall,keyboardHidden:root.classList.contains('ilg-kb-open'),rect:rect('ilg-ball')},
         rendering:{iosCompatible:iosMaterialActive(),engineRequested:S.engine,largeWebViewMessages:large,paths,surfaces},
         appearance:{requested:S.tone,actual:appearanceMode(),lightThumbnail:!!wallThumb('light'),darkThumbnail:!!wallThumb('dark'),customThumbnail:!!customWallThumb(),chatBackgroundLocked:chatBgLocked(),lastAction:lastAppearanceAction},
-        performance:interactionPerformance.status(),wallpapers:bundledWallpapers.status(),wallpaperRefraction:iosWallpaper.status(),workers:{reflections:reflections.status(),ball:((({mode,reason,suspended,pending,failures})=>({mode,reason,suspended,pending,failures}))(ballGlass.status()))},lighting:lighting.status(),captureNote:'Frame intervals describe page callbacks, not display flicker detection'};
+        performance:interactionPerformance.status(),wallpapers:bundledWallpapers.status(),wallpaperRefraction:iosWallpaper.status(),workers:{reflections:reflections.status(),ball:((({mode,reason,suspended,pending,failures,graphics})=>({mode,reason,suspended,pending,failures,graphics}))(ballGlass.status()))},lighting:lighting.status(),captureNote:'Frame intervals describe page callbacks, not display flicker detection'};
 }
 const CAPTURE_SCENARIOS = {
     general: ['综合交互', ['上下滑动聊天几次，停一下，再来回滑动。', '拖动悬浮小球几次，观察是否跟手；未开启小球时可跳过。', '打开并收起＋和魔法棒各一次，再输入几个字并收起键盘。']],
@@ -2818,7 +2818,7 @@ function iosTrialReport() {
         '折射引擎: ' + ENGINE_NAMES.refraction,
         '界面轮廓计算: ' + JSON.stringify(reflections.status()),
         '消息渲染: ' + JSON.stringify(messageRendering.status()),
-        '悬浮球计算: ' + JSON.stringify((({mode, reason, suspended, active, pending, workerFrames, syncFrames, coalesced, failures, cacheEntries}) => ({mode, reason, suspended, active, pending, workerFrames, syncFrames, coalesced, failures, cacheEntries}))(ballGlass.status())),
+        '悬浮球计算: ' + JSON.stringify((({mode, reason, suspended, active, pending, workerFrames, syncFrames, coalesced, failures, cacheEntries, graphics}) => ({mode, reason, suspended, active, pending, workerFrames, syncFrames, coalesced, failures, cacheEntries, graphics}))(ballGlass.status())),
         '配套壁纸恢复: ' + JSON.stringify(bundledWallpapers.status()),
         '视口与键盘: ' + JSON.stringify(viewportDiagnostic()),
         '短时交互采集: ' + JSON.stringify(interactionDiagnostics.report()),

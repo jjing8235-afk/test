@@ -1,3 +1,15 @@
+# 2.0.6-test.1 · GPU 折射实验（2026-11-12）
+
+- 仅浮球融合光学贴图进入自适应 WebGL2 路径；保留既有材质公式、保存键和 CPU 位图基线。
+- 首个合适的融合任务在 Worker 内有界校准：像素差不超过 1，且实测更快才启用。独立小球和小贴图保持原路径。
+- GPU 不可用、精度不符或回读变慢时回退 CPU。驱动失败 / 450ms 截止后最多重启一次 CPU Worker；不把驱动故障直接转成页面线程绘图。
+- GPU 使用一个离屏上下文、有限纹理缓存，没有持续负载循环。后台 / 禁用沿用 Worker 销毁；上下文丢失已有回归。
+- 兼容诊断和 15 秒采集包含 graphics 选择、校准和回退原因；high-performance 是请求偏好，不表示系统授权。
+- 新回归：adaptive-raster-regression、gpu-timeout-regression、gpu-raster-browser、gpu-worker-compat-browser。浏览器依赖沿用 NVWA_PLAYWRIGHT_MODULE / NVWA_BROWSER_EXECUTABLE。
+- 证据见 VALIDATION.json 的 gpu206。桌面测试不等于物理手机验收；正式渠道仍为原版本。
+
+---
+
 # 2.0 正式版维护入口（2026-11-11）
 
 当前正式产品版本为 **2.0**（扩展清单使用规范版本号 2.0.0，工作台显示 2.0），来源为测试仓库 1.4.5-test.25，提交 7e779dfd79b6a620926c91e211a6e1e31a15016c。正式整理只变更产品版本、正式仓库标识与文档；功能实现沿用该验证基线。下方旧版说明保留为历史，其中 1.4.4 / local / test 的“当前”状态不代表本次版本。

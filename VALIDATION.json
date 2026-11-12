@@ -1,6 +1,6 @@
 {
-  "currentVersion": "2.0.5-test.1",
-  "currentDisplayVersion": "2.0.5-test.1",
+  "currentVersion": "2.0.6-test.1",
+  "currentDisplayVersion": "2.0.6-test.1",
   "date": "2026-11-05",
   "version": "1.4.4-local.9",
   "baseline": "1.4.4-local.8",
@@ -3132,5 +3132,62 @@
       ],
       "librarySnapshot": "2026-08-18"
     }
+  },
+  "gpu206": {
+    "version": "2.0.6-test.1",
+    "date": "2026-11-12",
+    "scope": "Adaptive GPU raster for NVWA floating-ball fusion maps",
+    "baseline": {
+      "version": "2.0.5-test.1",
+      "commit": "f010525a3cbc0aeefbe4896b72249b385fa2adc6"
+    },
+    "offline": {
+      "passed": true,
+      "checks": 32
+    },
+    "browser": {
+      "passed": true,
+      "checks": 7,
+      "engines": [
+        "Edge desktop",
+        "Playwright WebKit desktop"
+      ],
+      "realSillyTavern": false,
+      "physicalPhone": false
+    },
+    "imageParity": {
+      "gpuCases": 154,
+      "maxRawChannelDelta": 1,
+      "unchangedCPUFixtureCases": 110,
+      "unchangedDecodedPNGComparisons": 418
+    },
+    "timing": {
+      "environment": "Windows desktop Edge",
+      "browser": "157.0.4341.46",
+      "method": "Seven alternating samples per scenario; worker round trip includes PNG encoding and message delivery; steady-state median",
+      "settledFusionReductionPct": {
+        "min": 37.70491804730361,
+        "max": 51.85185184503833
+      },
+      "previewFusionReductionPct": {
+        "min": 18.867924525649492,
+        "max": 32.692307682663824
+      },
+      "firstCalibrationRoundTripMs": 57.19999999925494,
+      "notPhoneFPS": true
+    },
+    "fallbacks": [
+      "GPU unavailable or no measured gain keeps CPU worker",
+      "Pixel delta above one rejects GPU",
+      "Repeated slow readback switches to CPU",
+      "GPU failure or 450ms deadline restarts CPU worker once",
+      "Existing main-thread fallback retained if worker canvas unavailable"
+    ],
+    "limits": [
+      "No OS CPU frequency or GPU clock grant",
+      "Desktop WebKit in this environment cannot encode with worker canvas, so CPU fallback was verified",
+      "Desktop synthetic long-chat functional checks passed; no WebKit performance gain claimed",
+      "Physical Android/iPhone/TT sustained performance remains unmeasured"
+    ]
   }
 }

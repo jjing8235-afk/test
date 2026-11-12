@@ -1,5 +1,7 @@
 import { rasterBall, packBallFrame } from './ball-raster.js';
 import { rasterReflection } from './reflection-raster.js';
+import { createAdaptiveBallRaster } from './adaptive-ball-raster.js';
+const adaptive = createAdaptiveBallRaster();
 
 async function encode(image) {
     const canvas = new OffscreenCanvas(image.w, image.h);
@@ -33,9 +35,9 @@ self.onmessage = async event => {
             self.postMessage({type:'result',id,frame:{url:await encode(image)}});
             return;
         }
-        const result = rasterBall(job), urls = [];
+        const result = event.data.graphics === 'adaptive' ? adaptive.render(job) : rasterBall(job), urls = [];
         for (const image of result.images) urls.push(await encode(image));
-        self.postMessage({ type: 'result', id, frame: packBallFrame(result, urls) });
+        self.postMessage({ type: 'result', id, frame: packBallFrame(result, urls), graphics: adaptive.status() });
     } catch {
         self.postMessage({ type: 'error', id });
     }
