@@ -3,7 +3,7 @@
 export function createGlassPerformance({ computeSync, onResult, onError = () => {}, isBusy = () => false, workerFactory } = {}) {
     let worker = null, mode = 'idle', reason = '', active = null, pending = null;
     let serial = 0, generation = 0, startupTimer = 0, workTimer = 0, deferTimer = 0, suspended = false, permanent = false;
-    let busyUntil = 0;
+    let busyUntil = 0, startupPainted = false;
     const counts = { workerFrames: 0, syncFrames: 0, coalesced: 0, stale: 0, failures: 0, peakTasks: 0 };
     const clock = () => performance.now();
     const clearTimers = () => { clearTimeout(startupTimer); clearTimeout(workTimer); clearTimeout(deferTimer); startupTimer = workTimer = deferTimer = 0; };
@@ -27,7 +27,7 @@ export function createGlassPerformance({ computeSync, onResult, onError = () => 
         if (permanent || workerFactory === null || (workerFactory === undefined && typeof Worker !== 'function')) {
             mode = 'sync'; reason = reason || 'unsupported'; return mode;
         }
-        mode = 'starting';
+        mode = 'starting'; startupPainted = false;
         try {
             worker = workerFactory ? workerFactory() : new Worker(new URL('./glass-worker.js', import.meta.url), { type: 'module', name: 'nvwa-glass' });
             const instance = worker;
@@ -75,15 +75,17 @@ export function createGlassPerformance({ computeSync, onResult, onError = () => 
         }
         if (pending?.job.key === job.key) { pending.job = job; return; }
         const task = { id: ++serial, generation, job, notBefore: !job.low && (clock() < busyUntil || isBusy()) ? clock() + 80 : 0 };
-        // Preserve the existing immediate first paint while the worker's capability probe runs.
-        if (mode === 'sync' || mode === 'starting') { sync(task); return; }
+        // Preserve one immediate first paint, then keep only the latest startup shape.
+        // Repeated pointer/resize events must not rasterise on the page while the worker warms.
+        if (mode === 'sync') { sync(task); return; }
+        if (mode === 'starting' && !startupPainted) { startupPainted = true; sync(task); return; }
         if (pending) counts.coalesced++;
         pending = task;
         counts.peakTasks = Math.max(counts.peakTasks, Number(!!active) + 1);
         drain();
     }
     function stop() {
-        generation++; pending = active = null; clearTimers(); stopWorker();
+        generation++; startupPainted = false; pending = active = null; clearTimers(); stopWorker();
         mode = permanent ? 'sync' : 'idle';
     }
     return {

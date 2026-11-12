@@ -9,7 +9,7 @@ const ENUMS = {
 };
 const ERROR_NAMES = new Set(['Error', 'TypeError', 'RangeError', 'SyntaxError', 'ReferenceError', 'AbortError']);
 const EVENTS = { composerFocuses:0, composerBlurs:0, ballDrags:0, ballMoves:0, chatScrolls:0, composerInputs:0,
-    windowResizes:0, orientationChanges:0, visualResizes:0, visualScrolls:0, appearanceClicks:0,
+    composerMenuClicks:0, windowResizes:0, orientationChanges:0, visualResizes:0, visualScrolls:0, appearanceClicks:0,
     compositionStarts:0, compositionEnds:0, runtimeErrors:0, unhandledRejections:0 };
 const cleanDetails = details => {
     const out = {};
@@ -57,7 +57,7 @@ export function createInteractionDiagnostics({snapshot=()=>({}),onFinish=()=>{},
         record('ball-drag-end',{reason});
     }
     const role = target => {
-        for(const [selector,name] of [['#ilg-ball','ball'],['#send_textarea','composer'],['#ilg-tone-button, #ilg-appearance-panel','appearance'],['#ilg-capture-badge, #ilg-interaction-diagnostics','capture'],['#chat','chat']]) {
+        for(const [selector,name] of [['#ilg-ball','ball'],['#send_textarea','composer'],['#options_button,#extensionsMenuButton,#options,#extensionsMenu','composer-menu'],['#ilg-tone-button, #ilg-appearance-panel','appearance'],['#ilg-capture-badge, #ilg-interaction-diagnostics','capture'],['#chat','chat']]) {
             if(target?.closest?.(selector))return name;
         }
         return 'other';
@@ -122,7 +122,11 @@ export function createInteractionDiagnostics({snapshot=()=>({}),onFinish=()=>{},
     const scroll=e=>{if(e.target?.id==='chat'){if(active&&!active.events.chatScrolls)record('chat-scroll');count('chatScrolls');}};
     const input=e=>{if(e.target?.id==='send_textarea'){if(active&&!active.events.composerInputs)record('composer-input');count('composerInputs');}};
     const composition=e=>{if(active&&e.target?.id==='send_textarea'){active.composing=e.type==='compositionstart';count(active.composing?'compositionStarts':'compositionEnds');record(active.composing?'composition-start':'composition-end');}};
-    const clicked=e=>{if(e.target?.closest?.('#ilg-tone-button')){count('appearanceClicks');record('appearance-click');}};
+    const clicked=e=>{
+        if(e.target?.closest?.('#ilg-tone-button')){count('appearanceClicks');record('appearance-click');}
+        const menu=e.target?.closest?.('#options_button')?'options':e.target?.closest?.('#extensionsMenuButton')?'extensions':null;
+        if(menu){count('composerMenuClicks');record('composer-menu-click',{menu});}
+    };
     const runtimeError=e=>{if(!active)return;count(e.type==='unhandledrejection'?'unhandledRejections':'runtimeErrors');const name=(e.type==='unhandledrejection'?e.reason:e.error)?.name;record('page-error',{kind:ERROR_NAMES.has(name)?name:'Other',source:e.type==='unhandledrejection'?'rejection':'error'});};
     const listeners=[[doc,'pointerdown',pointerDown],[doc,'pointermove',pointerMove],[doc,'pointerup',pointerUp],[doc,'pointercancel',pointerUp],[doc,'scroll',scroll],[doc,'input',input],[doc,'click',clicked],[doc,'compositionstart',composition],[doc,'compositionend',composition],
         [doc,'visibilitychange',()=>{if(doc.hidden)finish('hidden');}],[doc,'focusin',focused],[doc,'focusout',blurred],

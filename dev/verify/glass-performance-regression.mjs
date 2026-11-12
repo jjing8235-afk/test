@@ -27,6 +27,11 @@ function make(extra = {}) {
 }
 const job = (key, low=true) => ({ key, low });
 try {
+    const startup = make(); startup.prepare();
+    for (let i=0;i<8;i++) startup.request(job('startup-'+i));
+    assert.equal(startup.status().syncFrames,1,'Worker startup must not synchronously rasterise an entire input burst');
+    const warming=workers.at(-1);warming.emit({type:'ready',ok:true});
+    assert.equal(warming.sent.at(-1).job.key,'startup-7','Only the newest uncached startup shape is queued');warming.finish();startup.stop();
     const e = make(); e.prepare(); assert.equal(e.status().mode,'starting');
     e.request(job('seed')); assert.deepEqual(results.at(-1),['seed','seed']);
     const w = workers.at(-1); w.emit({type:'ready',ok:true}); assert.equal(e.status().mode,'worker');

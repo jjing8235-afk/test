@@ -7,6 +7,7 @@ import { createIOSWallpaperRefraction } from './ios-wallpaper-refraction.js';
 import { createBundledWallpapers } from './bundled-wallpapers.js';
 import { largeWebViewMessage } from './surface-policy.js';
 import { createInteractionDiagnostics } from './interaction-diagnostics.js';
+import { createInteractionPerformance } from './interaction-performance.js';
 import { positionFixed } from './fixed-position.js';
 import { createMessageRendering } from './message-rendering.js';
 import { createHostInteractionState } from './host-interaction-state.js';
@@ -29,7 +30,7 @@ window.__ilgLoaded = new URL('.', import.meta.url).pathname;
 
 let studioUI = null;
 const MODULE = 'iosLiquidGlass';
-const BUILD_VERSION = '2.0.4-test.1';
+const BUILD_VERSION = '2.0.5-test.1';
 const ENGINE_NAMES = Object.freeze({performance:'御风性能引擎',refraction:'棱光折射引擎'});
 const NS = 'http://www.w3.org/2000/svg';
 const ctx = SillyTavern.getContext();
@@ -807,6 +808,8 @@ function trackable(el) {
 const MES_SEL = '.mes:not(.smallSysMes)';
 
 const root = document.documentElement;
+const interactionPerformance = createInteractionPerformance({root,chat:document.getElementById('chat'),
+    mobile:isIOS||/Android/i.test(ua),paintBatch:list=>paintMany(list),onIdle:()=>scheduleAdapt()});
 const webGlass = createLiquidGlassWeb();
 const reflections = createGlassReflections();
 const lighting = createGlassLighting({
@@ -1032,6 +1035,16 @@ function measure(el) {
     const w = el.offsetWidth, h = el.offsetHeight;
     return { w, h, r: w && h ? radiusOf(el, w, h) : 0 };
 }
+// Visible messages and fading native menus share a bounded queue; small controls remain immediate.
+function queuePaintMany(list, measured = null) {
+    const immediate=[],deferred=[];
+    for(const el of list){const it=items.get(el);if(!it)continue;
+        if((it.kind==='mes'&&it.visible)||el.matches('#options .options-content,#extensionsMenu'))deferred.push(el);
+        else { interactionPerformance.cancel(el); immediate.push(el); }
+    }
+    if(immediate.length)paintMany(immediate,measured);
+    if(deferred.length)interactionPerformance.enqueue(deferred);
+}
 function paintMany(list, measured = null) {
     const jobs = [];
     for (const el of list) {
@@ -1153,7 +1166,7 @@ function setPhys(el, it, on) {
 const MES_STREAM_GAP = 250;
 const mesLate = new Set();
 let mesLateTimer = 0;
-const flushMesLate = () => { mesLateTimer = 0; const list = [...mesLate]; mesLate.clear(); if (list.length) paintMany(list); };
+const flushMesLate = () => { mesLateTimer = 0; const list = [...mesLate]; mesLate.clear(); if (list.length) queuePaintMany(list); };
 const ro = new ResizeObserver(entries => {
     const now = [], measured = new Map();
     const streaming = document.body.dataset.generating === 'true';
@@ -1172,7 +1185,7 @@ const ro = new ResizeObserver(entries => {
         if (streaming && items.get(e.target)?.kind === 'mes') { mesLate.add(e.target); continue; }
         now.push(e.target);
     }
-    if (now.length) paintMany(now, measured);
+    if (now.length) queuePaintMany(now, measured);
     if (mesLate.size && !mesLateTimer) mesLateTimer = setTimeout(flushMesLate, MES_STREAM_GAP);
 });
 new MutationObserver(() => { if (document.body.dataset.generating !== 'true' && mesLate.size) { clearTimeout(mesLateTimer); flushMesLate(); } })
@@ -1188,7 +1201,7 @@ const io = new IntersectionObserver(entries => {
         else visibleItems.delete(e.target);
         changed.push(e.target);
     }
-    if (changed.length) paintMany(changed);
+    if (changed.length) queuePaintMany(changed);
 }, { root: document.getElementById('chat'), rootMargin: '200px 0px' });
 
 function track(el, kind) {
@@ -1205,10 +1218,12 @@ function track(el, kind) {
     }
     ro.observe(el);
     if (kind === 'mes') { messageRendering.track(el); io.observe(el); }
-    paint(el);
+    if (interactionPerformance.busy() && el.matches('#options .options-content,#extensionsMenu')) queuePaintMany([el]);
+    else paint(el);
 }
 
 function untrack(el) {
+    interactionPerformance.cancel(el);
     messageRendering.release(el);
     reflections.release(el);
     webGlass.release(el);
@@ -1238,9 +1253,9 @@ function scan() {
 
 // 悬浮小球的融合玻璃不走 items，由它自己的钩子重画（小球那段代码在后面，这里只留个空位）
 let ballRefresh = null;
-function repaintAll() { paintMany([...items.keys()]); ballRefresh?.(); }
-function repaintVisible() { paintMany([...visibleItems]); ballRefresh?.(); }
-function clearAll() { [...items.keys()].forEach(untrack); cache.clear(); clearMaps(); }
+function repaintAll() { queuePaintMany([...items.keys()]); ballRefresh?.(); }
+function repaintVisible() { queuePaintMany([...visibleItems]); ballRefresh?.(); }
+function clearAll() { interactionPerformance.clear(); [...items.keys()].forEach(untrack); cache.clear(); clearMaps(); }
 
 // 顶栏分组悬浮岛：图标按功能分三组，每组后面画一块独立的玻璃。图标和抽屉面板都不动，抽屉是按整个图标区定位的
 const holder = document.getElementById('top-settings-holder');
@@ -2529,6 +2544,7 @@ function applyChatFontSize() {
 let glassSettingsRaf = 0;
 function applySurfaceSettings() {
     root.style.setProperty('--ilg-hl', S.highlight);
+    root.style.setProperty('--ilg-menu-motion-blur', `${Math.min(6, S.panelRead ? Math.max(10, Number(S.panelBlur) || 0) : Math.max(0, Number(S.panelBlur) || 0))}px`);
     root.style.setProperty('--ilg-radius', `${S.radius}px`);
     root.style.setProperty('--ilg-shadow-k', S.pShadow);
     root.style.setProperty('--ilg-sheen-k', S.pSheen);
@@ -2553,6 +2569,7 @@ function queueGlassSettings() {
 }
 
 function applyRoot() {
+    interactionPerformance.setEnabled(S.enabled);
     if (!S.enabled) hideRangeValue();
     if (!S.enabled) interactionDiagnostics.stop('disabled');
     hostInteractionState.setEnabled(S.enabled);
@@ -2743,10 +2760,10 @@ function viewportDiagnostic() {
         composerFocused:document.activeElement===document.getElementById('send_textarea'),keyboard:keyboard.status(),composer:rect('nonQRFormItems'),form:rect('form_sheld'),ball:{shown:S.enabled&&S.floatBall,keyboardHidden:root.classList.contains('ilg-kb-open'),rect:rect('ilg-ball')},
         rendering:{iosCompatible:iosMaterialActive(),engineRequested:S.engine,largeWebViewMessages:large,paths,surfaces},
         appearance:{requested:S.tone,actual:appearanceMode(),lightThumbnail:!!wallThumb('light'),darkThumbnail:!!wallThumb('dark'),customThumbnail:!!customWallThumb(),chatBackgroundLocked:chatBgLocked(),lastAction:lastAppearanceAction},
-        wallpapers:bundledWallpapers.status(),wallpaperRefraction:iosWallpaper.status(),workers:{reflections:reflections.status(),ball:((({mode,reason,suspended,pending,failures})=>({mode,reason,suspended,pending,failures}))(ballGlass.status()))},lighting:lighting.status(),captureNote:'Frame intervals describe page callbacks, not display flicker detection'};
+        performance:interactionPerformance.status(),wallpapers:bundledWallpapers.status(),wallpaperRefraction:iosWallpaper.status(),workers:{reflections:reflections.status(),ball:((({mode,reason,suspended,pending,failures})=>({mode,reason,suspended,pending,failures}))(ballGlass.status()))},lighting:lighting.status(),captureNote:'Frame intervals describe page callbacks, not display flicker detection'};
 }
 const CAPTURE_SCENARIOS = {
-    general: ['综合交互', ['上下滑动聊天几次，停一下，再来回滑动。', '拖动悬浮小球几次，观察是否跟手；未开启小球时可跳过。', '点输入框打几个字，收起键盘，再拖动一次小球。']],
+    general: ['综合交互', ['上下滑动聊天几次，停一下，再来回滑动。', '拖动悬浮小球几次，观察是否跟手；未开启小球时可跳过。', '打开并收起＋和魔法棒各一次，再输入几个字并收起键盘。']],
     appearance: ['黑白切换 / 壁纸', ['点击右上角的太阳、月亮或调色盘图标。', '连续切换两三次；如提示正在恢复壁纸，留在页面等待结果。', '观察壁纸和文字颜色是否变化，以及有没有错误提示。']],
     rendering: ['屏闪 / 折射', ['停在原来会闪的卡片处，先静止约 3 秒，观察静止时是否也闪。', '上下滑动这张卡片几次，再停住，观察屏闪或卡顿出现的时机。', '方便时另录约 10 秒视频；反馈时说明静止、滚动或打字时是否闪。']],
     keyboard: ['键盘 / 拖动', ['拖动悬浮小球几次，观察是否跟手；先确认小球已开启。', '点输入框打几个字，观察输入框有没有被键盘挡住。', '收起键盘，再拖动小球，观察位置和跟手是否恢复。']],
@@ -3323,7 +3340,7 @@ const ADAPT_INTERVAL = 100;
 let adaptRaf = 0, adaptTimer = 0, adaptLast = -Infinity;
 // 滚动时 100ms 采一次；流式输出合并补采。按钮只量可见项，所有采样完成后再批量写入。
 function scheduleAdapt(interval) {
-    if (adaptRaf || adaptTimer || !S.enabled) return;
+    if (adaptRaf || adaptTimer || !S.enabled || interactionPerformance.busy()) return;
     // 流式输出时酒馆每吐一段字都会自动滚一下，按 100ms 采样就等于不停逼浏览器重算整页样式；
     // 生成期间顶栏下面的内容几乎不会突然变色，放宽到 1.2 秒一次，生成结束后的下一次滚动恢复正常节奏
     const gap = Math.max(typeof interval === 'number' ? interval : ADAPT_INTERVAL, document.body.dataset.generating === 'true' ? 1200 : 0);

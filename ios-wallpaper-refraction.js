@@ -18,7 +18,12 @@ export function wallpaperPlacement({width,height,imageWidth,imageHeight,size='co
 export function createIOSWallpaperRefraction({background,onReady=()=>{},win=window,doc=document}={}) {
     const entries=new Map();let enabled=false,source=null,raf=0,listening=false,reason='disabled';
     const events=[[win,'resize'],[win.visualViewport,'resize'],[win.visualViewport,'scroll'],[doc,'scroll']];
-    const listen=on=>{if(on===listening)return;listening=on;for(const [target,type]of events)target?.[on?'addEventListener':'removeEventListener'](type,schedule,{capture:true,passive:true});};
+    const listen=on=>{if(on===listening)return;listening=on;for(const [target,type]of events)target?.[on?'addEventListener':'removeEventListener'](type,target===doc&&type==='scroll'?relevantScroll:schedule,{capture:true,passive:true});};
+    function relevantScroll(event){
+        const target=event.target;
+        if(target===doc||target===doc.documentElement||target===doc.body||target?.contains?.(source?.element)
+            ||[...entries.keys()].some(el=>target?.contains?.(el)))schedule();
+    }
     function release(el){const item=entries.get(el);item?.plane.remove();entries.delete(el);el.classList.remove('ilg-ios-wallpaper-host');if(!entries.size){listen(false);if(raf)win.cancelAnimationFrame(raf);raf=0;}}
     function queuePaint(){if(enabled)onReady();}
     function getSource(){
@@ -30,6 +35,7 @@ export function createIOSWallpaperRefraction({background,onReady=()=>{},win=wind
             image.onload=()=>{if(source!==current)return;current.loaded=image.naturalWidth>0&&image.naturalHeight>0;reason=current.loaded?'ready':'image-unavailable';queuePaint();};
             image.onerror=()=>{if(source!==current)return;current.failed=true;reason='image-unavailable';queuePaint();};image.src=url;
         }
+        source.element=el;
         if(!source.loaded){reason=source.failed?'image-unavailable':'loading-wallpaper';return null;}
         return {el,css,...source};
     }

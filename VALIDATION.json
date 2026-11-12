@@ -1,6 +1,6 @@
 {
-  "currentVersion": "2.0.4-test.1",
-  "currentDisplayVersion": "2.0.4-test.1",
+  "currentVersion": "2.0.5-test.1",
+  "currentDisplayVersion": "2.0.5-test.1",
   "date": "2026-11-05",
   "version": "1.4.4-local.9",
   "baseline": "1.4.4-local.8",
@@ -3082,5 +3082,55 @@
       "physical iPhone visual comparison",
       "real-device scroll keyboard and drag response"
     ]
+  },
+  "performance205": {
+    "date": "2026-11-12",
+    "baseline": "2.0.4-test.1",
+    "scope": "NVWA interaction priority for mobile chat scrolling and native composer menus",
+    "browserFixtures": [
+      "Chromium Android identity",
+      "Chromium iOS identity",
+      "WebKit iOS identity"
+    ],
+    "offlineRegressions": 30,
+    "liveSillyTavernVerified": false,
+    "physicalPhoneVerified": false,
+    "nativePerformanceBridge": "not-integrated",
+    "verified": [
+      "long-message live filters removed only during interaction",
+      "idle material restoration",
+      "plus and wand native actions preserved",
+      "draft card and iframe content preserved",
+      "bounded coalesced repaint work",
+      "idle capacity and high-refresh pacing",
+      "worker startup burst coalescing",
+      "fixed wallpaper geometry ignores unrelated chat scroll",
+      "background and disable cleanup",
+      "menu diagnostic counters and privacy"
+    ],
+    "controlledExperiment": {
+      "workerStartupRequests": 8,
+      "previousMainThreadRenders": 8,
+      "newMainThreadRenders": 1,
+      "syntheticIdleWork": {
+        "sameJobs": 60,
+        "conservativeFrames": 30,
+        "widerFrames": 21,
+        "phoneFPS": false
+      }
+    },
+    "pending": [
+      "physical-device scroll and menu latency",
+      "live TT native menu fade timing across versions"
+    ],
+    "engineeringRoute": {
+      "route": "sillytavern-extension-dev",
+      "loaded": [
+        "ST-A0 gates",
+        "ST-D5",
+        "ST-E5"
+      ],
+      "librarySnapshot": "2026-08-18"
+    }
   }
 }
