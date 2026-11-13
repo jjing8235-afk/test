@@ -35,7 +35,7 @@ const adapt = source.slice(source.indexOf('function adaptBar(bar) {'), source.in
 const adaptEnv = {
     interactionPerformance:{busy:()=>false}, S: settings, islands: [], PILL_SEL: '#pill', lightBg: false,
     isTopSurface:()=>false,readWallpaperBackdrop:()=>null,wallpaperBackdrop:null,applyTopTone(){},topIconTones:()=>[],
-    document: { getElementById: id => id==='ilg-floor'?null:bar, querySelector: () => pill, body: { dataset: {} } },
+    document: { addEventListener() {}, getElementById: id => id==='ilg-floor'?null:bar, querySelector: () => pill, body: { dataset: {} } },
     lumAt() { samples++; return luminance; }, performance: { now: () => now },
     requestAnimationFrame: fn => later(fn, 16), setTimeout: later,
 };

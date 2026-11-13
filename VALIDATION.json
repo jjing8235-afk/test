@@ -1,6 +1,6 @@
 {
-  "currentVersion": "2.0.8-test.1",
-  "currentDisplayVersion": "2.0.8-test.1",
+  "currentVersion": "2.0.9-test.1",
+  "currentDisplayVersion": "2.0.9-test.1",
   "date": "2026-11-05",
   "version": "1.4.4-local.9",
   "baseline": "1.4.4-local.8",
@@ -3449,5 +3449,418 @@
       "Home arm is an idle reference and not an equivalent scrolling workload"
     ],
     "evidenceDirectory": "D:/claudecod1/st-verify/out/browser208"
+  },
+  "menu209": {
+    "date": "2026-11-13",
+    "version": "2.0.9-test.1",
+    "baseline": "2d17a23911cbcee5ee7cbe319b0cbc1ccec0b40a",
+    "scope": "Keep background sampling from competing with repeated composer menu interactions; share repeated style reads within a sampling pass",
+    "offlineRegressions": 36,
+    "browserChecks": 7,
+    "checks": [
+      {
+        "name": "adaptive-raster-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "adaptive-sampling-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "ball-drag-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "ball-raster-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "bundled-wallpapers-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "card-solid-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "chat-background-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "chat-font-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "filter-reuse-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "first-line-indent-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "fixed-position-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "font-subset-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "form-scroll-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "frame-budget-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "glass-performance-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "gpu-timeout-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "interaction-diagnostics-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "interaction-performance-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "ios-wallpaper-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "keyboard-lifecycle-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "message-window-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "mobile-performance-regression.mjs",
+        "passed": true,
+        "exit": 0,
+        "rerunReason": "Add document.addEventListener to the extracted scheduler DOM stub"
+      },
+      {
+        "name": "mobile-tilt-permission-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "mobile-tilt-response-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "popup-boundary-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "priority-scheduling-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "range-value-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "reflection-queue-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "reflection-raster-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "resize-batch-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "settings-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "surface-policy-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "surface-sampling-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "top-shortcuts-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "tt-compat-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "wallpaper-sampling-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "adaptive-edge",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "adaptive-webkit",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "ordinary-continuity",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "webkit-continuity",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "host-interaction",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "interaction-scope",
+        "passed": true,
+        "exit": 0,
+        "rerunReason": "Pass a file URL for the legacy Windows import harness"
+      },
+      {
+        "name": "message-rendering",
+        "passed": true,
+        "exit": 0
+      }
+    ],
+    "redBeforeFix": [
+      {
+        "test": "adaptive-sampling-regression",
+        "failure": "Queued color sampling ran inside a native menu interaction: 2 != 0"
+      },
+      {
+        "test": "surface-sampling-regression",
+        "failure": "40 style reads for 3 unique nodes"
+      }
+    ],
+    "fixtureComparison": {
+      "unchangedMenuCycles": {
+        "beforeRuns": 4,
+        "afterRuns": 0,
+        "beforeStyleReads": 1180,
+        "afterStyleReads": 0
+      },
+      "necessarySample": {
+        "beforeStyleReads": 35,
+        "afterStyleReads": 4,
+        "sameLightAndDarkIconTones": true,
+        "authoredStyleChangeAutomaticallyInvalidates": true
+      },
+      "queuedSample": {
+        "beforeBusyRuns": 1,
+        "afterBusyRuns": 0
+      },
+      "engines": [
+        "desktop Edge Chromium",
+        "Playwright WebKit"
+      ]
+    },
+    "nativeHost": {
+      "version": "1.18.0",
+      "dataScope": "Independent data root with synthetic 400-message DOM and eight synthetic wand items; built-in native handlers, jQuery and Popper",
+      "viewport": "393x759 DPR2 touch; Android Chrome UA; desktop Edge; CPU4",
+      "agedPreconditioning": "16 alternating menu open-close pairs plus scrolling and synthetic content updates, then 1.8s settle",
+      "perStage": "6 alternating open-close pairs, real Playwright touch taps, visibility asserted after open and close",
+      "before": [
+        {
+          "arm": "before",
+          "stage": "early",
+          "samples": 444,
+          "busySamples": 0,
+          "p95": 20.899999999999636,
+          "over34": 25,
+          "max": 170.89999999999964,
+          "glass": 417,
+          "filters": 12,
+          "draftPreserved": true,
+          "messages": 400,
+          "openings": [
+            284,
+            119,
+            115,
+            110,
+            112,
+            120
+          ],
+          "metrics": {
+            "Nodes": 215,
+            "LayoutCount": 36,
+            "RecalcStyleCount": 625,
+            "LayoutDuration": 0.041573,
+            "RecalcStyleDuration": 0.485282,
+            "ScriptDuration": 0.86551,
+            "TaskDuration": 4.76966,
+            "JSHeapUsedSize": -3081864
+          },
+          "heap": 20652996,
+          "physicalPhone": false
+        },
+        {
+          "arm": "before",
+          "stage": "aged",
+          "samples": 444,
+          "busySamples": 0,
+          "p95": 20.799999999995634,
+          "over34": 23,
+          "max": 66.70000000000437,
+          "glass": 417,
+          "filters": 12,
+          "draftPreserved": true,
+          "messages": 400,
+          "openings": [
+            90,
+            131,
+            131,
+            137,
+            129,
+            124
+          ],
+          "metrics": {
+            "Nodes": -17,
+            "LayoutCount": 29,
+            "RecalcStyleCount": 685,
+            "LayoutDuration": 0.014085000000000014,
+            "RecalcStyleDuration": 0.4304699999999997,
+            "ScriptDuration": 0.8381669999999999,
+            "TaskDuration": 4.347087999999999,
+            "JSHeapUsedSize": -3173532
+          },
+          "heap": 21709404,
+          "physicalPhone": false
+        }
+      ],
+      "after": [
+        {
+          "arm": "candidate",
+          "stage": "early",
+          "samples": 0,
+          "busySamples": 0,
+          "p95": 16.700000000000728,
+          "over34": 13,
+          "max": 145.70000000000073,
+          "glass": 417,
+          "filters": 12,
+          "draftPreserved": true,
+          "messages": 400,
+          "openings": [
+            291,
+            132,
+            135,
+            136,
+            116,
+            113
+          ],
+          "metrics": {
+            "Nodes": 215,
+            "LayoutCount": 36,
+            "RecalcStyleCount": 701,
+            "LayoutDuration": 0.038649,
+            "RecalcStyleDuration": 0.501924,
+            "ScriptDuration": 0.425443,
+            "TaskDuration": 4.579132,
+            "JSHeapUsedSize": -3177512
+          },
+          "heap": 20504476,
+          "physicalPhone": false
+        },
+        {
+          "arm": "candidate",
+          "stage": "aged",
+          "samples": 0,
+          "busySamples": 0,
+          "p95": 12.599999999998545,
+          "over34": 10,
+          "max": 62.5,
+          "glass": 417,
+          "filters": 12,
+          "draftPreserved": true,
+          "messages": 400,
+          "openings": [
+            91,
+            118,
+            120,
+            118,
+            113,
+            122
+          ],
+          "metrics": {
+            "Nodes": 42,
+            "LayoutCount": 29,
+            "RecalcStyleCount": 799,
+            "LayoutDuration": 0.013507999999999992,
+            "RecalcStyleDuration": 0.4895130000000001,
+            "ScriptDuration": 0.345067,
+            "TaskDuration": 4.128219,
+            "JSHeapUsedSize": 3601140
+          },
+          "heap": 26199892,
+          "physicalPhone": false
+        }
+      ],
+      "scriptWorkReductionAfterWarmup": 0.5883075807088562,
+      "noQueueOrGlassGrowthObserved": true,
+      "errors": []
+    },
+    "limitations": [
+      "No physical phone connected; mobile Chrome/Edge or user third-party plugin combinations not accepted",
+      "Time-dependent worsening on the user phone was not reproduced; a real source of unnecessary sampling and scheduling contention was fixed",
+      "Callback intervals are headless desktop RAF measurements and not display FPS; Playwright tap wall time is not user INP",
+      "ScriptDuration reduction does not equal total CPU or whole-application speedup",
+      "Synthetic native-host settings and messages differ from the user production theme and chats"
+    ],
+    "evidenceDirectory": "D:/claudecod1/st-verify/out/menu209"
   }
 }

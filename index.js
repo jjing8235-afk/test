@@ -31,7 +31,7 @@ window.__ilgLoaded = new URL('.', import.meta.url).pathname;
 
 let studioUI = null;
 const MODULE = 'iosLiquidGlass';
-const BUILD_VERSION = '2.0.8-test.1';
+const BUILD_VERSION = '2.0.9-test.1';
 const ENGINE_NAMES = Object.freeze({performance:'御风性能引擎',refraction:'棱光折射引擎'});
 const NS = 'http://www.w3.org/2000/svg';
 const ctx = SillyTavern.getContext();
@@ -810,7 +810,7 @@ const MES_SEL = '.mes:not(.smallSysMes)';
 
 const root = document.documentElement;
 const interactionPerformance = createInteractionPerformance({root,chat:document.getElementById('chat'),
-    mobile:isIOS||/Android/i.test(ua),paintBatch:list=>paintMany(list),onIdle:()=>scheduleAdapt()});
+    mobile:isIOS||/Android/i.test(ua),paintBatch:list=>paintMany(list),onIdle:()=>scheduleAdapt(undefined,true)});
 const messageWindows = createMessageGlassWindow({chat:document.getElementById('chat'),mobile:isIOS||/Android/i.test(ua),onResize:list=>queuePaintMany(list)});
 const webGlass = createLiquidGlassWeb();
 const reflections = createGlassReflections();
@@ -3279,18 +3279,25 @@ function topIconTones(bars) {
     return result;
 }
 function clearTopTones() { document.querySelectorAll('[data-ilg-top-tone]').forEach(el => applyTopTone(el,null)); }
+// Cache only within one read phase; styles can change between any two samples.
+let adaptSurfaceCache = null;
 function surfaceLuminance(el, onColor) {
-    const view = el.ownerDocument.defaultView;
+    const view = el.ownerDocument.defaultView, walked = [];
+    let sample = null;
     for (let n = el; n && n.nodeType === 1; n = n.parentElement) {
-        if (n === document.body || n.id === 'chat' || n.id === 'sheld') return null;
+        if (n === document.body || n.id === 'chat' || n.id === 'sheld') break;
+        if (adaptSurfaceCache?.has(n)) { sample = adaptSurfaceCache.get(n); break; }
+        walked.push(n);
         const m = /rgba?\(([^)]+)\)/.exec(view.getComputedStyle(n).backgroundColor);
         if (!m) continue;
         const [r, g, b, a = 1] = m[1].split(',').map(Number);
         if (a < 0.5) continue;
-        onColor?.([r,g,b]);
-        return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+        sample = { color: [r,g,b], luminance: (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255 };
+        break;
     }
-    return null;
+    for (const node of walked) adaptSurfaceCache?.set(node, sample);
+    if (sample) onColor?.(sample.color);
+    return sample?.luminance ?? null;
 }
 function lumAt(x, y, bar, onColor) {
     for (const el of document.elementsFromPoint(x, y)) {
@@ -3348,10 +3355,12 @@ function inputActionTones(bar) {
 }
 // 合并滚动与流式输出的采样；最后一次请求仍会补采，先读完所有表面再更新样式。
 const ADAPT_INTERVAL = 100;
-let adaptRaf = 0, adaptTimer = 0, adaptLast = -Infinity;
-// 滚动时 100ms 采一次；流式输出合并补采。按钮只量可见项，所有采样完成后再批量写入。
-function scheduleAdapt(interval) {
-    if (adaptRaf || adaptTimer || !S.enabled || interactionPerformance.busy()) return;
+let adaptRaf = 0, adaptTimer = 0, adaptLast = -Infinity, adaptPending = false;
+// Retain dirty backdrop work while interacting. A clean menu open/close does not
+// request the same expensive hit tests again; scroll/content/theme changes do.
+function scheduleAdapt(interval, resume = false) {
+    if (!resume) adaptPending = true;
+    if (!adaptPending || adaptRaf || adaptTimer || !S.enabled || document.hidden || interactionPerformance.busy()) return;
     // 流式输出时酒馆每吐一段字都会自动滚一下，按 100ms 采样就等于不停逼浏览器重算整页样式；
     // 生成期间顶栏下面的内容几乎不会突然变色，放宽到 1.2 秒一次，生成结束后的下一次滚动恢复正常节奏
     const gap = Math.max(typeof interval === 'number' ? interval : ADAPT_INTERVAL, document.body.dataset.generating === 'true' ? 1200 : 0);
@@ -3359,14 +3368,21 @@ function scheduleAdapt(interval) {
         adaptTimer = 0;
         adaptRaf = requestAnimationFrame(() => {
             adaptRaf = 0;
-            if (!S.enabled) return;
+            // The request may have been queued before a tap, scroll or keystroke.
+            // Check again at execution and retain the request for the next idle.
+            if (!S.enabled || document.hidden || interactionPerformance.busy()) return;
+            adaptPending = false;
             adaptLast = performance.now();
             const bars = S.islands && islands.length ? islands : [document.getElementById('top-bar')];
             const input = document.querySelector(PILL_SEL);
             wallpaperBackdrop = readWallpaperBackdrop();
             const floor = document.getElementById('ilg-floor');
-            const samples = [...bars, ...(floor && !floor.hidden ? [floor] : []), input].map(adaptBar);
-            const actionTones = inputActionTones(input), iconTones = topIconTones(bars);
+            let samples, actionTones, iconTones;
+            adaptSurfaceCache = new WeakMap();
+            try {
+                samples = [...bars, ...(floor && !floor.hidden ? [floor] : []), input].map(adaptBar);
+                actionTones = inputActionTones(input); iconTones = topIconTones(bars);
+            } finally { adaptSurfaceCache = null; }
             for (const sample of samples) {
                 if (!sample) continue;
                 const { bar, light, dark, top } = sample;
@@ -3386,6 +3402,7 @@ function scheduleAdapt(interval) {
     if (delay) adaptTimer = setTimeout(queue, delay);
     else queue();
 }
+document.addEventListener('visibilitychange', () => { if (!document.hidden) scheduleAdapt(undefined,true); });
 chatEl.addEventListener('scroll', scheduleAdapt, { passive: true });
 new MutationObserver(() => scheduleAdapt(600)).observe(chatEl, { childList: true, subtree: true });
 onViewportChange(() => scheduleAdapt());
@@ -3906,7 +3923,8 @@ new MutationObserver(muts => {
         if (t) { cardDirty.add(t); hit = true; continue; }
         m.addedNodes.forEach(n => { if (n.nodeType === 1) (n.matches('.mes_text') ? [n] : n.querySelectorAll('.mes_text')).forEach(x => { cardDirty.add(x); hit = true; }); });
     }
-    if (hit) queueCards(false);
+    // Authored card colors/visibility can change without replacing text.
+    if (hit) { queueCards(false); scheduleAdapt(600); }
 }).observe(chatEl, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['style', 'class', 'hidden', 'open'], attributeOldValue: true });
 
 // 世界书多选框“还没选任何一本”：原来 CSS 用 :not(:has(.select2-selection__choice)) 判断，
