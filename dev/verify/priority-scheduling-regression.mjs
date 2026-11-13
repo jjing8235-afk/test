@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import {createInteractionPerformance} from '../../interaction-performance.js';
+class Target{events=new Map();addEventListener(t,f){if(!this.events.has(t))this.events.set(t,new Set());this.events.get(t).add(f);}removeEventListener(t,f){this.events.get(t)?.delete(f);}emit(t,e={}){for(const f of this.events.get(t)||[])f(e);}}
+let time=0,id=0;const frames=new Map(),timers=new Map(),posted=[],painted=[];const win=new Target(),doc=new Target(),chat=new Target();doc.hidden=false;
+Object.assign(win,{AbortController,performance:{now:()=>time},requestAnimationFrame(fn){frames.set(++id,fn);return id;},cancelAnimationFrame(i){frames.delete(i);},setTimeout(fn,delay){timers.set(++id,{fn,at:time+delay});return id;},clearTimeout(i){timers.delete(i);},scheduler:{postTask(fn,options){return new Promise((resolve,reject)=>{const item={fn,options,resolve,reject};posted.push(item);options.signal.addEventListener('abort',()=>reject(options.signal.reason),{once:true});});}}});
+const frame=()=>{time+=16;const list=[...frames.values()];frames.clear();for(const fn of list)fn(time);};
+const root={classList:{toggle(){}}};const engine=createInteractionPerformance({win,doc,chat,root,mobile:true,paintBatch:items=>painted.push(...items)});engine.setEnabled(true);engine.enqueue(['one']);frame();
+assert.equal(posted.length,1,'Deferred glass work should use browser task prioritisation when available');assert.equal(posted[0].options.priority,'background');assert.deepEqual(painted,[],'RAF should only enqueue the task, not block first paint');
+chat.emit('scroll');assert(posted[0].options.signal.aborted,'Input must cancel pending decorative work');await Promise.resolve();assert.deepEqual(painted,[]);
+for(const {fn,at}of [...timers.values()]){time=at;fn();}timers.clear();frame();const next=posted.at(-1);next.fn();next.resolve();await Promise.resolve();assert.deepEqual(painted,['one']);assert(engine.status().prioritizedBatches>=1);
+engine.enqueue(['cancel']);frame();engine.destroy();assert(posted.at(-1).options.signal.aborted);await Promise.resolve();assert.equal(engine.status().pending,0);assert.equal(frames.size,0);
+let fallback=0;win.scheduler={postTask(){throw Error('blocked');}};const safe=createInteractionPerformance({win,doc,chat,root,paintBatch:items=>fallback+=items.length});safe.setEnabled(true);safe.enqueue(['safe']);frame();frame();assert.equal(fallback,1,'Rejected scheduling capability must retain RAF fallback');safe.destroy();
+console.log(JSON.stringify({passed:true,checks:['native background task request','first paint yielded','input cancellation','idle resume','disable cancellation','unsupported scheduler fallback']}));

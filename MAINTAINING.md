@@ -1,3 +1,17 @@
+# 2.0.7-test.1 · 滚动与菜单连续玻璃（2026-11-13）
+
+当前测试版本为 2.0.7-test.1。修复 2.0.5 引入的交互材质切换，设置命名空间和迁移版本不变。以下历史记录保留，不代表当前状态。
+
+- 滚动和原生菜单过渡期间不移除消息 backdrop-filter，也不临时换成另一种菜单材质。＋和魔法棒的首帧按有效尺寸直接应用最终材质。
+- message-glass-window.js 只限制 NVWA 消息背景层，保留原消息高度、卡片、iframe、草稿与原生点击。移动层有视口外预留，不在每次滚动重建滤镜；可见状态、尺寸变化、替换层、关闭与销毁必须清理。
+- interaction-performance.js 在可用时使用可取消的浏览器背景任务，输入／滚动时让路；不支持时回退 RAF，不替换宿主调度 API。
+- 菜单轮廓和较大 NVWA 表面的轮廓进入已有 worker 队列。glass-frame.js 支持 worker 无 Canvas 编码时的原始像素返回，保持光栅计算在后台；页面仅完成 PNG 编码并记录其时间。
+- 生成位图的 Canvas 使用读回提示，保留相同像素算法和材质参数。旧折射滤镜复用必须包含 curve、bevel、尺寸和强度，物理引擎重建时清除旧缓存键。
+- 新验证入口：message-window-regression、priority-scheduling-regression、material-continuity-browser、worker-pixel-fallback-browser；更新原有聊天背景、滚动、移动环境与 worker 检查。
+- VALIDATION.json 的 continuity207 是本轮证据摘要。桌面 4 倍 CPU 降速、WebKit、UA 身份测试均不等于手机验收。原生游戏识别实验另存于开发工作区，未集成宿主、未构建 APK，也未向手机请求系统模式。
+
+---
+
 # 2.0.6-test.1 · GPU 折射实验（2026-11-12）
 
 - 仅浮球融合光学贴图进入自适应 WebGL2 路径；保留既有材质公式、保存键和 CPU 位图基线。

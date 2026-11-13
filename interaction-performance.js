@@ -2,13 +2,25 @@
 export function createInteractionPerformance({root,chat,paintBatch,onIdle=()=>{},mobile=false,maxBudgetMs=6,win=window,doc=document}={}) {
     const pending=new Map();let enabled=false,scrolling=false,menu=false,touching=false,raf=0,timer=0,scrollUntil=0,menuUntil=0,inputUntil=0,average=2;
     const capacity=Math.max(2,Math.min(6,Number(maxBudgetMs)||6));
-    let frameInterval=1000/60,lastFrame=0,budgetMs=Math.min(4,capacity);
-    const counts={scrollBursts:0,menuBursts:0,batches:0,painted:0,coalesced:0,maxBatchMs:0};
+    let frameInterval=1000/60,lastFrame=0,budgetMs=Math.min(4,capacity),priorityTask=null,schedulerFailed=false,taskEpoch=0;
+    const counts={scrollBursts:0,menuBursts:0,batches:0,painted:0,coalesced:0,maxBatchMs:0,prioritizedBatches:0};
     const now=()=>win.performance.now();
     const busy=()=>enabled&&(scrolling||menu||now()<inputUntil);
-    const cancelFrame=()=>{if(raf)win.cancelAnimationFrame(raf);raf=0;};
+    const cancelFrame=()=>{if(raf)win.cancelAnimationFrame(raf);raf=0;taskEpoch++;priorityTask?.abort();priorityTask=null;};
     function syncClasses(){root.classList.toggle('ilg-scroll-active',enabled&&scrolling);root.classList.toggle('ilg-menu-active',enabled&&menu);}
-    function schedule(){if(enabled&&!doc.hidden&&!busy()&&pending.size&&!raf)raf=win.requestAnimationFrame(flush);}
+    const canPrioritize=()=>!schedulerFailed&&typeof win.scheduler?.postTask==='function'&&typeof win.AbortController==='function';
+    function dispatch(timestamp){
+        raf=0;if(!enabled||doc.hidden||busy()||!pending.size)return;
+        if(!canPrioritize()){flush(timestamp);return;}
+        const abort=new win.AbortController(),epoch=++taskEpoch;priorityTask=abort;
+        try{
+            const task=win.scheduler.postTask(()=>{
+                if(epoch!==taskEpoch)return;priorityTask=null;counts.prioritizedBatches++;flush(timestamp);
+            },{priority:'background',signal:abort.signal});
+            Promise.resolve(task).catch(()=>{if(epoch!==taskEpoch||abort.signal.aborted)return;priorityTask=null;schedulerFailed=true;schedule();});
+        }catch{priorityTask=null;schedulerFailed=true;schedule();}
+    }
+    function schedule(){if(enabled&&!doc.hidden&&!busy()&&pending.size&&!raf&&!priorityTask)raf=win.requestAnimationFrame(dispatch);}
     function flush(timestamp){
         raf=0;if(!enabled||doc.hidden||busy()||!pending.size)return;
         const at=Number.isFinite(timestamp)?timestamp:now(),gap=at-lastFrame;
@@ -65,7 +77,7 @@ export function createInteractionPerformance({root,chat,paintBatch,onIdle=()=>{}
         enqueue(list){if(!enabled)return;for(const key of list){if(pending.has(key))counts.coalesced++;pending.set(key,true);}schedule();},
         cancel(key){pending.delete(key);if(!pending.size)cancelFrame();},
         clear(){pending.clear();cancelFrame();},busy,
-        status:()=>({enabled,mobile,scrolling,menuTransition:menu,pending:pending.size,frameScheduled:!!raf,budgetMs,capacityMs:capacity,...counts,nativePerformance:'not-integrated'}),
+        status:()=>({enabled,mobile,scrolling,menuTransition:menu,pending:pending.size,frameScheduled:!!raf||!!priorityTask,taskScheduling:canPrioritize()?'prioritized':'animation-frame',budgetMs,capacityMs:capacity,...counts,nativePerformance:'not-integrated'}),
         destroy(){this.setEnabled(false);}
     };
 }

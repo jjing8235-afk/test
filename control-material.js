@@ -10,7 +10,7 @@ function coreMask(width, height, radius) {
     const scale = Math.min(.5, 512 / w, 256 / h);
     const cw = Math.max(2, Math.round(w * scale)), ch = Math.max(2, Math.round(h * scale));
     const canvas = document.createElement('canvas'); canvas.width = cw; canvas.height = ch;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
     if (!ctx) throw new Error('Control glass requires a 2D canvas.');
     const image = ctx.createImageData(cw, ch), data = image.data;
     const feather = Math.min(5.5, h * .18), inset = Math.min(.8, h * .03);

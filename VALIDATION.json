@@ -1,6 +1,6 @@
 {
-  "currentVersion": "2.0.6-test.1",
-  "currentDisplayVersion": "2.0.6-test.1",
+  "currentVersion": "2.0.7-test.1",
+  "currentDisplayVersion": "2.0.7-test.1",
   "date": "2026-11-05",
   "version": "1.4.4-local.9",
   "baseline": "1.4.4-local.8",
@@ -3188,6 +3188,134 @@
       "Desktop WebKit in this environment cannot encode with worker canvas, so CPU fallback was verified",
       "Desktop synthetic long-chat functional checks passed; no WebKit performance gain claimed",
       "Physical Android/iPhone/TT sustained performance remains unmeasured"
+    ]
+  },
+  "continuity207": {
+    "version": "2.0.7-test.1",
+    "date": "2026-11-13",
+    "scope": "Continuous message and composer glass, bounded mobile backdrop work and compatible background computation",
+    "baseline": {
+      "version": "2.0.6-test.1",
+      "commit": "a59967a406a00d57d0e1caf82bc36bd7f57527db"
+    },
+    "offline": {
+      "passed": true,
+      "regressionFiles": 34
+    },
+    "browser": {
+      "passed": true,
+      "functionalJobs": 10,
+      "additionalCurrentGpuCompatibility": true,
+      "engines": [
+        "Windows desktop Edge",
+        "Playwright desktop WebKit"
+      ],
+      "realSillyTavern": false,
+      "physicalPhone": false,
+      "cpuThrottle": {
+        "engine": "Edge desktop",
+        "rate": 4,
+        "continuityPassed": true
+      }
+    },
+    "continuity": {
+      "baselineFailureReproduced": true,
+      "glassPresentDuringScroll": true,
+      "materialStableDuringScroll": true,
+      "composerMenuMaterialStable": true,
+      "materialModes": [
+        "original physical",
+        "original legacy",
+        "liquid-web",
+        "CSS blur fallback",
+        "transparent"
+      ],
+      "syntheticMessages": 360,
+      "tallMessageHeight": 9200,
+      "chatViewportHeight": 759,
+      "actualBackdropHeight": 1265,
+      "scrollFilterRebuilds": 0,
+      "cardIframeAndDraftPreserved": true,
+      "bubbleEndsCovered": true
+    },
+    "workerCompatibility": {
+      "noWorkerCanvas": [
+        "Edge desktop",
+        "WebKit desktop"
+      ],
+      "rawPixelWorkerFrames": 2,
+      "mainThreadRasterFrames": 0,
+      "decodedPngParityChecksPerEngine": 5,
+      "unchangedRasterCases": 110,
+      "unchangedDecodedPngComparisons": 418,
+      "graphicsTimeoutRetainsCpuWorker": true
+    },
+    "timing": {
+      "environment": "Windows desktop Edge, fresh isolated contexts, alternating order",
+      "scope": "first visible-message batch; not phone FPS or total page latency",
+      "results": [
+        {
+          "kind": "before",
+          "sample": 1,
+          "maxVisibleBatchMs": 238.5,
+          "slowestMessagePaintMs": 238.29999999981374,
+          "menuFirstPaintMs": [
+            0.10000000055879354,
+            7.400000000372529,
+            10.099999999627471
+          ],
+          "physicalPhone": false
+        },
+        {
+          "kind": "after",
+          "sample": 1,
+          "maxVisibleBatchMs": 3.2999999998137355,
+          "slowestMessagePaintMs": 3.1000000005587935,
+          "menuFirstPaintMs": [
+            0.10000000055879354,
+            2.3999999994412065,
+            2.199999999254942
+          ],
+          "physicalPhone": false
+        },
+        {
+          "kind": "after",
+          "sample": 2,
+          "maxVisibleBatchMs": 3.2000000001862645,
+          "slowestMessagePaintMs": 2.900000000372529,
+          "menuFirstPaintMs": [
+            2.5,
+            2.2000000001862645
+          ],
+          "physicalPhone": false
+        },
+        {
+          "kind": "before",
+          "sample": 2,
+          "maxVisibleBatchMs": 273.70000000018626,
+          "slowestMessagePaintMs": 273.5,
+          "menuFirstPaintMs": [
+            11.899999999441206,
+            10
+          ],
+          "physicalPhone": false
+        }
+      ]
+    },
+    "nativeGameExperiment": {
+      "preparedSeparately": true,
+      "hostSourceCommit": "85dc99089e3fcc9d3a0aafc085564bd642895261",
+      "nativeHostIntegrated": false,
+      "apkBuilt": false,
+      "physicalDeviceRequests": 0,
+      "systemBoostVerified": false
+    },
+    "limits": [
+      "Desktop synthetic fixtures and CPU throttling do not measure phone FPS, INP or OEM game scheduling.",
+      "Raw-pixel compatibility keeps geometry/raster in the worker; PNG encoding can still occur on the page.",
+      "The backdrop window bounds only NVWA-owned glass, preserving authored message and iframe contents.",
+      "Native game classification requires a rebuilt host; the beauty extension cannot change installed app metadata.",
+      "No OS CPU/GPU clock or game-mode permission has been obtained."
     ]
   }
 }

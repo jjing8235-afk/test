@@ -78,7 +78,7 @@ for (const mode of ['glass', 'transparent']) {
                     const sandbox = {
                         S: { chatBackground: mode, engine, saturate: 1.6, brightness: 1.05 },
                         document: { createElement: () => element(), body: { classList: { contains: () => noBlur } } },
-                        items: new Map([[el, it]]), trackable: () => true,
+                        items: new Map([[el, it]]), trackable: () => true, messageWindows: { release() {}, apply() {} },
                         KIND: { mes: { blur: () => 3 } }, refractAllowed: () => allowed,
                         canRefract: () => allowed, isIOS: false, androidWebView:false, devicePixelRatio:1,largeWebViewMessage:()=>false,iosMaterialActive:()=>false, radiusOf: () => 22,
                         setPhys(node, _item, on) { node.classList.toggle('ilg-phys', on); },
@@ -145,6 +145,11 @@ build({ kind: 'mes' }, {}, 374, 240, 22);
 assert.deepEqual(builds, [3, 0, 1, 3]);
 assert.equal(settings.mesBlur, 3, 'Transparent mode must not overwrite the user blur preference');
 
+const cacheSettings={scale:10,aberration:0,bevel:8,curve:1};let legacyMaps=0;const legacyItem={kind:'mes'},legacyFilter={innerHTML:''};
+const legacyBuild=vm.runInNewContext(bodyOf('buildFilter')+';buildFilter',{S:cacheSettings,KIND:{mes:{k:1}},foldedMenuSurface:()=>false,filterOf:it=>(it.filter=legacyFilter),makeMap:()=>{legacyMaps++;return 'curve-'+cacheSettings.curve;},disp:scale=>'<displacement scale="'+scale+'"/>'});
+legacyBuild(legacyItem,320,240,22,{});const firstLegacy=legacyFilter.innerHTML;legacyBuild(legacyItem,320,240,22,{});assert.equal(legacyMaps,1,'Identical legacy geometry must reuse its filter');
+cacheSettings.curve=2;legacyBuild(legacyItem,320,240,22,{});assert.equal(legacyMaps,2,'A curve adjustment must invalidate the legacy filter');assert.notEqual(legacyFilter.innerHTML,firstLegacy);
+
 console.log(JSON.stringify({ passed: true, renderingCases: cases, checks: [
     'Settings retain defaults and reject invalid values without overwriting user parameters',
     'Reading strength is bounded, restores through bookmarks and ignores retired saved options',
@@ -153,6 +158,7 @@ console.log(JSON.stringify({ passed: true, renderingCases: cases, checks: [
     'Transparent removes message blur without disabling refraction or changing input blur',
     'Card layers are reused and removed when the message stops owning a card',
     'Host no-blur disables both rendering paths',
+    'Legacy filter reuse respects curve changes',
 ] }, null, 2));
 
 const css = fs.readFileSync(new URL('../../style.css', import.meta.url), 'utf8');

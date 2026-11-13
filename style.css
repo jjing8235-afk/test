@@ -4678,15 +4678,9 @@ html.ilg.ilg-home.ilg-recent-open body.jd-bookshelf-home-active #chat.jd-bookshe
 html.ilg body .ilg-ios-wallpaper-host {isolation:isolate;}
 html.ilg body .ilg-ios-wallpaper-host > .ilg-ios-wallpaper-plane {position:absolute;inset:0;z-index:-1;overflow:hidden;border-radius:inherit;pointer-events:none;background-color:transparent;}
 
-/* Interaction budget: retain NVWA tint/rims while live message backdrops rest during motion.
-   Descendant card/iframe filters and saved material settings are never changed. */
-html.ilg:is(.ilg-scroll-active,.ilg-menu-active) body.bubblechat #chat .mes.ilg-glass,
-html.ilg:is(.ilg-scroll-active,.ilg-menu-active) body.bubblechat #chat .mes.ilg-glass > .ilg-message-glass {
-    -webkit-backdrop-filter:none!important;
-    backdrop-filter:none!important;
-}
-/* The native host owns menu fading. Delay expensive optics until that fade has settled. */
-html.ilg.ilg-menu-active body:not(.no-blur) :is(#options .options-content,#extensionsMenu).ilg-glass {
-    -webkit-backdrop-filter:blur(var(--ilg-menu-motion-blur,6px)) saturate(1.1)!important;
-    backdrop-filter:blur(var(--ilg-menu-motion-blur,6px)) saturate(1.1)!important;
+/* Interaction scheduling does not change visible glass materials. */
+
+/* Tall mobile bubbles keep one viewport-sized glass plane behind their original content. */
+html.ilg body.bubblechat #chat .mes.ilg-message-window > .ilg-message-glass {
+    bottom:auto;
 }

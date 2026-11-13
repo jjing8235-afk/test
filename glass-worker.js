@@ -5,7 +5,7 @@ const adaptive = createAdaptiveBallRaster();
 
 async function encode(image) {
     const canvas = new OffscreenCanvas(image.w, image.h);
-    const context = canvas.getContext('2d');
+    const context = canvas.getContext('2d', { willReadFrequently: true });
     if (!context) throw new Error('2D canvas unavailable');
     context.putImageData(new ImageData(image.data, image.w, image.h), 0, 0);
     const blob = await canvas.convertToBlob({ type: 'image/png' });
@@ -24,20 +24,28 @@ const capable = (async () => {
         return true;
     } catch { return false; }
 })();
-capable.then(ok => self.postMessage({ type: 'ready', ok }));
+capable.then(encoded => self.postMessage({ type: 'ready', ok: true, encoding: encoded ? 'png' : 'pixels' }));
+let encodingFailed=false;
 self.onmessage = async event => {
     const { type, id, job } = event.data || {};
     if (type !== 'render') return;
     try {
-        if (!await capable) throw new Error('Canvas unavailable');
+        const canEncode=await capable&&!encodingFailed;
         if (job.kind === 'reflection') {
             const image=rasterReflection(job.width,job.height,job.radius,job.dpr);
-            self.postMessage({type:'result',id,frame:{url:await encode(image)}});
+            if(canEncode){try{self.postMessage({type:'result',id,frame:{url:await encode(image)},encoding:'png'});return;}catch{encodingFailed=true;}}
+            self.postMessage({type:'result',id,frame:{rawReflection:image},encoding:'pixels'},[image.data.buffer]);
             return;
         }
         const result = event.data.graphics === 'adaptive' ? adaptive.render(job) : rasterBall(job), urls = [];
-        for (const image of result.images) urls.push(await encode(image));
-        self.postMessage({ type: 'result', id, frame: packBallFrame(result, urls), graphics: adaptive.status() });
+        if(canEncode){
+            try{
+                for (const image of result.images) urls.push(await encode(image));
+                self.postMessage({ type: 'result', id, frame: packBallFrame(result, urls), graphics: adaptive.status(), encoding:'png' });
+                return;
+            }catch{encodingFailed=true;}
+        }
+        self.postMessage({type:'result',id,frame:{rawBall:result},graphics:adaptive.status(),encoding:'pixels'},result.images.map(image=>image.data.buffer));
     } catch {
         self.postMessage({ type: 'error', id });
     }

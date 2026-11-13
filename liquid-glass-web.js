@@ -64,7 +64,7 @@ function displacement(width, height, preset, strength, bendY) {
         image.data[i + 2] = 0; image.data[i + 3] = 255;
     }
     const canvas = document.createElement('canvas'); canvas.width = tw; canvas.height = th;
-    const context = canvas.getContext('2d'); if (!context) throw new Error('Liquid Glass Web requires a 2D canvas.');
+    const context = canvas.getContext('2d', { willReadFrequently: true }); if (!context) throw new Error('Liquid Glass Web requires a 2D canvas.');
     context.putImageData(image, 0, 0);
     const result = { url: canvas.toDataURL('image/png'), scale: half, width: tw, height: th, pixels: tw * th };
     canvas.width = canvas.height = 0;

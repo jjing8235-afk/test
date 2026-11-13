@@ -164,9 +164,4 @@ export function rasterBall(job) {
     return { frame, images };
 }
 
-export function packBallFrame(result, urls) {
-    const frame = { ...result.frame };
-    for (const field of ['cover', 'inv', 'reflection', 'html']) frame[field] = frame[field].replace(/__ILG_BITMAP_(\d+)__/g, (_, i) => urls[Number(i)]);
-    frame.chars = frame.cover.length + frame.inv.length + frame.reflection.length + frame.html.length;
-    return frame;
-}
+export { packBallFrame } from './glass-frame.js';

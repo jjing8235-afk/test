@@ -17,7 +17,7 @@ function roundedReflection(width,height,radius,dpr=window.devicePixelRatio||1) {
     const {key,cw,ch}=geometry;
     if(cache.has(key)){const item=cache.get(key);cache.delete(key);cache.set(key,item);return item.url;}
     const canvas=document.createElement('canvas');canvas.width=cw;canvas.height=ch;
-    const ctx=canvas.getContext('2d');if(!ctx)return null;
+    const ctx=canvas.getContext('2d', { willReadFrequently: true });if(!ctx)return null;
     const image=ctx.createImageData(cw,ch);
     rasterReflection(width,height,radius,dpr,image.data);
     ctx.putImageData(image,0,0);
@@ -74,8 +74,8 @@ export function createGlassReflections() {
             wanted.set(el,key);known.add(el);
             const item=cache.get(key);
             if(item){cache.delete(key);cache.set(key,item);apply(el,key,item.url);return;}
-            const overlay=el.matches('#options .options-content, #extensionsMenu, #qr--bar, dialog.popup.ilg-adapted');
-            if(overlay&&width*height>=16000){
+            // All callers are NVWA-owned shell/message surfaces; large contour math stays off the page.
+            if(width*height>=16000||el.matches('#options .options-content,#extensionsMenu')){
                 let entry=jobs.get(key);
                 if(!entry){entry={job:{kind:'reflection',key,width,height,radius,dpr},clients:new Set()};jobs.set(key,entry);}
                 entry.clients.add(el);background.prepare();pump();return;

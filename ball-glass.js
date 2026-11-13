@@ -30,7 +30,7 @@ export function createBallGlass({ workerFactory, onError = () => {} } = {}) {
         const result = rasterBall(job);
         const urls = result.images.map(image => {
             canvas.width = image.w; canvas.height = image.h;
-            const context = canvas.getContext('2d'), pixels = context.createImageData(image.w, image.h);
+            const context = canvas.getContext('2d', { willReadFrequently: true }), pixels = context.createImageData(image.w, image.h);
             pixels.data.set(image.data); context.putImageData(pixels, 0, 0);
             return canvas.toDataURL('image/png');
         });

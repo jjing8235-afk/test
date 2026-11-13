@@ -9,7 +9,7 @@ const root = path.resolve(fileURLToPath(new URL('../../', import.meta.url)));
 const { chromium } = createRequire(import.meta.url)(process.env.NVWA_PLAYWRIGHT_MODULE || 'playwright');
 const fixture = JSON.parse(fs.readFileSync(new URL('fixtures/ball-raster-v17.json', import.meta.url), 'utf8'));
 fixture.cases = fixture.cases.map(item => ({ ...item, m: fixture.materials[item.material], shape: fixture.shapes[item.shape] }));
-const pageHTML = `<!doctype html><html class="ilg"><head><meta charset="utf-8"><link rel="stylesheet" href="/style.css"></head><body style="background:linear-gradient(135deg,#13243c,#455661);min-height:100vh"><div id="target" style="position:fixed;left:16px;top:400px;width:358px;height:52px;border-radius:26px;background:#ffffff18"></div><script type="module">import{createBallGlass}from'/ball-glass.js';import{buildBallJob,rasterBall,packBallFrame}from'/ball-raster.js';window.testAPI={createBallGlass,buildBallJob,rasterBall,packBallFrame};</script></body></html>`;
+const pageHTML = `<!doctype html><html class="ilg"><head><meta charset="utf-8"><link rel="stylesheet" href="/style.css"></head><body style="background:linear-gradient(135deg,#13243c,#455661);min-height:100vh"><div id="target" style="position:fixed;left:16px;top:400px;width:358px;height:52px;border-radius:26px;background:#ffffff18"></div><script type="module">import{createBallGlass}from'/ball-glass.js';import{buildBallJob,rasterBall,packBallFrame}from'/ball-raster.js';import{materializeGlassFrame}from'/glass-frame.js';window.testAPI={createBallGlass,buildBallJob,rasterBall,packBallFrame,materializeGlassFrame};</script></body></html>`;
 const server = http.createServer((req,res) => {
     const name = decodeURIComponent(new URL(req.url,'http://localhost').pathname);
     if (name === '/no-reader-worker.js' || name === '/no-canvas-worker.js') { res.writeHead(200,{'Content-Type':'text/javascript'}); res.end('self.'+(name.includes('reader')?'FileReaderSync':'OffscreenCanvas')+'=undefined;await import("/glass-worker.js");');return; }
@@ -28,7 +28,7 @@ try {
     const errors=[];page.on('pageerror',error=>errors.push(error.message));
     await page.goto(origin);await page.waitForFunction(()=>window.testAPI);
     const result=await page.evaluate(async fixture=>{
-        const {createBallGlass,buildBallJob,rasterBall,packBallFrame}=window.testAPI;
+        const {createBallGlass,buildBallJob,rasterBall,packBallFrame,materializeGlassFrame}=window.testAPI;
         const assert=(ok,message)=>{if(!ok)throw Error(message);};
         const wait=ms=>new Promise(r=>setTimeout(r,ms));
         const canvas=document.createElement('canvas');
@@ -54,7 +54,7 @@ try {
         for(const field of ['cover','inv','reflection'])assert(await decode(expectedAlt[field])===await decode(alt[field]),'ArrayBuffer encoding changed pixels');
         alternate.terminate();
         const unavailable=new Worker('/no-canvas-worker.js',{type:'module'});
-        await new Promise((resolve,reject)=>{unavailable.onerror=reject;unavailable.onmessage=e=>{assert(e.data.type==='ready'&&!e.data.ok,'Missing canvas was not detected');resolve();};});unavailable.terminate();
+        await new Promise((resolve,reject)=>{unavailable.onerror=reject;unavailable.onmessage=e=>{assert(e.data.type==='ready'&&e.data.ok&&e.data.encoding==='pixels','Missing canvas must retain pixel-worker mode');resolve();};});unavailable.terminate();
         // Drive the presentation with a controlled worker to force an obsolete result.
         let fake;
         const factory=()=>fake={sent:[],postMessage(m){this.sent.push(m);},terminate(){this.closed=true;},emit(data){this.onmessage?.({data});}};

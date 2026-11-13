@@ -93,7 +93,7 @@ function encode({ buf, cw, ch }, maxO, normals) {
     const dc = document.createElement('canvas'), nc = normals ? document.createElement('canvas') : null;
     dc.width = cw; dc.height = ch;
     if (nc) { nc.width = cw; nc.height = ch; }
-    const dctx = dc.getContext('2d'), nctx = nc?.getContext('2d');
+    const dctx = dc.getContext('2d', { willReadFrequently: true }), nctx = nc?.getContext('2d', { willReadFrequently: true });
     const di = dctx.createImageData(cw, ch), ni = nctx?.createImageData(cw, ch), D = di.data, N = ni?.data;
     for (let p = 0, n = cw * ch; p < n; p++) {
         const b4 = p * 4, b5 = p * 5;

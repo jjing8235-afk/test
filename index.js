@@ -8,6 +8,7 @@ import { createBundledWallpapers } from './bundled-wallpapers.js';
 import { largeWebViewMessage } from './surface-policy.js';
 import { createInteractionDiagnostics } from './interaction-diagnostics.js';
 import { createInteractionPerformance } from './interaction-performance.js';
+import { createMessageGlassWindow } from './message-glass-window.js';
 import { positionFixed } from './fixed-position.js';
 import { createMessageRendering } from './message-rendering.js';
 import { createHostInteractionState } from './host-interaction-state.js';
@@ -30,7 +31,7 @@ window.__ilgLoaded = new URL('.', import.meta.url).pathname;
 
 let studioUI = null;
 const MODULE = 'iosLiquidGlass';
-const BUILD_VERSION = '2.0.6-test.1';
+const BUILD_VERSION = '2.0.7-test.1';
 const ENGINE_NAMES = Object.freeze({performance:'御风性能引擎',refraction:'棱光折射引擎'});
 const NS = 'http://www.w3.org/2000/svg';
 const ctx = SillyTavern.getContext();
@@ -810,6 +811,7 @@ const MES_SEL = '.mes:not(.smallSysMes)';
 const root = document.documentElement;
 const interactionPerformance = createInteractionPerformance({root,chat:document.getElementById('chat'),
     mobile:isIOS||/Android/i.test(ua),paintBatch:list=>paintMany(list),onIdle:()=>scheduleAdapt()});
+const messageWindows = createMessageGlassWindow({chat:document.getElementById('chat'),mobile:isIOS||/Android/i.test(ua),onResize:list=>queuePaintMany(list)});
 const webGlass = createLiquidGlassWeb();
 const reflections = createGlassReflections();
 const lighting = createGlassLighting({
@@ -871,7 +873,7 @@ function makeMap(w, h, r, bevel) {
     const hw = cw / 2, hh = ch / 2, Rn = Math.max(R, B), curve = S.curve;
     const cv = document.createElement('canvas');
     cv.width = cw; cv.height = ch;
-    const c2 = cv.getContext('2d');
+    const c2 = cv.getContext('2d', { willReadFrequently: true });
     const img = c2.createImageData(cw, ch), d = img.data;
     for (let y = 0; y < ch; y++) {
         for (let x = 0; x < cw; x++) {
@@ -952,6 +954,7 @@ function surfaceBlur(it, el) {
 }
 // 新版：模糊、调色、折射全在一个 SVG 滤镜里，所以 backdrop-filter 只写 url()
 function buildPhysical(it, el, w, h, r) {
+    it.legacyKey = null;
     const kind = KIND[it.kind], control = controlReadable(el);
     const baseBezel = Math.max(2, S.pBezel * kind.bezelK);
     const bezel = control ? Math.max(2, Math.min(baseBezel, Math.min(w, h) * .2)) : baseBezel;
@@ -985,6 +988,8 @@ function buildPhysical(it, el, w, h, r) {
 function buildFilter(it, w, h, r, el) {
     it.physical = null;
     const sc = S.scale * KIND[it.kind].k * (el && foldedMenuSurface(el) ? .82 : 1), a = S.aberration * KIND[it.kind].k;
+    const key=[w,h,r,sc,a,S.bevel,S.curve,it.kind].join(':');
+    if(it.legacyKey===key&&it.filter)return;
     const f = filterOf(it, w, h);
     let html = `<feFlood flood-color="rgb(128,128,128)" result="neutral"/>` +
         `<feImage href="${makeMap(w, h, r, S.bevel * (it.kind === 'bar' ? 1.3 : 1))}" x="0" y="0" width="${w}" height="${h}" preserveAspectRatio="none" result="img"/>` +
@@ -999,6 +1004,7 @@ function buildFilter(it, w, h, r, el) {
         html += disp(sc);
     }
     f.innerHTML = html;
+    it.legacyKey=key;
 }
 
 function refractAllowed(it) {
@@ -1010,10 +1016,11 @@ function refractAllowed(it) {
 
 // Cards keep their fixed-position descendants outside the filter's containing block.
 // The independent layer uses the same filter builder as ordinary message and input glass.
-function messageSurface(el, it) {
-    const separate = el.classList.contains('ilg-content-overlay') || el.classList.contains('ilg-card-renderer');
+function messageSurface(el, it, geometry) {
+    const separate = !!geometry?.window || el.classList.contains('ilg-content-overlay') || el.classList.contains('ilg-card-renderer');
     el.classList.toggle('ilg-message-backdrop', separate);
     if (!separate) {
+        messageWindows.release(el);
         it.backdrop?.remove();
         it.backdrop = null;
         return el;
@@ -1025,6 +1032,7 @@ function messageSurface(el, it) {
         el.prepend(layer);
         it.backdrop = layer;
     }
+    messageWindows.apply(el,it.backdrop,geometry,!!it.visible);
     el.style.backdropFilter = 'none';
     el.style.webkitBackdropFilter = 'none';
     return it.backdrop;
@@ -1033,13 +1041,14 @@ function messageSurface(el, it) {
 // 先量后写：一批表面一起量完尺寸和圆角再统一写样式。边量边写时，每量一个都要让浏览器把整页样式重算一遍（长聊天滚动卡顿的主因）。
 function measure(el) {
     const w = el.offsetWidth, h = el.offsetHeight;
-    return { w, h, r: w && h ? radiusOf(el, w, h) : 0 };
+    const geometry={ w, h, r: w && h ? radiusOf(el, w, h) : 0 };
+    return items.get(el)?.kind==='mes'?messageWindows.plan(el,geometry,!!items.get(el).visible):geometry;
 }
-// Visible messages and fading native menus share a bounded queue; small controls remain immediate.
+// Visible messages use a bounded queue; native menus and small controls paint immediately.
 function queuePaintMany(list, measured = null) {
     const immediate=[],deferred=[];
     for(const el of list){const it=items.get(el);if(!it)continue;
-        if((it.kind==='mes'&&it.visible)||el.matches('#options .options-content,#extensionsMenu'))deferred.push(el);
+        if(it.kind==='mes'&&it.visible)deferred.push(el);
         else { interactionPerformance.cancel(el); immediate.push(el); }
     }
     if(immediate.length)paintMany(immediate,measured);
@@ -1058,7 +1067,7 @@ function paintMany(list, measured = null) {
         }
         jobs.push(el);
     }
-    const geo = jobs.map(el => measured?.get(el) || measure(el));
+    const geo = jobs.map(el => {const geometry=measured?.get(el);return geometry?(items.get(el)?.kind==='mes'?messageWindows.plan(el,geometry,!!items.get(el).visible):geometry):measure(el);});
     jobs.forEach((el, i) => paint(el, geo[i]));
 }
 function paint(el, geo) {
@@ -1078,7 +1087,8 @@ function paint(el, geo) {
         it.visible = !!geo.w && !!geo.h;
         if (it.visible) visibleItems.add(el); else { visibleItems.delete(el); iosWallpaper.release(el); return; }
     }
-    const surface = it.kind === 'mes' ? messageSurface(el, it) : el;
+    const surface = it.kind === 'mes' ? messageSurface(el, it, geo) : el;
+    if(geo.w&&geo.h){it.backdropSize=[geo.w,geo.h];it.backdropWindowed=!!geo.window;}
     const control = it.kind === 'bar' && controlSurface(el);
     el.classList.toggle('ilg-control-surface', control);
     el.classList.toggle('ilg-control-readable', control && controlReadable(el));
@@ -1117,7 +1127,7 @@ function paint(el, geo) {
     }
     // Offscreen messages retain their CSS material; rasterise their contour on entry.
     if (it.kind === 'mes' && !it.visible) reflections.release(el);
-    else reflections.paint(el, w, h, r);
+    else reflections.paint(el, w, geo.messageHeight||h, r);
     if (useWeb) {
         it.renderPath = 'web-compatible';
         setPhys(el, it, false);
@@ -1195,6 +1205,7 @@ const io = new IntersectionObserver(entries => {
     for (const e of entries) {
         const it = items.get(e.target);
         messageRendering.visibility(e.target, e.isIntersecting);
+        messageWindows.visibility(e.target,e.isIntersecting);
         if (!it || it.visible === e.isIntersecting) continue;
         it.visible = e.isIntersecting;
         if (it.visible) visibleItems.add(e.target);
@@ -1218,13 +1229,13 @@ function track(el, kind) {
     }
     ro.observe(el);
     if (kind === 'mes') { messageRendering.track(el); io.observe(el); }
-    if (interactionPerformance.busy() && el.matches('#options .options-content,#extensionsMenu')) queuePaintMany([el]);
-    else paint(el);
+    paint(el);
 }
 
 function untrack(el) {
     interactionPerformance.cancel(el);
     messageRendering.release(el);
+    messageWindows.release(el);
     reflections.release(el);
     webGlass.release(el);
     iosWallpaper.release(el);
@@ -2544,7 +2555,6 @@ function applyChatFontSize() {
 let glassSettingsRaf = 0;
 function applySurfaceSettings() {
     root.style.setProperty('--ilg-hl', S.highlight);
-    root.style.setProperty('--ilg-menu-motion-blur', `${Math.min(6, S.panelRead ? Math.max(10, Number(S.panelBlur) || 0) : Math.max(0, Number(S.panelBlur) || 0))}px`);
     root.style.setProperty('--ilg-radius', `${S.radius}px`);
     root.style.setProperty('--ilg-shadow-k', S.pShadow);
     root.style.setProperty('--ilg-sheen-k', S.pSheen);
@@ -2570,6 +2580,7 @@ function queueGlassSettings() {
 
 function applyRoot() {
     interactionPerformance.setEnabled(S.enabled);
+    messageWindows.setEnabled(S.enabled);
     if (!S.enabled) hideRangeValue();
     if (!S.enabled) interactionDiagnostics.stop('disabled');
     hostInteractionState.setEnabled(S.enabled);
@@ -2760,7 +2771,7 @@ function viewportDiagnostic() {
         composerFocused:document.activeElement===document.getElementById('send_textarea'),keyboard:keyboard.status(),composer:rect('nonQRFormItems'),form:rect('form_sheld'),ball:{shown:S.enabled&&S.floatBall,keyboardHidden:root.classList.contains('ilg-kb-open'),rect:rect('ilg-ball')},
         rendering:{iosCompatible:iosMaterialActive(),engineRequested:S.engine,largeWebViewMessages:large,paths,surfaces},
         appearance:{requested:S.tone,actual:appearanceMode(),lightThumbnail:!!wallThumb('light'),darkThumbnail:!!wallThumb('dark'),customThumbnail:!!customWallThumb(),chatBackgroundLocked:chatBgLocked(),lastAction:lastAppearanceAction},
-        performance:interactionPerformance.status(),wallpapers:bundledWallpapers.status(),wallpaperRefraction:iosWallpaper.status(),workers:{reflections:reflections.status(),ball:((({mode,reason,suspended,pending,failures,graphics})=>({mode,reason,suspended,pending,failures,graphics}))(ballGlass.status()))},lighting:lighting.status(),captureNote:'Frame intervals describe page callbacks, not display flicker detection'};
+        performance:{...interactionPerformance.status(),messageWindows:messageWindows.status()},wallpapers:bundledWallpapers.status(),wallpaperRefraction:iosWallpaper.status(),workers:{reflections:reflections.status(),ball:((({mode,reason,suspended,pending,failures,graphics,workerEncoding,maxMainEncodeMs})=>({mode,reason,suspended,pending,failures,graphics,workerEncoding,maxMainEncodeMs}))(ballGlass.status()))},lighting:lighting.status(),captureNote:'Frame intervals describe page callbacks, not display flicker detection'};
 }
 const CAPTURE_SCENARIOS = {
     general: ['综合交互', ['上下滑动聊天几次，停一下，再来回滑动。', '拖动悬浮小球几次，观察是否跟手；未开启小球时可跳过。', '打开并收起＋和魔法棒各一次，再输入几个字并收起键盘。']],
@@ -2818,7 +2829,7 @@ function iosTrialReport() {
         '折射引擎: ' + ENGINE_NAMES.refraction,
         '界面轮廓计算: ' + JSON.stringify(reflections.status()),
         '消息渲染: ' + JSON.stringify(messageRendering.status()),
-        '悬浮球计算: ' + JSON.stringify((({mode, reason, suspended, active, pending, workerFrames, syncFrames, coalesced, failures, cacheEntries, graphics}) => ({mode, reason, suspended, active, pending, workerFrames, syncFrames, coalesced, failures, cacheEntries, graphics}))(ballGlass.status())),
+        '悬浮球计算: ' + JSON.stringify((({mode, reason, suspended, active, pending, workerFrames, syncFrames, coalesced, failures, cacheEntries, graphics, workerEncoding, maxMainEncodeMs}) => ({mode, reason, suspended, active, pending, workerFrames, syncFrames, coalesced, failures, cacheEntries, graphics, workerEncoding, maxMainEncodeMs}))(ballGlass.status())),
         '配套壁纸恢复: ' + JSON.stringify(bundledWallpapers.status()),
         '视口与键盘: ' + JSON.stringify(viewportDiagnostic()),
         '短时交互采集: ' + JSON.stringify(interactionDiagnostics.report()),
@@ -3715,7 +3726,7 @@ function cardDisplayReport({includeCapture=true}={}) {
             after: style(win.getComputedStyle(el, '::after')),
             solid: el.classList.contains('ilg-solid'),
         };
-        if (el.matches('.mes')) { result.glass = style(win.getComputedStyle(el.querySelector(':scope > .ilg-message-glass') || el)); const it=items.get(el);result.rendering={path:it?.renderPath||'not-tracked',fallbackReason:it?.fallbackReason||'',nearViewport:it?.visible===true}; }
+        if (el.matches('.mes')) { result.glass = style(win.getComputedStyle(el.querySelector(':scope > .ilg-message-glass') || el)); const it=items.get(el);result.rendering={path:it?.renderPath||'not-tracked',fallbackReason:it?.fallbackReason||'',nearViewport:it?.visible===true,windowed:it?.backdropWindowed===true,backdropSize:it?.backdropSize||null}; }
         if (el.tagName === 'IFRAME') {
             try {
                 const doc = el.contentDocument;

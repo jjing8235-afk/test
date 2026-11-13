@@ -1,11 +1,12 @@
+import { materializeGlassFrame } from './glass-frame.js';
 // One worker and one replaceable pending task for NVWA-owned glass work.
 // This queue never patches host timers, animation frames, workers or settings.
 export function createGlassPerformance({ computeSync, onResult, onError = () => {}, isBusy = () => false, workerFactory, graphics = false } = {}) {
     let worker = null, mode = 'idle', reason = '', active = null, pending = null;
     let serial = 0, generation = 0, startupTimer = 0, workTimer = 0, deferTimer = 0, suspended = false, permanent = false;
-    let busyUntil = 0, startupPainted = false, graphicsStatus = null;
+    let busyUntil = 0, startupPainted = false, graphicsStatus = null, workerEncoding = null;
     let graphicsMode = graphics ? 'adaptive' : 'cpu', graphicsFallback = '';
-    const counts = { workerFrames: 0, syncFrames: 0, coalesced: 0, stale: 0, failures: 0, peakTasks: 0 };
+    const counts = { workerFrames: 0, syncFrames: 0, coalesced: 0, stale: 0, failures: 0, peakTasks: 0, maxMainEncodeMs: 0 };
     const clock = () => performance.now();
     const clearTimers = () => { clearTimeout(startupTimer); clearTimeout(workTimer); clearTimeout(deferTimer); startupTimer = workTimer = deferTimer = 0; };
     const stopWorker = () => { if (worker) { worker.onmessage = worker.onerror = worker.onmessageerror = null; worker.terminate(); worker = null; } };
@@ -20,7 +21,7 @@ export function createGlassPerformance({ computeSync, onResult, onError = () => 
     function fail(why) {
         const latest = pending || active;
         const retryCPU = graphicsMode === 'adaptive' && mode === 'worker';
-        clearTimers(); stopWorker(); active = pending = null; graphicsStatus = null; counts.failures++;
+        clearTimers(); stopWorker(); active = pending = null; graphicsStatus = null; workerEncoding = null; counts.failures++;
         if (retryCPU && !suspended) {
             // A driver may stall inside readPixels. Replace that worker once; keep CPU raster off the page.
             graphicsMode = 'cpu'; graphicsFallback = 'gpu-' + why + '-cpu-worker';
@@ -51,15 +52,18 @@ export function createGlassPerformance({ computeSync, onResult, onError = () => 
                 if (message?.type === 'ready' && mode === 'starting') {
                     clearTimeout(startupTimer); startupTimer = 0;
                     if (!message.ok) { fail('canvas-unavailable'); return; }
-                    mode = 'worker'; drain(); return;
+                    workerEncoding=message.encoding||'png';mode = 'worker'; drain(); return;
                 }
                 if (!active || message?.id !== active.id) return;
                 if (message.type === 'error') { fail('render-failed'); return; }
                 if (message.type !== 'result') return;
+                let frame;
+                try{const at=clock();frame=materializeGlassFrame(message.frame);if(message.encoding==='pixels')counts.maxMainEncodeMs=Math.max(counts.maxMainEncodeMs,clock()-at);}catch{fail('encode-failed');return;}
+                if(message.encoding)workerEncoding=message.encoding;
                 const task = active; active = null; clearTimeout(workTimer); workTimer = 0;
                 counts.workerFrames++;
                 if (message.graphics) graphicsStatus = { ...message.graphics, ...(graphicsFallback ? { state: 'cpu', reason: graphicsFallback } : {}) };
-                try { deliver(task, message.frame); } catch (error) { onError(error); }
+                try { deliver(task, frame); } catch (error) { onError(error); }
                 drain();
             };
             worker.onerror = event => { event.preventDefault?.(); if (worker === instance) fail('worker-error'); };
@@ -100,7 +104,7 @@ export function createGlassPerformance({ computeSync, onResult, onError = () => 
         drain();
     }
     function stop() {
-        generation++; startupPainted = false; graphicsStatus = null; pending = active = null; clearTimers(); stopWorker();
+        generation++; startupPainted = false; graphicsStatus = null; workerEncoding = null; pending = active = null; clearTimers(); stopWorker();
         mode = permanent ? 'sync' : 'idle';
     }
     return {
@@ -110,6 +114,6 @@ export function createGlassPerformance({ computeSync, onResult, onError = () => 
         pause() { suspended = true; stop(); },
         resume() { suspended = false; },
         stop,
-        status: () => ({ mode, reason, suspended, active: Number(!!active), pending: Number(!!pending), graphics: graphicsStatus && { ...graphicsStatus }, ...counts }),
+        status: () => ({ mode, reason, suspended, active: Number(!!active), pending: Number(!!pending), graphics: graphicsStatus && { ...graphicsStatus }, workerEncoding, ...counts }),
     };
 }
