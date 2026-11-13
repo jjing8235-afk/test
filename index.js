@@ -31,7 +31,7 @@ window.__ilgLoaded = new URL('.', import.meta.url).pathname;
 
 let studioUI = null;
 const MODULE = 'iosLiquidGlass';
-const BUILD_VERSION = '2.0.7-test.1';
+const BUILD_VERSION = '2.0.8-test.1';
 const ENGINE_NAMES = Object.freeze({performance:'御风性能引擎',refraction:'棱光折射引擎'});
 const NS = 'http://www.w3.org/2000/svg';
 const ctx = SillyTavern.getContext();
@@ -3872,6 +3872,10 @@ new MutationObserver(muts => {
             if (clean(m.oldValue) === clean(m.target.getAttribute('class'))) continue;
         }
         const el = m.target.nodeType === 1 ? m.target : m.target.parentElement;
+        // A former last reply may already be outside the IO margin. Re-measure
+        // it when the host moves last_mes, without waiting for another crossing.
+        if (m.type === 'attributes' && m.attributeName === 'class' && el.parentElement === chatEl && el.matches('.mes')
+            && (m.oldValue || '').split(/\s+/).includes('last_mes') !== el.classList.contains('last_mes')) messageRendering.invalidate(el, true);
         const text = el?.closest?.('.mes_text');
         if (text) { dirty.add(text); continue; }
         m.addedNodes.forEach(n => { if (n.nodeType === 1) (n.matches('.mes_text') ? [n] : n.querySelectorAll('.mes_text')).forEach(t => dirty.add(t)); });

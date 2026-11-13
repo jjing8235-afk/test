@@ -4608,9 +4608,9 @@ html.ilg.ilg-prose-inset-on body #chat .mes:not(.smallSysMes):not([is_system="tr
 }
 html.ilg body #ilg-appearance-panel .ilg-reading-preview { line-height: var(--ilg-prose-leading-user, var(--ilg-prose-leading)); }
 
-/* Plain messages outside the existing 200px visibility margin keep their measured
-   content height. Flex items must not shrink when their contents are skipped.
-   Visible messages and custom/iframe renderers retain their normal overflow. */
+/* Eligible plain messages retain automatic containment across viewport crossings.
+   The browser skips distant content and remembers its size without scroll-time
+   class/layout churn. Custom cards, iframes and the newest reply stay unmanaged. */
 html.ilg body #chat > .mes.ilg-render-away:not(.last_mes):not(.ilg-content-overlay):not(.ilg-card-renderer) {
     flex-shrink: 0;
     content-visibility: auto;

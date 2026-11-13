@@ -1,6 +1,6 @@
 {
-  "currentVersion": "2.0.7-test.1",
-  "currentDisplayVersion": "2.0.7-test.1",
+  "currentVersion": "2.0.8-test.1",
+  "currentDisplayVersion": "2.0.8-test.1",
   "date": "2026-11-05",
   "version": "1.4.4-local.9",
   "baseline": "1.4.4-local.8",
@@ -3318,5 +3318,136 @@
       "Native game classification requires a rebuilt host; the beauty extension cannot change installed app metadata.",
       "No OS CPU/GPU clock or game-mode permission has been obtained."
     ]
+  },
+  "browser208": {
+    "date": "2026-11-13",
+    "version": "2.0.8-test.1",
+    "baseline": "e416c6fbef2eaef371b00ec2b3de06de8332d916",
+    "scope": "Stable safe-prose containment across viewport crossings in ordinary mobile browsers",
+    "checks": [
+      {
+        "name": "rendering-edge",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "rendering-webkit",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "host-interaction",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "ordinary-continuity",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "tt-continuity",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "webkit-continuity",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "chat-font",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "shortcuts",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "keyboard",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "font-subset",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "resize",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "interaction",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "chat-background",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "message-window",
+        "passed": true,
+        "exit": 0
+      }
+    ],
+    "scrollContainmentChanges": {
+      "baseline": 56,
+      "candidate": 0,
+      "scenario": "Four round-trip jumps in 243-message fixture"
+    },
+    "comparison": {
+      "scene": "1000 plain messages, 100 RAF scroll steps, first 10 omitted; three alternating before/after pairs",
+      "environment": "Windows desktop Edge, ordinary Android Chrome UA, 393x759 DPR2, CDP CPU throttle x4",
+      "baselineMedian": {
+        "TaskDuration": 0.623765,
+        "ScriptDuration": 0.05607,
+        "LayoutDuration": 0.019498,
+        "RecalcStyleDuration": 0.032696,
+        "LayoutCount": 15,
+        "RecalcStyleCount": 15
+      },
+      "candidateMedian": {
+        "TaskDuration": 0.5690500000000001,
+        "ScriptDuration": 0.052035,
+        "LayoutDuration": 0.010201,
+        "RecalcStyleDuration": 0.004515,
+        "LayoutCount": 8,
+        "RecalcStyleCount": 8
+      },
+      "styleWorkReduction": 0.8619097137264498,
+      "layoutWorkReduction": 0.47681813519335325,
+      "callbackP95Ms": {
+        "baselineMedian": 8.4,
+        "candidateMedian": 4.3
+      },
+      "physicalPhone": false
+    },
+    "visual": {
+      "sameVisibleProseGeometry": true,
+      "sameScrollHeight": true,
+      "sameGlassFilter": true,
+      "screenshotInspected": true
+    },
+    "knownFixtureFailures": [
+      {
+        "name": "fold-menu-font-browser",
+        "reason": "Legacy menu-count expectation 7, actual 8; reproduced unchanged 2.0.7 baseline. Separate font-only path addresses controls inside the obsolete settings location and times out. Not counted as passed."
+      }
+    ],
+    "limitations": [
+      "No physical mobile Chrome or Edge measurements; no promise of homepage-equivalent performance",
+      "Headless desktop callback timings are not display FPS",
+      "Synthetic host fixtures; local SillyTavern at 127.0.0.1:8090 was offline",
+      "Chrome UA exercises shared mobile branch; executable tested was Edge, plus Playwright WebKit for lifecycle/continuity",
+      "Authored card internals remain outside safe-prose containment",
+      "Home arm is an idle reference and not an equivalent scrolling workload"
+    ],
+    "evidenceDirectory": "D:/claudecod1/st-verify/out/browser208"
   }
 }

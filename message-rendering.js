@@ -24,14 +24,29 @@ export function fontLoadMayChangeText(faces, texts) {
     return false;
 }
 
-// Preserve message DOM and exact measured heights while the browser skips distant plain text.
+// Keep safe prose under stable browser-managed containment. Entering/leaving the
+// viewport must not toggle layout containment or force message remeasurement.
 const MARK = 'ilg-render-away', SIZE = '--ilg-message-height';
 const TAGS = new Set('P BR Q EM I B STRONG S DEL U A UL OL LI BLOCKQUOTE H1 H2 H3 H4 H5 H6 HR CODE PRE SPAN'.split(' '));
 const OWN_CLASSES = new Set(['ilg-prose', 'ilg-indentable']);
 export function createMessageRendering(chat, { onReset = () => {} } = {}) {
     const doc = chat.ownerDocument, root = doc.documentElement, win = doc.defaultView;
     const supported = !!win.CSS?.supports?.('content-visibility', 'auto') && !!win.CSS?.supports?.('contain-intrinsic-block-size', 'auto 1px');
-    const states = new Map();
+    const states = new Map(), widthResets = new Set();
+    let widthFrame = 0;
+    function cancelWidthReset(el) {
+        widthResets.delete(el);
+        if (!widthResets.size && widthFrame) { win.cancelAnimationFrame(widthFrame); widthFrame = 0; }
+    }
+    function deferWidthReset(el) {
+        widthResets.add(el);
+        if (widthFrame) return;
+        widthFrame = win.requestAnimationFrame(() => {
+            widthFrame = 0;
+            const pending = [...widthResets]; widthResets.clear();
+            for (const element of pending) { const state = states.get(element); if (state) reset(element, state); }
+        });
+    }
     let environment = '';
     const excluded = el => el.matches('.last_mes, .smallSysMes, .ilg-content-overlay, .ilg-card-renderer, [is_system="true"]');
     function plain(el) {
@@ -44,18 +59,19 @@ export function createMessageRendering(chat, { onReset = () => {} } = {}) {
         return true;
     }
     function clear(el, state) {
-        if (!state.culled) return;
-        state.culled = false; el.classList.remove(MARK); el.style.removeProperty(SIZE);
+        if (!state.managed) return;
+        state.managed = false; el.classList.remove(MARK); el.style.removeProperty(SIZE);
     }
     function apply(el, state) {
-        if (state.near !== false || state.height === null || excluded(el) || !el.isConnected) { clear(el, state); return; }
+        if (state.height === null || excluded(el) || !el.isConnected) { clear(el, state); return; }
         if (state.plain === null) state.plain = plain(el);
         if (!state.plain) { clear(el, state); return; }
-        if (!state.culled) {
-            el.style.setProperty(SIZE, state.height + 'px'); el.classList.add(MARK); state.culled = true;
+        if (!state.managed) {
+            el.style.setProperty(SIZE, state.height + 'px'); el.classList.add(MARK); state.managed = true;
         }
     }
     function reset(el, state) {
+        cancelWidthReset(el);
         clear(el, state); state.height = null; state.plain = null;
         if (el.isConnected) onReset(el);
     }
@@ -87,30 +103,39 @@ export function createMessageRendering(chat, { onReset = () => {} } = {}) {
         track(el) {
             if (!supported || states.has(el)) return;
             if (!states.size) listen(true);
-            states.set(el, { near: null, height: null, width: null, plain: null, culled: false });
+            states.set(el, { near: null, height: null, width: null, plain: null, managed: false });
         },
         resize(el, contentHeight, contentWidth) {
             const state = states.get(el); if (!state) return;
-            if (state.culled && state.width !== null && Number.isFinite(contentWidth) && Math.abs(contentWidth - state.width) > .25) {
-                state.width = contentWidth; reset(el, state); return;
+            if (state.managed && state.width !== null && Number.isFinite(contentWidth) && Math.abs(contentWidth - state.width) > .25) {
+                // Releasing size containment inside ResizeObserver can trigger a
+                // resize feedback warning in WebKit. Batch width resets next frame.
+                state.width = contentWidth; deferWidthReset(el); return;
             }
+            if (widthResets.has(el)) return;
             if (Number.isFinite(contentWidth)) state.width = contentWidth;
             if (excluded(el)) {
                 clear(el, state);
                 if (Number.isFinite(contentHeight) && contentHeight > 0) state.height = contentHeight;
                 return;
             }
-            if (!state.culled && Number.isFinite(contentHeight) && contentHeight > 0) state.height = contentHeight;
+            // A near message has real content geometry; distant skipped boxes may
+            // report only the intrinsic placeholder. Never cache that as a new size.
+            if ((!state.managed || state.near === true) && Number.isFinite(contentHeight) && contentHeight > 0) {
+                if (state.managed && Math.abs(contentHeight - state.height) > .25) el.style.setProperty(SIZE, contentHeight + 'px');
+                state.height = contentHeight;
+            }
             apply(el, state);
         },
         visibility(el, near) { const state = states.get(el); if (state) { state.near = near; apply(el, state); } },
-        invalidate(el) {
+        invalidate(el, remeasure = false) {
             const state = states.get(el); if (!state) return;
             state.plain = null;
-            if (state.culled) reset(el, state);
+            if (state.managed || remeasure) reset(el, state);
         },
-        release(el) { const state = states.get(el); if (!state) return; clear(el, state); states.delete(el); if (!states.size) listen(false); },
+        release(el) { const state = states.get(el); if (!state) return; cancelWidthReset(el); clear(el, state); states.delete(el); if (!states.size) listen(false); },
         invalidateAll,
-        status: () => ({ supported, tracked: states.size, culled: [...states.values()].filter(s => s.culled).length }),
+        // Distant is our visibility estimate, not a count of browser-skipped paint.
+        status: () => ({ supported, tracked: states.size, managed: [...states.values()].filter(s => s.managed).length, distant: [...states.values()].filter(s => s.managed && s.near === false).length }),
     };
 }

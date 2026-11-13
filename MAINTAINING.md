@@ -1,3 +1,15 @@
+# 2.0.8-test.1 · 普通浏览器长聊天滚动（2026-11-13）
+
+当前测试版为 2.0.8-test.1。设置命名空间、迁移版本和材质参数不变。
+
+- 安全普通正文稳定保留 content-visibility:auto，由浏览器决定何时跳过屏外内容。IO 视野边界不再添加/移除布局 containment；现有类名 ilg-render-away 保留，但表示纳入渲染管理，并非当前不可见。
+- 仍排除最新回复、系统消息、自绘卡片、iframe 与原有复杂内容；不删除/替换消息 DOM。诊断以 managed / distant 区分受管理数量和 IO 距离估计，不声称测到了浏览器实际跳过的数量。
+- 宽度变化在下一帧批量清除过期尺寸，避免 WebKit ResizeObserver 反馈警告；销毁时取消待处理任务。字号、字体、正文编辑继续使高度缓存失效；宿主移交 last_mes 时显式刷新原末条消息。
+- message-rendering-browser 覆盖往返滚动无 containment 变动、布局高度、字体/容器变化、屏外编辑、查找、卡片定位与清理。browser-scroll-performance 提供同机交替 A/B，需 NVWA_BASELINE_RENDERING 指向旧 message-rendering.js，NVWA_PROFILE_OUT 指向独立输出目录。
+- VALIDATION.json.browser208 记录证据与限制。性能百分比只对应样式/布局工作，不等于手机帧率或整机性能。首页场景为空闲参考，不构成聊天与首页同样流畅的验收。普通浏览器并未获得原生游戏/CPU/GPU 调度授权。
+
+---
+
 # 2.0.7-test.1 · 滚动与菜单连续玻璃（2026-11-13）
 
 当前测试版本为 2.0.7-test.1。修复 2.0.5 引入的交互材质切换，设置命名空间和迁移版本不变。以下历史记录保留，不代表当前状态。
