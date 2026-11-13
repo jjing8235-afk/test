@@ -4455,11 +4455,11 @@ html.ilg body.reduced-motion .ilg-glass.ilg-reflection:is(.ilg-glass, #ilg-floor
 
 /* Opt-in pose light owns a neutral contour, independent of the fixed light map.
    This lets the bright segment travel to either side without rasterising new images. */
-html.ilg.ilg-tilt-light {
+html.ilg.ilg-tilt-light .ilg-pose-surface {
     --ilg-pose-rim: radial-gradient(ellipse 32% 120% at calc(50% + var(--ilg-tilt-x, 0) * 60%) calc(32% + var(--ilg-tilt-y, 0) * 80%), rgba(255,255,255,.72), rgba(238,249,255,.32) 42%, transparent 78%);
 }
 /* On a pale backdrop, a cool refracted shoulder provides contrast for the white glint. */
-html.ilg.ilg-tilt-light.ilg-light {
+html.ilg.ilg-tilt-light.ilg-light .ilg-pose-surface {
     --ilg-pose-rim: radial-gradient(ellipse 32% 120% at calc(50% + var(--ilg-tilt-x, 0) * 60%) calc(32% + var(--ilg-tilt-y, 0) * 80%), rgba(255,255,255,.85), rgba(42,69,96,.55) 42%, transparent 78%);
 }
 html.ilg.ilg-tilt-light body:not(.no-blur):not(.reduced-motion) .ilg-glass.ilg-reflection:is(.ilg-glass, #ilg-floor):not(.mes)::before {

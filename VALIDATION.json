@@ -1,6 +1,6 @@
 {
-  "currentVersion": "2.0.4-test.1",
-  "currentDisplayVersion": "2.0.4-test.1",
+  "currentVersion": "2.0.10-test.1",
+  "currentDisplayVersion": "2.0.10-test.1",
   "date": "2026-11-05",
   "version": "1.4.4-local.9",
   "baseline": "1.4.4-local.8",
@@ -3082,5 +3082,594 @@
       "physical iPhone visual comparison",
       "real-device scroll keyboard and drag response"
     ]
+  },
+  "restart204": {
+    "date": "2026-11-13",
+    "version": "2.0.10-test.1",
+    "sourceBaseline": "c18e29fe8c9fe47f609e9a8ba3aaf391ee780dcc",
+    "supersedes": "2.0.9-test.1",
+    "scope": "Rebuild the complete 2.0.4 runtime; bound live pose inheritance to glass surfaces without altering optics or update cadence",
+    "unchangedBaselineModules": [
+      "glass2.js",
+      "ball-raster.js",
+      "control-material.js",
+      "glass-lighting.js",
+      "liquid-glass-web.js",
+      "glass-worker.js",
+      "glass-performance.js",
+      "glass-reflections.js",
+      "message-rendering.js",
+      "ios-wallpaper-refraction.js",
+      "settings-panel.js",
+      "settings-panel.css"
+    ],
+    "runtimeChanges": [
+      "index.js",
+      "style.css",
+      "ball-glass.js",
+      "light-scope.js"
+    ],
+    "offlinePassed": 29,
+    "focusedBrowserPassed": 3,
+    "verification": [
+      {
+        "name": "ball-drag-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "ball-raster-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "bundled-wallpapers-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "card-solid-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "chat-background-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "chat-font-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "filter-reuse-regression.mjs",
+        "passed": true,
+        "exit": 0,
+        "rerunReason": "Extracted paint DOM stub now includes the scoped light sink"
+      },
+      {
+        "name": "first-line-indent-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "fixed-position-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "font-subset-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "form-scroll-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "glass-performance-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "interaction-diagnostics-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "ios-wallpaper-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "keyboard-lifecycle-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "light-scope-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "mobile-performance-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "mobile-tilt-permission-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "mobile-tilt-response-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "popup-boundary-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "range-value-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "reflection-queue-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "reflection-raster-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "resize-batch-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "settings-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "surface-policy-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "top-shortcuts-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "tt-compat-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "wallpaper-sampling-regression.mjs",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "host-interaction",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "message-rendering",
+        "passed": true,
+        "exit": 0
+      },
+      {
+        "name": "home-avatar",
+        "passed": false,
+        "exit": 1
+      },
+      {
+        "name": "ios-material",
+        "passed": false,
+        "exit": 1
+      },
+      {
+        "name": "pose-webkit",
+        "passed": true,
+        "exit": 0
+      }
+    ],
+    "knownBaselineFailures": [
+      {
+        "name": "home-avatar",
+        "reason": "Legacy audit anchor was repaired; storage-boundary assertion also fails on pristine 2.0.4 under the same repaired harness."
+      },
+      {
+        "name": "ios-material",
+        "reason": "Legacy fixture requires blur(1px) and an old local diagnostic version; initial assertion fails on pristine 2.0.4 too."
+      }
+    ],
+    "redBeforeFix": "20 original pose callbacks wrote 40 inherited root variables; regression failed before changing the callback",
+    "poseWorkload": {
+      "environment": "Desktop Edge / NVIDIA RTX5080, CPU4, 393x759 DPR2, 600 synthetic messages / 9600 chat descendants",
+      "samples": 50,
+      "nominalGapMs": 33,
+      "source": "pose-scope-corrected.json",
+      "results": [
+        {
+          "arm": "original",
+          "mode": "pose",
+          "frames": 100,
+          "p95": 95.89999999999964,
+          "over34": 50,
+          "glass": 608,
+          "filters": 11,
+          "nodes": 9600,
+          "rootTilt": "0.34",
+          "topRim": "radial-gradient(90px 34px at 25% 10%, rgba(251, 254, 255, 0), rgba(0, 0, 0, 0) 80%), radial-gradient(32% 120% at 70.4% 15.2%, rgba(255, 255, 255, 0.72), rgba(238, 249, 255, 0.32) 42%, rgba(0, 0, 0, 0) 78%)",
+          "mesContent": "这是完整材质的持续交互测试。高光、折射和正文都保持原样。 Continuous reading content.这是完整材质的持续交互测试。高光、折射和正文都保持原样。 Continuous reading content.这是完整材质的持续交互测试。高光、折射和正文都保持原样。 Continuous reading content.这是完整材质的持续交互测试。高光、折射和正文都保持原样。 Continuous reading content.这是完整材质的持续交互测试。高光、折射和正文都保持原样。 Continuous reading content.这是完整材质的持续交互测试。高光、折射和正文都保持原样。 Continuous reading content.",
+          "metrics": {
+            "Nodes": -3079,
+            "LayoutCount": 1,
+            "RecalcStyleCount": 54,
+            "LayoutDuration": 0.000395,
+            "RecalcStyleDuration": 4.037364,
+            "ScriptDuration": 0.009662,
+            "TaskDuration": 4.521908,
+            "JSHeapUsedSize": 70332
+          },
+          "errors": [],
+          "physicalPhone": false
+        },
+        {
+          "arm": "original",
+          "mode": "scroll-pose",
+          "frames": 284,
+          "p95": 95.89999999999964,
+          "over34": 50,
+          "glass": 608,
+          "filters": 11,
+          "nodes": 9600,
+          "rootTilt": "0.34",
+          "topRim": "radial-gradient(90px 34px at 25% 10%, rgba(251, 254, 255, 0), rgba(0, 0, 0, 0) 80%), radial-gradient(32% 120% at 70.4% 15.2%, rgba(255, 255, 255, 0.72), rgba(238, 249, 255, 0.32) 42%, rgba(0, 0, 0, 0) 78%)",
+          "mesContent": "这是完整材质的持续交互测试。高光、折射和正文都保持原样。 Continuous reading content.这是完整材质的持续交互测试。高光、折射和正文都保持原样。 Continuous reading content.这是完整材质的持续交互测试。高光、折射和正文都保持原样。 Continuous reading content.这是完整材质的持续交互测试。高光、折射和正文都保持原样。 Continuous reading content.这是完整材质的持续交互测试。高光、折射和正文都保持原样。 Continuous reading content.这是完整材质的持续交互测试。高光、折射和正文都保持原样。 Continuous reading content.",
+          "metrics": {
+            "Nodes": 90,
+            "LayoutCount": 8,
+            "RecalcStyleCount": 71,
+            "LayoutDuration": 0.007048,
+            "RecalcStyleDuration": 4.089745,
+            "ScriptDuration": 0.740471,
+            "TaskDuration": 5.3292,
+            "JSHeapUsedSize": 301684
+          },
+          "errors": [],
+          "physicalPhone": false
+        },
+        {
+          "arm": "candidate",
+          "mode": "pose",
+          "frames": 402,
+          "p95": 8.300000000000182,
+          "over34": 1,
+          "glass": 608,
+          "filters": 11,
+          "nodes": 9600,
+          "rootTilt": "",
+          "topRim": "radial-gradient(90px 34px at 25% 10%, rgba(251, 254, 255, 0), rgba(0, 0, 0, 0) 80%), radial-gradient(32% 120% at 70.4% 15.2%, rgba(255, 255, 255, 0.72), rgba(238, 249, 255, 0.32) 42%, rgba(0, 0, 0, 0) 78%)",
+          "mesContent": "这是完整材质的持续交互测试。高光、折射和正文都保持原样。 Continuous reading content.这是完整材质的持续交互测试。高光、折射和正文都保持原样。 Continuous reading content.这是完整材质的持续交互测试。高光、折射和正文都保持原样。 Continuous reading content.这是完整材质的持续交互测试。高光、折射和正文都保持原样。 Continuous reading content.这是完整材质的持续交互测试。高光、折射和正文都保持原样。 Continuous reading content.这是完整材质的持续交互测试。高光、折射和正文都保持原样。 Continuous reading content.",
+          "metrics": {
+            "Nodes": -3183,
+            "LayoutCount": 1,
+            "RecalcStyleCount": 110,
+            "LayoutDuration": 0.0004,
+            "RecalcStyleDuration": 0.327576,
+            "ScriptDuration": 0.008207,
+            "TaskDuration": 0.988161,
+            "JSHeapUsedSize": -1184316
+          },
+          "errors": [],
+          "physicalPhone": false
+        },
+        {
+          "arm": "candidate",
+          "mode": "scroll-pose",
+          "frames": 408,
+          "p95": 12.399999999999636,
+          "over34": 0,
+          "glass": 608,
+          "filters": 11,
+          "nodes": 9600,
+          "rootTilt": "",
+          "topRim": "radial-gradient(90px 34px at 25% 10%, rgba(251, 254, 255, 0), rgba(0, 0, 0, 0) 80%), radial-gradient(32% 120% at 70.4% 15.2%, rgba(255, 255, 255, 0.72), rgba(238, 249, 255, 0.32) 42%, rgba(0, 0, 0, 0) 78%)",
+          "mesContent": "这是完整材质的持续交互测试。高光、折射和正文都保持原样。 Continuous reading content.这是完整材质的持续交互测试。高光、折射和正文都保持原样。 Continuous reading content.这是完整材质的持续交互测试。高光、折射和正文都保持原样。 Continuous reading content.这是完整材质的持续交互测试。高光、折射和正文都保持原样。 Continuous reading content.这是完整材质的持续交互测试。高光、折射和正文都保持原样。 Continuous reading content.这是完整材质的持续交互测试。高光、折射和正文都保持原样。 Continuous reading content.",
+          "metrics": {
+            "Nodes": 4,
+            "LayoutCount": 8,
+            "RecalcStyleCount": 99,
+            "LayoutDuration": 0.007401,
+            "RecalcStyleDuration": 0.260988,
+            "ScriptDuration": 0.290142,
+            "TaskDuration": 1.085547,
+            "JSHeapUsedSize": 342804
+          },
+          "errors": [],
+          "physicalPhone": false
+        }
+      ],
+      "physicalPhone": false
+    },
+    "visual": {
+      "width": 393,
+      "height": 759,
+      "differentPixelsAbove2": 0,
+      "totalPixels": 298287,
+      "topDifferentPixels": 0,
+      "meanMaxChannelError": 0,
+      "materialMatrixEqual": true,
+      "matrix": [
+        {
+          "arm": "original",
+          "matrix": [
+            {
+              "config": {
+                "tone": "light",
+                "engine": "physical",
+                "glassStyle": "original",
+                "compatibilityMode": "auto"
+              },
+              "topRim": "radial-gradient(90px 34px at 25% 10%, rgba(251, 254, 255, 0), rgba(0, 0, 0, 0) 80%), radial-gradient(32% 120% at 70.4% 15.2%, rgba(255, 255, 255, 0.85), rgba(42, 69, 96, 0.55) 42%, rgba(0, 0, 0, 0) 78%)",
+              "ballRim": "radial-gradient(32% 120% at 70.4% 15.2%, rgba(255, 255, 255, 0.85), rgba(42, 69, 96, 0.55) 42%, rgba(0, 0, 0, 0) 78%)",
+              "inputFilter": "url(\"#ilg-f609\")",
+              "paragraphs": 3600
+            },
+            {
+              "config": {
+                "tone": "dark",
+                "engine": "legacy",
+                "glassStyle": "original",
+                "compatibilityMode": "auto"
+              },
+              "topRim": "radial-gradient(90px 34px at 25% 10%, rgba(251, 254, 255, 0), rgba(0, 0, 0, 0) 80%), radial-gradient(32% 120% at 70.4% 15.2%, rgba(255, 255, 255, 0.72), rgba(238, 249, 255, 0.32) 42%, rgba(0, 0, 0, 0) 78%)",
+              "ballRim": null,
+              "inputFilter": "url(\"#ilg-f1217\") blur(0.25px) saturate(1.1) brightness(1.02)",
+              "paragraphs": 3600
+            },
+            {
+              "config": {
+                "engine": "physical",
+                "glassStyle": "liquid-web",
+                "compatibilityMode": "auto"
+              },
+              "topRim": "radial-gradient(90px 34px at 25% 10%, rgba(251, 254, 255, 0), rgba(0, 0, 0, 0) 80%), radial-gradient(32% 120% at 70.4% 15.2%, rgba(255, 255, 255, 0.72), rgba(238, 249, 255, 0.32) 42%, rgba(0, 0, 0, 0) 78%)",
+              "ballRim": "radial-gradient(32% 120% at 70.4% 15.2%, rgba(255, 255, 255, 0.72), rgba(238, 249, 255, 0.32) 42%, rgba(0, 0, 0, 0) 78%)",
+              "inputFilter": "url(\"#ilg-f1826-web\") blur(0.25px) contrast(1.2) brightness(1.05) saturate(1.1)",
+              "paragraphs": 3600
+            },
+            {
+              "config": {
+                "compatibilityMode": "blur"
+              },
+              "topRim": "radial-gradient(32% 120% at 70.4% 15.2%, rgba(255, 255, 255, 0.72), rgba(238, 249, 255, 0.32) 42%, rgba(0, 0, 0, 0) 78%)",
+              "ballRim": null,
+              "inputFilter": "blur(0.75px) saturate(1.1)",
+              "paragraphs": 3600
+            }
+          ]
+        },
+        {
+          "arm": "candidate",
+          "matrix": [
+            {
+              "config": {
+                "tone": "light",
+                "engine": "physical",
+                "glassStyle": "original",
+                "compatibilityMode": "auto"
+              },
+              "topRim": "radial-gradient(90px 34px at 25% 10%, rgba(251, 254, 255, 0), rgba(0, 0, 0, 0) 80%), radial-gradient(32% 120% at 70.4% 15.2%, rgba(255, 255, 255, 0.85), rgba(42, 69, 96, 0.55) 42%, rgba(0, 0, 0, 0) 78%)",
+              "ballRim": "radial-gradient(32% 120% at 70.4% 15.2%, rgba(255, 255, 255, 0.85), rgba(42, 69, 96, 0.55) 42%, rgba(0, 0, 0, 0) 78%)",
+              "inputFilter": "url(\"#ilg-f609\")",
+              "paragraphs": 3600
+            },
+            {
+              "config": {
+                "tone": "dark",
+                "engine": "legacy",
+                "glassStyle": "original",
+                "compatibilityMode": "auto"
+              },
+              "topRim": "radial-gradient(90px 34px at 25% 10%, rgba(251, 254, 255, 0), rgba(0, 0, 0, 0) 80%), radial-gradient(32% 120% at 70.4% 15.2%, rgba(255, 255, 255, 0.72), rgba(238, 249, 255, 0.32) 42%, rgba(0, 0, 0, 0) 78%)",
+              "ballRim": null,
+              "inputFilter": "url(\"#ilg-f1217\") blur(0.25px) saturate(1.1) brightness(1.02)",
+              "paragraphs": 3600
+            },
+            {
+              "config": {
+                "engine": "physical",
+                "glassStyle": "liquid-web",
+                "compatibilityMode": "auto"
+              },
+              "topRim": "radial-gradient(90px 34px at 25% 10%, rgba(251, 254, 255, 0), rgba(0, 0, 0, 0) 80%), radial-gradient(32% 120% at 70.4% 15.2%, rgba(255, 255, 255, 0.72), rgba(238, 249, 255, 0.32) 42%, rgba(0, 0, 0, 0) 78%)",
+              "ballRim": "radial-gradient(32% 120% at 70.4% 15.2%, rgba(255, 255, 255, 0.72), rgba(238, 249, 255, 0.32) 42%, rgba(0, 0, 0, 0) 78%)",
+              "inputFilter": "url(\"#ilg-f1826-web\") blur(0.25px) contrast(1.2) brightness(1.05) saturate(1.1)",
+              "paragraphs": 3600
+            },
+            {
+              "config": {
+                "compatibilityMode": "blur"
+              },
+              "topRim": "radial-gradient(32% 120% at 70.4% 15.2%, rgba(255, 255, 255, 0.72), rgba(238, 249, 255, 0.32) 42%, rgba(0, 0, 0, 0) 78%)",
+              "ballRim": null,
+              "inputFilter": "blur(0.75px) saturate(1.1)",
+              "paragraphs": 3600
+            }
+          ]
+        }
+      ],
+      "iphoneWebKitMatrixPassed": true,
+      "sensorMathCadenceUnchanged": true
+    },
+    "nativeMenu": {
+      "hostVersion": "1.18.0",
+      "independentDataRoot": true,
+      "allExtensionAssetsFromEachArm": true,
+      "syntheticMessages": 400,
+      "preconditioningMenuPairs": 12,
+      "before": [
+        {
+          "arm": "before",
+          "stage": "early",
+          "samples": 0,
+          "busySamples": 0,
+          "p95": 16.69999999999891,
+          "over34": 12,
+          "max": 162.40000000000146,
+          "glass": 417,
+          "filters": 12,
+          "draftPreserved": true,
+          "messages": 400,
+          "openings": [
+            293,
+            130,
+            124,
+            137,
+            131,
+            158
+          ],
+          "metrics": {
+            "Nodes": 215,
+            "LayoutCount": 36,
+            "RecalcStyleCount": 711,
+            "LayoutDuration": 0.040424,
+            "RecalcStyleDuration": 0.524305,
+            "ScriptDuration": 0.441747,
+            "TaskDuration": 4.632961,
+            "JSHeapUsedSize": -2760864
+          },
+          "heap": 20254364,
+          "physicalPhone": false
+        },
+        {
+          "arm": "before",
+          "stage": "aged",
+          "samples": 0,
+          "busySamples": 0,
+          "p95": 12.60000000000582,
+          "over34": 12,
+          "max": 66.70000000000073,
+          "glass": 417,
+          "filters": 12,
+          "draftPreserved": true,
+          "messages": 400,
+          "openings": [
+            87,
+            108,
+            116,
+            138,
+            117,
+            130
+          ],
+          "metrics": {
+            "Nodes": 42,
+            "LayoutCount": 29,
+            "RecalcStyleCount": 786,
+            "LayoutDuration": 0.013779000000000013,
+            "RecalcStyleDuration": 0.5371739999999998,
+            "ScriptDuration": 0.36307,
+            "TaskDuration": 4.245737,
+            "JSHeapUsedSize": 6500632
+          },
+          "heap": 25689216,
+          "physicalPhone": false
+        }
+      ],
+      "candidate": [
+        {
+          "arm": "candidate",
+          "stage": "early",
+          "samples": 0,
+          "busySamples": 0,
+          "p95": 16.69999999999891,
+          "over34": 13,
+          "max": 154.1999999999989,
+          "glass": 417,
+          "filters": 12,
+          "draftPreserved": true,
+          "messages": 400,
+          "openings": [
+            294,
+            132,
+            125,
+            126,
+            124,
+            118
+          ],
+          "metrics": {
+            "Nodes": 215,
+            "LayoutCount": 36,
+            "RecalcStyleCount": 738,
+            "LayoutDuration": 0.038762,
+            "RecalcStyleDuration": 0.536266,
+            "ScriptDuration": 0.419168,
+            "TaskDuration": 4.636691,
+            "JSHeapUsedSize": 3605412
+          },
+          "heap": 24564268,
+          "physicalPhone": false
+        },
+        {
+          "arm": "candidate",
+          "stage": "aged",
+          "samples": 0,
+          "busySamples": 0,
+          "p95": 16.599999999998545,
+          "over34": 11,
+          "max": 70.79999999999563,
+          "glass": 417,
+          "filters": 12,
+          "draftPreserved": true,
+          "messages": 400,
+          "openings": [
+            88,
+            126,
+            108,
+            131,
+            123,
+            123
+          ],
+          "metrics": {
+            "Nodes": 42,
+            "LayoutCount": 29,
+            "RecalcStyleCount": 803,
+            "LayoutDuration": 0.015298000000000006,
+            "RecalcStyleDuration": 0.5199510000000003,
+            "ScriptDuration": 0.370741,
+            "TaskDuration": 4.245417999999999,
+            "JSHeapUsedSize": 5043184
+          },
+          "heap": 24223212,
+          "physicalPhone": false
+        }
+      ],
+      "noPoseTotalTaskDurationSeconds": {
+        "before": 4.245737,
+        "candidate": 4.245417999999999
+      },
+      "pageErrors": []
+    },
+    "limitations": [
+      "No physical phone validation or mobile FPS claim",
+      "Pose callback is exercised with deterministic synthetic points; physical sensor delivery is not measured",
+      "When pose lighting is disabled, native menu tests show similar total work to 2.0.4 and variable callback tails; do not claim a general menu speedup",
+      "No GPU/CPU game authorization, quality reduction, blur removal, pose-rate reduction or card modification",
+      "Early prototype with missing gradient scope is excluded; corrected results require unchanged gradient strings and pixel identity"
+    ],
+    "evidenceDirectory": "D:/claudecod1/st-verify/out/restart204"
   }
 }

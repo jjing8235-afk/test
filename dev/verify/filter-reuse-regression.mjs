@@ -79,6 +79,7 @@ let painted = 0;
 const element = { isConnected: true, offsetWidth: 0, offsetHeight: 0, style: {}, classList: { toggle() {} } };
 const hiddenItem = { kind: 'bar' };
 vm.runInNewContext('(function(el, geo){' + paintBody + '})(el)', {
+    lightScope: { visibility() {} },
     measure: e => ({ w: e.offsetWidth, h: e.offsetHeight, r: 0 }), messageSurface: e => e,
     controlSurface: () => false, controlReadable: () => false, cssGlassActive: () => false, webStyleEnabled: () => false,
     iosWallpaperRequested:()=>false, iosWallpaper:{release(){}}, webGlass: { release() {} }, reflections: { release() {} }, surfaceBlur: () => 1,

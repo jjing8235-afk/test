@@ -19,6 +19,7 @@ import { createLiquidGlassWeb } from './liquid-glass-web.js';
 import { createCardTextClarity } from './card-clarity.js';
 import { createGlassReflections } from './glass-reflections.js';
 import { createGlassLighting } from './glass-lighting.js';
+import { createLightScope } from './light-scope.js';
 import { wallpaperLayout, wallpaperPoint, topTone } from './wallpaper-sampling.js';
 import { createAppearanceBookmark } from './appearance-bookmark.js';
 import { onViewportChange, createKeyboard, createReadingAnchor } from './viewport.js';
@@ -29,7 +30,7 @@ window.__ilgLoaded = new URL('.', import.meta.url).pathname;
 
 let studioUI = null;
 const MODULE = 'iosLiquidGlass';
-const BUILD_VERSION = '2.0.4-test.1';
+const BUILD_VERSION = '2.0.10-test.1';
 const ENGINE_NAMES = Object.freeze({performance:'御风性能引擎',refraction:'棱光折射引擎'});
 const NS = 'http://www.w3.org/2000/svg';
 const ctx = SillyTavern.getContext();
@@ -807,15 +808,12 @@ function trackable(el) {
 const MES_SEL = '.mes:not(.smallSysMes)';
 
 const root = document.documentElement;
+const lightScope = createLightScope(root);
 const webGlass = createLiquidGlassWeb();
 const reflections = createGlassReflections();
 const lighting = createGlassLighting({
     onPoint(point) {
-        root.classList.toggle('ilg-tilt-light', !!point);
-        for (const key of ['x', 'y']) {
-            if (point) root.style.setProperty('--ilg-tilt-' + key, point[key]);
-            else root.style.removeProperty('--ilg-tilt-' + key);
-        }
+        lightScope.update(point);
     },
     onStatus(text) { const status = document.getElementById('ilg-tilt-state'); if (status) status.textContent = text; },
 });
@@ -1063,6 +1061,7 @@ function paint(el, geo) {
     }
     if (it.kind !== 'mes') {
         it.visible = !!geo.w && !!geo.h;
+        lightScope.visibility(el, it.visible);
         if (it.visible) visibleItems.add(el); else { visibleItems.delete(el); iosWallpaper.release(el); return; }
     }
     const surface = it.kind === 'mes' ? messageSurface(el, it) : el;
@@ -1209,6 +1208,7 @@ function track(el, kind) {
 }
 
 function untrack(el) {
+    lightScope.release(el);
     messageRendering.release(el);
     reflections.release(el);
     webGlass.release(el);
@@ -1843,7 +1843,9 @@ function neckGeometry(x1, y1, R, n) {
 let fuseList = null, bridgeTint = '', ballMat = null, ballSdfFailed = false;
 // 融合半径：两块玻璃的空隙小于它的一半时开始长颈部
 const SMIN_K = 30;
-const ballGlass = createBallGlass({ onError(error) {
+const ballGlass = createBallGlass({ onSurface(el, visible) {
+    if (visible === null) lightScope.release(el); else lightScope.visibility(el, visible);
+}, onError(error) {
     console.warn('[NVWA] 悬浮小球绘制失败，恢复兼容绘制。', error);
     ballSdfFailed = true; applyBall();
 } });
