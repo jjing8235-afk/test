@@ -798,12 +798,16 @@ function isNativePopup(el) {
 }
 // 仅对原生 Popup 内固定内容根做定点适配，不通过标题、类名或相似结构猜测所有权。
 const ADAPTED_PANEL_SEL = ':scope > .popup-body > .popup-content > :is(#nvwa-panel, #nvwa-memory)';
+function popupOwnsStyle(el) {
+    const content = el.querySelector?.(':scope > .popup-body > .popup-content');
+    return !!content?.matches?.('[data-nvwa-style="author"]') || !!content?.querySelector?.('style, link[rel~="stylesheet"], iframe, [data-v-app], [data-reactroot], [data-nvwa-style="author"]');
+}
 function adaptedPanel(el) {
-    return isNativePopup(el) ? el.querySelector(ADAPTED_PANEL_SEL) : null;
+    return isNativePopup(el) && !popupOwnsStyle(el) ? el.querySelector(ADAPTED_PANEL_SEL) : null;
 }
 function trackable(el) {
     const popup = el.closest('dialog, .popup, [role="dialog"]:not(.ilg-recent)');
-    return (!popup || isNativePopup(popup)) && !(el.id === 'world_popup' && inDrawer(el));
+    return (!popup || isNativePopup(popup) && !popupOwnsStyle(popup)) && !(el.id === 'world_popup' && inDrawer(el));
 }
 const MES_SEL = '.mes:not(.smallSysMes)';
 
@@ -1202,6 +1206,13 @@ function track(el, kind) {
         el.style.position = 'relative';
         it.posFixed = true;
     }
+    if (isNativePopup(el)) {
+        const content = el.querySelector(':scope > .popup-body > .popup-content');
+        if (content) {
+            it.contentObserver = new MutationObserver(() => { if (popupOwnsStyle(el)) untrack(el); });
+            it.contentObserver.observe(content, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-nvwa-style'] });
+        }
+    }
     ro.observe(el);
     if (kind === 'mes') { messageRendering.track(el); io.observe(el); }
     paint(el);
@@ -1215,6 +1226,7 @@ function untrack(el) {
     iosWallpaper.release(el);
     const it = items.get(el);
     if (!it) return;
+    it.contentObserver?.disconnect();
     it.filter?.remove();
     it.backdrop?.remove();
     ro.unobserve(el);
@@ -2749,6 +2761,7 @@ function viewportDiagnostic() {
 }
 const CAPTURE_SCENARIOS = {
     general: ['综合交互', ['上下滑动聊天几次，停一下，再来回滑动。', '拖动悬浮小球几次，观察是否跟手；未开启小球时可跳过。', '点输入框打几个字，收起键盘，再拖动一次小球。']],
+    menus: ['输入框菜单 / 卡顿', ['若通常用久才变慢，先正常使用到变慢，再点击开始采集。', '点击输入框左侧的“＋”，等菜单显示后关闭，重复两三次。', '再点击魔法棒图标，打开、关闭两三次，尽量在 15 秒内完成。', '采集结束后点击提示条的“导出诊断”，把下载的 TXT 文件发回。']],
     appearance: ['黑白切换 / 壁纸', ['点击右上角的太阳、月亮或调色盘图标。', '连续切换两三次；如提示正在恢复壁纸，留在页面等待结果。', '观察壁纸和文字颜色是否变化，以及有没有错误提示。']],
     rendering: ['屏闪 / 折射', ['停在原来会闪的卡片处，先静止约 3 秒，观察静止时是否也闪。', '上下滑动这张卡片几次，再停住，观察屏闪或卡顿出现的时机。', '方便时另录约 10 秒视频；反馈时说明静止、滚动或打字时是否闪。']],
     keyboard: ['键盘 / 拖动', ['拖动悬浮小球几次，观察是否跟手；先确认小球已开启。', '点输入框打几个字，观察输入框有没有被键盘挡住。', '收起键盘，再拖动小球，观察位置和跟手是否恢复。']],
@@ -2776,7 +2789,7 @@ const interactionDiagnostics=createInteractionDiagnostics({snapshot:viewportDiag
     const badge=captureBadge();badge.querySelector('span').textContent='采集中 · '+Math.ceil(progress.remainingMs/1000)+' 秒';badge.querySelector('[data-action="main"]').textContent='提前结束';badge.querySelector('[data-action="close"]').hidden=true;
 },onFinish(result){
     const missing=result.coverage.missing.length;
-    const labels={chatScroll:'滚动聊天',ballDrag:'拖动小球',composerInput:'输入文字',visualViewportChange:'视口变化',appearanceAttempt:'外观切换'};
+    const labels={optionsMenu:'打开加号菜单',extensionsMenu:'打开魔法棒菜单',chatScroll:'滚动聊天',ballDrag:'拖动小球',composerInput:'输入文字',visualViewportChange:'视口变化',appearanceAttempt:'外观切换'};
     const reason=result.quality.fullDuration?'15 秒采集完成':({manual:'已手动提前结束',hidden:'切到后台，采集已中断',pagehide:'离开页面，采集已中断',disabled:'美化已关闭，采集已停止',exported:'已在导出时提前结束'}[result.reason]||'采集已提前结束');
     const text=reason+'（实际 '+(result.durationMs/1000).toFixed(1)+' 秒）。'+(missing?'未记录到：'+result.coverage.missing.map(key=>labels[key]||key).join('、')+'。建议按上方步骤重新采集；如果已复现问题，也可导出这次结果。':'点击屏幕提示条的“导出诊断”，把下载的 TXT 文件发回即可。');
     const scenario=document.getElementById('ilg-capture-scenario');if(scenario)scenario.disabled=false;
@@ -3478,8 +3491,12 @@ document.head.appendChild(iconLink);
 
 // Keep the filled track aligned with the native 20px thumb, including the workbench dialog.
 const RANGE_THUMB = 20; // Match the CSS grip width; its height is independent.
+const AUTHORED_CONTROL_SEL = '.mes_text, .mes_reasoning, .popup-content, dialog, .popup, [role="dialog"]:not(.ilg-recent), [role="alertdialog"], [data-nvwa-style="author"], #catgod-oracle-qrbar';
+function ownsHostControl(el) {
+    return !!el.closest('#ilg-studio') || !!el.closest(HOST_UI_SEL) && !el.closest(AUTHORED_CONTROL_SEL);
+}
 function paintRange(el) {
-    if (!el.closest('#ilg-studio') && (!el.closest(HOST_UI_SEL) || el.closest('dialog, .popup, [role="dialog"]:not(.ilg-recent)'))) return;
+    if (!ownsHostControl(el)) return;
     const min = Number(el.min || 0), max = Number(el.max || 100), v = Number(el.value);
     const p = max > min ? Math.min(1, Math.max(0, (v - min) / (max - min))) : 0;
     const fill = `calc(${p.toFixed(4)} * (100% - ${RANGE_THUMB}px) + ${RANGE_THUMB / 2}px)`;
@@ -3510,7 +3527,7 @@ function updateRangeValue(el) {
     rangeValue.dataset.target = el.id;
 }
 function showRangeValue(el) {
-    if (!S.enabled || el.disabled || !el.closest('#ilg-studio') && (!el.closest(HOST_UI_SEL) || el.closest('dialog, .popup, [role="dialog"]:not(.ilg-recent)'))) return;
+    if (!S.enabled || el.disabled || !ownsHostControl(el)) return;
     if (rangeValueInput === el) { updateRangeValue(el); return; }
     hideRangeValue();
     const rect = el.getBoundingClientRect(), dialog = el.closest('dialog');
@@ -3543,7 +3560,7 @@ const thumbCenter = el => {
 };
 document.addEventListener('pointerdown', e => {
     const el = e.target;
-    if (!(el instanceof HTMLInputElement) || el.type !== 'range') return;
+    if (!(el instanceof HTMLInputElement) || el.type !== 'range' || !S.enabled || !ownsHostControl(el)) return;
     // 按下去这一刻 value 还没被浏览器改，用它算圆点位置
     const nearThumb = Math.abs(e.clientX - thumbCenter(el)) <= RANGE_THUMB * 0.9;
     rangeGuards.set(el, { value: el.value, skip: coarsePointer.matches && !nearThumb });
@@ -3555,7 +3572,7 @@ document.addEventListener('pointerdown', e => {
 }, true));
 ['input', 'change'].forEach(t => document.addEventListener(t, e => {
     const el = e.target;
-    if (!(el instanceof HTMLInputElement) || el.type !== 'range') return;
+    if (!(el instanceof HTMLInputElement) || el.type !== 'range' || !S.enabled || !ownsHostControl(el)) return;
     const guard = rangeGuards.get(el);
     if (guard?.skip) {
         // 还原成按下之前的值，并且在捕获阶段截住，别让设置面板把这次误触存进 S
@@ -3571,7 +3588,7 @@ document.addEventListener('pointerdown', e => {
 // Bubble after the target's setting handler so the formatted value is current.
 for (const type of ['input', 'change']) document.addEventListener(type, e => {
     const el = e.target;
-    if (!(el instanceof HTMLInputElement) || el.type !== 'range') return;
+    if (!(el instanceof HTMLInputElement) || el.type !== 'range' || !S.enabled || !ownsHostControl(el)) return;
     if (e.type === 'input' && document.activeElement === el && !rangeValueInput) showRangeValue(el);
     else updateRangeValue(el);
 });
@@ -3585,7 +3602,7 @@ document.addEventListener('scroll', e => {
 window.addEventListener('resize', hideRangeValue);
 document.addEventListener('visibilitychange', () => { if (document.hidden) hideRangeValue(); });
 // 酒馆读预设时是直接改 value（不发 input 事件），所以打开抽屉、切预设之后再统一刷一遍
-document.addEventListener('click', e => { if (e.target.closest?.('.drawer-toggle, .inline-drawer-toggle')) requestAnimationFrame(paintRanges); }, true);
+document.addEventListener('click', e => { if (e.target.closest?.('.drawer-toggle, .inline-drawer-toggle') && ownsHostControl(e.target)) requestAnimationFrame(paintRanges); }, true);
 ['APP_READY', 'SETTINGS_LOADED', 'OAI_PRESET_CHANGED_AFTER', 'PRESET_CHANGED'].forEach(t => {
     if (ctx.eventTypes[t]) ctx.eventSource.on(ctx.eventTypes[t], () => setTimeout(paintRanges, 50));
 });
@@ -3604,7 +3621,11 @@ const thinkPill = () => {
 };
 // sawReply：这次生成里已经出现过占位 / 思维链 / 正文，之后就算短暂对不上（流刚结束、酒馆还没收尾）也不再弹浮动胶囊
 let genSince = 0, sawReply = false, floatPill = null, thinkTimer = 0, thinkQueued = false;
-const dotsOnly = m => !(m.querySelector('.mes_text')?.textContent || '').replace(/[.…]/g, '').trim();
+const dotsOnly = m => {
+    const text = m.querySelector('.mes_text');
+    return !!text && !text.querySelector('iframe, details, summary, img, video, audio, svg, canvas, table, button, input, select, textarea, [class]:not(.ilg-prose):not(.ilg-indentable), [style], [role]')
+        && !(text.textContent || '').replace(/[.…]/g, '').trim();
+};
 const genOn = () => S.enabled && S.orb && document.body.dataset.generating === 'true';
 function syncThink() {
     thinkQueued = false;
@@ -3612,6 +3633,7 @@ function syncThink() {
     // 1. 思维链标题
     // 只看正在想的和已经挂了球的，长聊天里不用把每条消息都翻一遍
     chatEl.querySelectorAll('.mes[data-reasoning-state="thinking"] .mes_reasoning_header, .mes_reasoning_header:has(> .ilg-orb)').forEach(head => {
+        if (head.closest('.mes_text, .mes_reasoning, [data-nvwa-style="author"]')) return;
         const want = on && head.closest('.mes').dataset.reasoningState === 'thinking';
         const orb = head.querySelector(':scope > .ilg-orb');
         if (want && !orb) head.prepend(makeOrb());

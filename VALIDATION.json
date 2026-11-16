@@ -3671,5 +3671,1504 @@
       "Early prototype with missing gradient scope is excluded; corrected results require unchanged gradient strings and pixel identity"
     ],
     "evidenceDirectory": "D:/claudecod1/st-verify/out/restart204"
+  },
+  "fontMenu20261114": {
+    "date": "2026-11-14",
+    "status": "unpublished-isolated-candidate",
+    "baselineCommit": "8e97b13d569ec766a8f59168d7bca0895e8deff7",
+    "scope": [
+      "Lazy Unicode font-impact checks without changing metrics invalidation",
+      "One ready-settled fallback for missing font completion events, with lifecycle cleanup",
+      "Manual bounded long-animation-frame attribution and menu capture scenario"
+    ],
+    "sourceHashes": [
+      {
+        "file": "index.js",
+        "sha256": "4260b060e9cb37cb583439f084d61f6daf3b1d4a2a8b36906400a55fa45a1f04"
+      },
+      {
+        "file": "message-rendering.js",
+        "sha256": "693ab2553ba0dce6636d5f1afd6a33cf0bb4a476bd8ebb4c54b984c9955c9157"
+      },
+      {
+        "file": "interaction-diagnostics.js",
+        "sha256": "2935c92715ce84d128f25982405c530f1e20d1ffa38e681c7249d1350c2e7720"
+      }
+    ],
+    "unchangedRecipes": [
+      {
+        "file": "style.css",
+        "unchanged": true
+      },
+      {
+        "file": "glass-lighting.js",
+        "unchanged": true
+      },
+      {
+        "file": "glass2.js",
+        "unchanged": true
+      },
+      {
+        "file": "liquid-glass-web.js",
+        "unchanged": true
+      },
+      {
+        "file": "ball-glass.js",
+        "unchanged": true
+      },
+      {
+        "file": "glass-worker.js",
+        "unchanged": true
+      },
+      {
+        "file": "glass-reflections.js",
+        "unchanged": true
+      },
+      {
+        "file": "optics-settings.js",
+        "unchanged": true
+      },
+      {
+        "file": "settings-panel.js",
+        "unchanged": true
+      },
+      {
+        "file": "manifest.json",
+        "unchanged": true
+      }
+    ],
+    "settingsVersion": 9,
+    "automated": {
+      "offlinePassed": 30,
+      "browserPassed": 6,
+      "nativeHostPassed": true,
+      "allSelectedPassed": true
+    },
+    "fontComparison": [
+      {
+        "case": "unknown event",
+        "beforeMs": 6.3,
+        "afterMs": 5.4,
+        "beforeTextReads": 600,
+        "afterTextReads": 0,
+        "resets": 600
+      },
+      {
+        "case": "malformed range",
+        "beforeMs": 2.8,
+        "afterMs": 2.8,
+        "beforeTextReads": 600,
+        "afterTextReads": 0,
+        "resets": 600
+      },
+      {
+        "case": "full font",
+        "beforeMs": 34.6,
+        "afterMs": 3.2,
+        "beforeTextReads": 600,
+        "afterTextReads": 0,
+        "resets": 600
+      },
+      {
+        "case": "generated punctuation",
+        "beforeMs": 31.6,
+        "afterMs": 2.4,
+        "beforeTextReads": 600,
+        "afterTextReads": 0,
+        "resets": 600
+      },
+      {
+        "case": "matching first message",
+        "beforeMs": 31.6,
+        "afterMs": 2.7,
+        "beforeTextReads": 600,
+        "afterTextReads": 1,
+        "resets": 600
+      },
+      {
+        "case": "unrelated menu character",
+        "beforeMs": 28.6,
+        "afterMs": 5.1,
+        "beforeTextReads": 600,
+        "afterTextReads": 600,
+        "resets": 0
+      },
+      {
+        "case": "edited message becomes relevant",
+        "beforeMs": 30.9,
+        "afterMs": 2.8,
+        "beforeTextReads": 600,
+        "afterTextReads": 1,
+        "resets": 600
+      }
+    ],
+    "webkit": {
+      "nativeLoadingDoneObserved": false,
+      "readyFallbackResets": 600,
+      "measuredHeight": 785175,
+      "naturalHeight": 785175,
+      "cleanup": true
+    },
+    "nativeHost": {
+      "version": "1.18.0",
+      "messages": 600,
+      "menuClicks": {
+        "options": 4,
+        "wand": 4
+      },
+      "draftPreserved": true,
+      "coverageMissing": [],
+      "longFrameSupport": true
+    },
+    "diagnosticLimits": {
+      "manualOnly": true,
+      "maxSourceModules": 24,
+      "maxScriptsPerFrame": 64,
+      "maxRetainedSlowFrames": 8,
+      "maxScriptsPerRetainedFrame": 4,
+      "fullURLsRetained": false,
+      "chatTextRetained": false
+    },
+    "delivery": {
+      "published": false,
+      "testRemoteHead": "d3bf9f4aafe4c299fc9733b488b0fce3708675b9",
+      "installedVersion": "2.0.9-test.1",
+      "temporaryHostStopped": true
+    },
+    "limitations": [
+      "Desktop Edge CPU throttling and desktop WebKit are not physical phone FPS or iPhone acceptance",
+      "Native menu timing does not demonstrate a sustained general menu speedup",
+      "Long-frame module attribution is a hint, includes capture overhead and cannot prove GPU bottlenecks or assign every library callback to a plugin",
+      "WebKit actual font readiness required a fallback; previous baseline also failed the newly added geometry check",
+      "Inherited home-avatar and ios-material fixture failures on pristine baseline are not counted as passed"
+    ],
+    "evidenceDirectory": "D:/claudecod1/st-verify/out/restart204/font-menu-20261114"
+  },
+  "mapCore20261114": {
+    "date": "2026-11-14",
+    "phase": "Bounded background preparation for cold updates of already displayed Liquid Glass Web surfaces",
+    "status": "local-unpublished",
+    "candidateVersion": "2.0.10-test.1",
+    "scope": {
+      "firstAppearance": "Original immediate synchronous full material retained",
+      "coldUpdates": "Existing valid material stays displayed while an exact replacement is prepared",
+      "ownership": "NVWA-owned maps only; host timers, event order, settings version and third-party execution unchanged"
+    },
+    "comparison": {
+      "scope": "Desktop Edge CPU x4, three cold updates per geometry; callback timings and completion timings are distinct; not phone FPS.",
+      "groups": [
+        {
+          "name": "input",
+          "beforeCallbackMs": 14.100000000558794,
+          "candidateCallbackMs": 0.20000000018626451,
+          "beforeSettledMs": 15.5,
+          "candidateSettledMs": 16.5
+        },
+        {
+          "name": "menu",
+          "beforeCallbackMs": 27,
+          "candidateCallbackMs": 0.20000000018626451,
+          "beforeSettledMs": 29.100000000558794,
+          "candidateSettledMs": 16.899999999441206
+        },
+        {
+          "name": "panel",
+          "beforeCallbackMs": 52.69999999925494,
+          "candidateCallbackMs": 0.20000000018626451,
+          "beforeSettledMs": 55.299999999813735,
+          "candidateSettledMs": 16.600000000558794
+        },
+        {
+          "name": "wide-panel",
+          "beforeCallbackMs": 78,
+          "candidateCallbackMs": 0.20000000018626451,
+          "beforeSettledMs": 81.59999999962747,
+          "candidateSettledMs": 27.5
+        }
+      ],
+      "beforeMainEncodes": 12,
+      "candidateMainEncodes": 0,
+      "firstAppearanceImmediate": true,
+      "existingMaterialRetained": true
+    },
+    "verification": {
+      "offline": {
+        "passed": 31,
+        "total": 31
+      },
+      "browserChecks": 5,
+      "nativeIntegration": 1,
+      "edge": {
+        "passed": true,
+        "browser": "chromium",
+        "pixelCases": 96,
+        "canvasRoundTripDifferences": 0,
+        "crossEngineScaleDifferences": 0,
+        "crossEngineRawDifferences": 0,
+        "workerCanvasSupported": true,
+        "workerPixelCases": 96,
+        "syncPixelCases": 0,
+        "alternateEncoder": true,
+        "unavailableCanvas": true,
+        "pendingMaterialRetained": true,
+        "latestOf120": true,
+        "sharedMap": true,
+        "releasedResultIgnored": true,
+        "disabledRefractionPreserved": true,
+        "wallpaperPlaneRetained": true,
+        "visibilityResume": true,
+        "pageLifecycle": true,
+        "queueBound": true,
+        "unsupportedFallback": true,
+        "workerFailureFallback": true,
+        "destroyReleases": true,
+        "cspFallback": true
+      },
+      "windowsWebKit": {
+        "passed": true,
+        "browser": "webkit",
+        "pixelCases": 96,
+        "canvasRoundTripDifferences": 95,
+        "crossEngineScaleDifferences": 36,
+        "crossEngineRawDifferences": 0,
+        "workerCanvasSupported": false,
+        "workerPixelCases": 0,
+        "syncPixelCases": 96,
+        "alternateEncoder": false,
+        "unavailableCanvas": true,
+        "pendingMaterialRetained": true,
+        "latestOf120": true,
+        "sharedMap": true,
+        "releasedResultIgnored": true,
+        "disabledRefractionPreserved": true,
+        "wallpaperPlaneRetained": true,
+        "visibilityResume": true,
+        "pageLifecycle": true,
+        "queueBound": true,
+        "unsupportedFallback": true,
+        "workerFailureFallback": true,
+        "destroyReleases": true,
+        "cspFallback": true
+      },
+      "native": {
+        "hostVersion": "1.18.0",
+        "messages": 600,
+        "menuPairs": 8,
+        "presets": 4,
+        "workerFramesBefore": 2,
+        "workerFramesAfter": 14,
+        "draftPreserved": true,
+        "iframePreserved": true,
+        "pageErrors": 0
+      },
+      "static": {
+        "inheritedFixture": {
+          "test": "shared-performance-browser.mjs",
+          "baselineAlsoFails": true,
+          "reason": "Outdated fixture expects function paint(el); unchanged source has function paint(el, geo).",
+          "countedAsPass": false
+        },
+        "syntax": {
+          "files": 11,
+          "passed": true
+        },
+        "diff": ""
+      }
+    },
+    "limits": {
+      "queuedMaps": 20,
+      "activeMapJobs": 1,
+      "cachedMaps": 20,
+      "cachedPixels": 1572864
+    },
+    "sourceHashes": {
+      "ball-raster.js": "fb8f5731e53c5e4d6fe921d5b2f1ab8bea8a714c0392f99bbe2e58e0d8ac8648",
+      "glass-performance.js": "44c893649b55bec33b63e36927470c9acc4849a957782ca5cb690d87114d62f2",
+      "glass-worker.js": "61de663fb95f0273d12c051b7a85e38398f31871c3c2f6e6cc6c52b26bf2d026",
+      "liquid-glass-web.js": "90000721dbac9f5f34aec3167e08a88a5cdd7b24773ca5e6ef1596863f7754d8",
+      "web-map-cache.js": "62dd8e204233dac3b04e367be00affca6d45c872c4cb4a2f1b68e6e9482aadd8",
+      "web-map-raster.js": "ed1a8c16ac9cb3b056a4e4e8bb2f716e76da337f6f7d3c48c6bac0e58c1ebe00"
+    },
+    "preservedFiles": [
+      "index.js",
+      "interaction-diagnostics.js",
+      "message-rendering.js",
+      "style.css",
+      "settings-panel.css",
+      "settings-panel.js",
+      "web-presets.js",
+      "glass2.js",
+      "glass-lighting.js",
+      "ball-glass.js",
+      "glass-reflections.js",
+      "reflection-raster.js",
+      "control-material.js",
+      "optics-settings.js",
+      "ios-wallpaper-refraction.js",
+      "manifest.json"
+    ],
+    "limitations": [
+      "No physical-phone FPS, temperature, thermal-throttling or sustained Chrome/Edge measurements.",
+      "Desktop CPU throttling is not equivalent to a phone and may affect threads differently; callback and completion timings are distinct.",
+      "Windows WebKit lacks the required worker canvas in this runtime; 96 synchronous fallback pixel cases passed, with zero worker pixel cases claimed.",
+      "Synchronous first appearance remains a cold-path cost. This is not proof of faster first menu opening or overall sustained menu responsiveness.",
+      "The inherited shared-performance browser fixture also fails on the pre-change source due to its obsolete paint(el) hook; excluded from passing counts.",
+      "The isolated host lacks the companion theme; native checks cover task wiring, materials and interactions, not complete user-theme visual acceptance."
+    ],
+    "publication": {
+      "pushed": false,
+      "deployed": false,
+      "installedExtensionReplaced": false
+    },
+    "evidenceDirectory": "D:/claudecod1/st-verify/out/restart204/map-core-20261114"
+  },
+  "engineCoordination20261114": {
+    "date": "2026-11-14",
+    "researchOnly": true,
+    "productionChangeAdopted": false,
+    "selectedTopology": "independent-3",
+    "formalRuns": 54,
+    "stageOneRuns": 36,
+    "stageTwoRuns": 18,
+    "desktopEnvironment": {
+      "browser": "Microsoft Edge",
+      "browserVersion": "157.0.4341.46",
+      "platform": "Windows desktop",
+      "logicalCpus": 16,
+      "physicalPhoneTested": false,
+      "candidateVersion": "2.0.10-test.1",
+      "installedVersion": "2.0.9-test.1",
+      "candidateHead": "8e97b13d569ec766a8f59168d7bca0895e8deff7"
+    },
+    "method": {
+      "formalRuns": 54,
+      "stageOneRuns": 36,
+      "stageTwoRuns": 18,
+      "excludedSmokeRuns": 4,
+      "roundsPerScenarioAndMode": 3,
+      "scenarios": [
+        "ball-only",
+        "mixed",
+        "stress"
+      ],
+      "requestedBallJobsPerRun": 73,
+      "ballSchedule": "72 dynamic jobs followed by one full-precision final job; nominal intervals 16ms normal or 8ms stress.",
+      "backgroundJobs": {
+        "mixed": {
+          "reflection": 6,
+          "map": 9
+        },
+        "stress": {
+          "reflection": 9,
+          "map": 12
+        }
+      },
+      "source": "Actual createGlassPerformance, ball/reflection/map job builders and glass-worker.js; routing is confined to the research fixture.",
+      "warmup": "All physical Workers warmed before measurement; worker startup and memory were not measured.",
+      "aggregation": "Median of three per-run P95 completed-task latencies; completed and latest-state counts are recorded separately.",
+      "visualParity": "Same existing production drag sampling for every strategy; no optical recipe or setting changed."
+    },
+    "stageOne": {
+      "groups": [
+        {
+          "scenario": "ball-only",
+          "mode": "independent-3",
+          "rounds": 3,
+          "physicalWorkers": 3,
+          "ballP95": 6.100000001490116,
+          "freshBallP95": 6.100000001490116,
+          "freshBallCompletions": 73,
+          "ballCompletions": 73,
+          "reflectionP95": null,
+          "mapP95": null,
+          "rafP95": 4.2999999999999545,
+          "allFinalPixelsMatch": true
+        },
+        {
+          "scenario": "ball-only",
+          "mode": "shared-1",
+          "rounds": 3,
+          "physicalWorkers": 1,
+          "ballP95": 5.900000000372529,
+          "freshBallP95": 5.900000000372529,
+          "freshBallCompletions": 73,
+          "ballCompletions": 73,
+          "reflectionP95": null,
+          "mapP95": null,
+          "rafP95": 4.2999999999999545,
+          "allFinalPixelsMatch": true
+        },
+        {
+          "scenario": "ball-only",
+          "mode": "shared-2",
+          "rounds": 3,
+          "physicalWorkers": 2,
+          "ballP95": 6.200000001117587,
+          "freshBallP95": 6.200000001117587,
+          "freshBallCompletions": 73,
+          "ballCompletions": 73,
+          "reflectionP95": null,
+          "mapP95": null,
+          "rafP95": 4.2999999999999545,
+          "allFinalPixelsMatch": true
+        },
+        {
+          "scenario": "ball-only",
+          "mode": "split-2",
+          "rounds": 3,
+          "physicalWorkers": 2,
+          "ballP95": 6.099999999627471,
+          "freshBallP95": 6.099999999627471,
+          "freshBallCompletions": 73,
+          "ballCompletions": 73,
+          "reflectionP95": null,
+          "mapP95": null,
+          "rafP95": 4.2999999999999545,
+          "allFinalPixelsMatch": true
+        },
+        {
+          "scenario": "mixed",
+          "mode": "independent-3",
+          "rounds": 3,
+          "physicalWorkers": 3,
+          "ballP95": 6.300000000745058,
+          "freshBallP95": 6.300000000745058,
+          "freshBallCompletions": 73,
+          "ballCompletions": 73,
+          "reflectionP95": 12.300000000745058,
+          "mapP95": 5.900000000372529,
+          "rafP95": 4.2999999999999545,
+          "allFinalPixelsMatch": true
+        },
+        {
+          "scenario": "mixed",
+          "mode": "shared-1",
+          "rounds": 3,
+          "physicalWorkers": 1,
+          "ballP95": 6.800000000745058,
+          "freshBallP95": 6.800000000745058,
+          "freshBallCompletions": 73,
+          "ballCompletions": 73,
+          "reflectionP95": 18.300000000745058,
+          "mapP95": 23.90000000037253,
+          "rafP95": 4.2999999999999545,
+          "allFinalPixelsMatch": true
+        },
+        {
+          "scenario": "mixed",
+          "mode": "shared-2",
+          "rounds": 3,
+          "physicalWorkers": 2,
+          "ballP95": 5.900000000372529,
+          "freshBallP95": 5.900000000372529,
+          "freshBallCompletions": 73,
+          "ballCompletions": 73,
+          "reflectionP95": 12,
+          "mapP95": 9.399999998509884,
+          "rafP95": 4.2999999999999545,
+          "allFinalPixelsMatch": true
+        },
+        {
+          "scenario": "mixed",
+          "mode": "split-2",
+          "rounds": 3,
+          "physicalWorkers": 2,
+          "ballP95": 6.099999999627471,
+          "freshBallP95": 6.099999999627471,
+          "freshBallCompletions": 73,
+          "ballCompletions": 73,
+          "reflectionP95": 13.699999999254942,
+          "mapP95": 17.5,
+          "rafP95": 4.2999999999999545,
+          "allFinalPixelsMatch": true
+        },
+        {
+          "scenario": "stress",
+          "mode": "independent-3",
+          "rounds": 3,
+          "physicalWorkers": 3,
+          "ballP95": 6.699999999254942,
+          "freshBallP95": 6.699999999254942,
+          "freshBallCompletions": 52,
+          "ballCompletions": 73,
+          "reflectionP95": 25.700000001117587,
+          "mapP95": 48.40000000037253,
+          "rafP95": 4.2999999999999545,
+          "allFinalPixelsMatch": true
+        },
+        {
+          "scenario": "stress",
+          "mode": "shared-1",
+          "rounds": 3,
+          "physicalWorkers": 1,
+          "ballP95": 30.699999999254942,
+          "freshBallP95": 8.599999999627471,
+          "freshBallCompletions": 30,
+          "ballCompletions": 50,
+          "reflectionP95": 67,
+          "mapP95": 95.80000000074506,
+          "rafP95": 4.299999999999983,
+          "allFinalPixelsMatch": true
+        },
+        {
+          "scenario": "stress",
+          "mode": "shared-2",
+          "rounds": 3,
+          "physicalWorkers": 2,
+          "ballP95": 13.900000000372529,
+          "freshBallP95": 7.400000000372529,
+          "freshBallCompletions": 43,
+          "ballCompletions": 71,
+          "reflectionP95": 35.59999999962747,
+          "mapP95": 55.5,
+          "rafP95": 4.2999999999999545,
+          "allFinalPixelsMatch": true
+        },
+        {
+          "scenario": "stress",
+          "mode": "split-2",
+          "rounds": 3,
+          "physicalWorkers": 2,
+          "ballP95": 6.199999999254942,
+          "freshBallP95": 6.300000000745058,
+          "freshBallCompletions": 55,
+          "ballCompletions": 73,
+          "reflectionP95": 51.100000001490116,
+          "mapP95": 76,
+          "rafP95": 4.300000000000011,
+          "allFinalPixelsMatch": true
+        }
+      ]
+    },
+    "stageTwo": {
+      "groups": [
+        {
+          "scenario": "ball-only",
+          "mode": "independent-3",
+          "rounds": 3,
+          "physicalWorkers": 3,
+          "ballP95": 6.299999998882413,
+          "freshBallP95": 6.299999998882413,
+          "freshBallCompletions": 73,
+          "ballCompletions": 73,
+          "reflectionP95": null,
+          "mapP95": null,
+          "rafP95": 4.2999999999999545,
+          "allFinalPixelsMatch": true
+        },
+        {
+          "scenario": "ball-only",
+          "mode": "cooperate-3",
+          "rounds": 3,
+          "physicalWorkers": 3,
+          "ballP95": 6.199999999254942,
+          "freshBallP95": 6.199999999254942,
+          "freshBallCompletions": 73,
+          "ballCompletions": 73,
+          "reflectionP95": null,
+          "mapP95": null,
+          "rafP95": 4.2999999999999545,
+          "allFinalPixelsMatch": true
+        },
+        {
+          "scenario": "mixed",
+          "mode": "independent-3",
+          "rounds": 3,
+          "physicalWorkers": 3,
+          "ballP95": 6.299999998882413,
+          "freshBallP95": 6.299999998882413,
+          "freshBallCompletions": 73,
+          "ballCompletions": 73,
+          "reflectionP95": 12.5,
+          "mapP95": 6.099999999627471,
+          "rafP95": 4.2999999999999545,
+          "allFinalPixelsMatch": true
+        },
+        {
+          "scenario": "mixed",
+          "mode": "cooperate-3",
+          "rounds": 3,
+          "physicalWorkers": 3,
+          "ballP95": 6.099999999627471,
+          "freshBallP95": 6.099999999627471,
+          "freshBallCompletions": 73,
+          "ballCompletions": 73,
+          "reflectionP95": 17.09999999962747,
+          "mapP95": 9.5,
+          "rafP95": 4.2999999999999545,
+          "allFinalPixelsMatch": true
+        },
+        {
+          "scenario": "stress",
+          "mode": "independent-3",
+          "rounds": 3,
+          "physicalWorkers": 3,
+          "ballP95": 6.399999998509884,
+          "freshBallP95": 6.400000000372529,
+          "freshBallCompletions": 52,
+          "ballCompletions": 73,
+          "reflectionP95": 25.300000000745058,
+          "mapP95": 47.20000000111759,
+          "rafP95": 4.2999999999999545,
+          "allFinalPixelsMatch": true
+        },
+        {
+          "scenario": "stress",
+          "mode": "cooperate-3",
+          "rounds": 3,
+          "physicalWorkers": 3,
+          "ballP95": 9,
+          "freshBallP95": 9.199999999254942,
+          "freshBallCompletions": 55,
+          "ballCompletions": 73,
+          "reflectionP95": 36.69999999925494,
+          "mapP95": 57.399999998509884,
+          "rafP95": 4.2999999999999545,
+          "allFinalPixelsMatch": true
+        }
+      ]
+    },
+    "quality": {
+      "all54FinalStatesCorrect": true,
+      "all54FinalPixelHashesAndFilterStructuresMatch": true,
+      "all54QueuesSettled": true,
+      "note": "Final decoded pixels and filter structure are compared per scenario. This does not establish identical intermediate timing or physical display frames."
+    },
+    "native": {
+      "passed": true,
+      "hostAppReady": true,
+      "hostVersion": "1.18.0",
+      "hostRevision": "8172dcd0ee672d3cd9a5e5f7af134f91a45cd2b8",
+      "messages": 600,
+      "presets": [
+        "soft",
+        "thin",
+        "crystal",
+        "clear"
+      ],
+      "menuOpenCloseCycles": 8,
+      "combinedWorkload": {
+        "pointerMoves": 48,
+        "presetAndSizeChanges": 12,
+        "engineDeltas": {
+          "map": 24,
+          "reflection": 12,
+          "ball": 79
+        },
+        "allSamplesRetainedRefraction": true,
+        "allQueuesSettled": true,
+        "overlapSamples": 0
+      },
+      "draftPreserved": true,
+      "iframePreserved": true,
+      "allFinalMaterialsReady": true,
+      "pageErrors": 0
+    },
+    "initialNativeFailure": {
+      "evidence": "native-initial-failure.json",
+      "stage": "native menu loop, before combined work",
+      "countedAsPass": false,
+      "fixtureChanges": [
+        "Wait for actual APP_READY using its verified eventSource/eventTypes API.",
+        "Use locator.tap and bounded condition waits rather than fixed coordinates and a fixed 320ms assumption."
+      ],
+      "resolution": "The unchanged production candidate passed after both synchronization changes. Their individual contribution was not isolated; no production regression or production fix is claimed."
+    },
+    "sourceIntegrity": {
+      "checkedRuntimeFiles": 35,
+      "allUnchanged": true,
+      "evidence": "source-integrity.json"
+    },
+    "serverClosure": {
+      "port": 8113,
+      "portOccupied": false,
+      "ownedServerPid": 14212,
+      "ownedServerProcessAlive": false
+    },
+    "limitations": [
+      "Only this Windows desktop with 16 logical CPUs and Edge was measured; no universal phone-worker-count recommendation is established.",
+      "The task-routing benchmark is not a full UI FPS test. Empty-page RAF intervals and completed worker jobs must not be converted into rendered phone FPS.",
+      "Each group has three runs. Small differences do not establish significance or a stable improvement.",
+      "Phone Chrome/Edge, real iOS Safari, sustained use, physical memory, temperature and thermal throttling were not measured.",
+      "The isolated host uses a mobile viewport and synthetic content without the companion theme; checks prove task wiring and retained state, not full user-theme visual acceptance.",
+      "The native workload sampled zero outstanding ball/background overlaps after the per-step wait; engine completion deltas do not prove simultaneous CPU execution.",
+      "No browser kernel, native game mode or system CPU/GPU scheduling permission was added."
+    ],
+    "publication": {
+      "pushed": false,
+      "deployed": false,
+      "installedExtensionReplaced": false
+    },
+    "evidenceDirectory": "D:/claudecod1/st-verify/out/restart204/engine-coordination-20261114",
+    "resultFile": "D:/claudecod1/st-verify/out/restart204/engine-coordination-20261114/final-result.json"
+  },
+  "resizeObserver20261116": {
+    "date": "2026-11-16",
+    "passed": true,
+    "scope": "Fix the locally reproduced message-height ResizeObserver loop; investigate the screenshot without asserting exclusive attribution on the reporter phone.",
+    "symptom": "ResizeObserver loop completed with undelivered notifications.",
+    "cause": "The message height handler changed containment and reset measurement during ResizeObserver delivery. Processing its latest dimensions in a deduplicated animation-frame batch removes the error path.",
+    "reproduction": {
+      "minimal": {
+        "messages": 10,
+        "widthChanges": 4,
+        "beforeErrors": 8,
+        "afterErrors": 0,
+        "idleCallbacks": 0,
+        "naturalHeightPreserved": true
+      },
+      "native": {
+        "host": "SillyTavern 1.18.0",
+        "browser": "157.0.4341.60",
+        "messages": 600,
+        "beforeErrors": 6,
+        "afterErrors": 0,
+        "stages": [
+          "initial message layout",
+          "native menu open/close",
+          "scroll",
+          "viewport width changes",
+          "four preset changes"
+        ],
+        "draftPreserved": true,
+        "iframePreserved": true
+      },
+      "resetOnlyExperiment": {
+        "beforeErrors": 8,
+        "afterErrors": 8,
+        "adopted": false
+      }
+    },
+    "implementation": {
+      "file": "message-rendering.js",
+      "onePendingResizePerTrackedMessage": true,
+      "oneAnimationFramePerBatch": true,
+      "latestMeasurementWins": true,
+      "pendingInvalidationDiscarded": true,
+      "cancelOnRelease": true,
+      "globalErrorSuppression": false,
+      "glassRecipesChanged": false,
+      "settingsVersionChanged": false
+    },
+    "verification": {
+      "edge": {
+        "engine": "chromium",
+        "resizeErrors": [],
+        "messages": 10,
+        "widthChanges": 4,
+        "naturalHeightPreserved": true,
+        "idleCallbacks": 0,
+        "latestMeasurementWins": true,
+        "noSynchronousContainmentWrites": true,
+        "invalidatedMeasurementDiscarded": true,
+        "pendingReleaseClean": true,
+        "pageErrors": []
+      },
+      "windowsWebKit": {
+        "engine": "webkit",
+        "resizeErrors": [],
+        "messages": 10,
+        "widthChanges": 4,
+        "naturalHeightPreserved": true,
+        "idleCallbacks": 0,
+        "latestMeasurementWins": true,
+        "noSynchronousContainmentWrites": true,
+        "invalidatedMeasurementDiscarded": true,
+        "pendingReleaseClean": true,
+        "pageErrors": []
+      },
+      "fullMessageRendering": {
+        "resizeErrorEvents": [],
+        "messages": 243,
+        "initialCulled": 234,
+        "exactInitialHeight": true,
+        "naturalHeightChecks": 12,
+        "offscreenEdit": true,
+        "characterDataEdit": true,
+        "containerResize": true,
+        "fontChanges": true,
+        "fontSubsetRelevance": true,
+        "unknownFontConservative": true,
+        "richAndIframeExclusion": true,
+        "lateFixedPopup": true,
+        "nativeFind": true,
+        "newReplyLifecycle": true,
+        "translatedScaleGeometry": true,
+        "cleanup": true,
+        "unsupportedFallback": true,
+        "domPreserved": true
+      },
+      "checks": [
+        {
+          "name": "full-renderer",
+          "passed": true
+        },
+        {
+          "name": "font-lifecycle-edge",
+          "passed": true
+        },
+        {
+          "name": "font-subsets",
+          "passed": true
+        },
+        {
+          "name": "resize-batch",
+          "passed": true
+        },
+        {
+          "name": "form-scroll",
+          "passed": true
+        },
+        {
+          "name": "loop-webkit",
+          "passed": true
+        },
+        {
+          "name": "font-lifecycle-webkit",
+          "passed": true
+        }
+      ],
+      "static": "static-checks.json"
+    },
+    "sourceIntegrity": {
+      "runtimeFilesChecked": 34,
+      "changed": [
+        {
+          "name": "message-rendering.js",
+          "before": "693ab2553ba0dce6636d5f1afd6a33cf0bb4a476bd8ebb4c54b984c9955c9157",
+          "after": "fae89c1021bd9046c4bc86b1b6acb62de0cb189b222ad38a6941cf520a823bf4"
+        }
+      ],
+      "evidenceBaseline": "D:/claudecod1/st-verify/out/restart204/render-path-20261116/before-hashes.json"
+    },
+    "limitations": [
+      "The screenshot does not identify the extension that generated each observer error; the reporter environment and version are not captured.",
+      "Only this reproduced NVWA path is verified fixed; independent loops in card content or other extensions are not ruled out.",
+      "Windows desktop WebKit does not establish iPhone acceptance; phone frame rate and persistent error flooding remain unmeasured.",
+      "The isolated native host lacks the companion theme and uses synthetic messages."
+    ],
+    "publication": {
+      "pushed": false,
+      "deployed": false,
+      "installedExtensionReplaced": false
+    },
+    "evidenceDirectory": "D:/claudecod1/st-verify/out/restart204/resize-loop-20261116",
+    "resultFile": "D:/claudecod1/st-verify/out/restart204/resize-loop-20261116/final-result.json"
+  },
+  "renderPath20261116": {
+    "date": "2026-11-16",
+    "researchComplete": true,
+    "prototypeAdopted": false,
+    "environment": {
+      "browser": "157.0.4341.60",
+      "cpuThrottle": 4,
+      "viewport": {
+        "width": 393,
+        "height": 759,
+        "dpr": 2
+      },
+      "messages": 600,
+      "host": "SillyTavern 1.18.0",
+      "physicalPhone": false,
+      "companionThemeInstalled": false
+    },
+    "method": {
+      "rounds": 3,
+      "arms": [
+        "baseline",
+        "composited"
+      ],
+      "pageRuns": 6,
+      "sceneSamples": 18,
+      "scenes": [
+        "90 direct highlight updates",
+        "6 native menu open/close cycles",
+        "6 native menu cycles with a nominal 33ms highlight interval"
+      ],
+      "aggregation": "Median of three cumulative CDP Performance metric deltas per scene; not a frame, interaction latency, or FPS measurement.",
+      "order": "Arms alternate by round; scene order within a page is fixed.",
+      "profiling": "CDP LayerTree observation is enabled in both arms and contributes diagnostic overhead; total task duration is not treated as product interaction latency.",
+      "mixedLimit": "The mixed scene uses a timer; actual update counts were not retained. Its aggregate time is exploratory and is not an equal-point-count throughput benchmark."
+    },
+    "results": {
+      "gains": {
+        "pose": {
+          "baseline": 683.224,
+          "prototype": 219.941,
+          "reductionPercent": 67.80836153296723
+        },
+        "menus": {
+          "baseline": 272.3960000000001,
+          "prototype": 274.60200000000003,
+          "reductionPercent": -0.8098503649098958
+        },
+        "mixedExploratory": {
+          "baseline": 1552.176,
+          "prototype": 616.5250000000001,
+          "reductionPercent": 60.27995536588634
+        }
+      },
+      "refractionFilterParity": true,
+      "extraLayersWithPose": 16,
+      "fullVisualParity": false,
+      "allRecordedResizeErrors": 0,
+      "allMeasuredFontEvents": 0
+    },
+    "gates": {
+      "renderingCostDirectionSupportedOnThisDesktop": true,
+      "fullVisualParity": false,
+      "phoneGpuAndMemoryValidated": false,
+      "allMaterialsAndThemesValidated": false,
+      "productionAdoptionApprovedByEvidence": false
+    },
+    "limitations": [
+      "Three runs per arm are exploratory; no general mobile speedup or statistical confidence is claimed.",
+      "Highlight movement adds 16 layers in this fixture; real GPU memory, raster traffic, temperature and mobile composition are not measured.",
+      "Raw screenshot differences cover 0.34-0.42 percent of pixels; differences over eight channel units are confined to the send-button region. Small rim raster differences also remain, so this is not zero-pixel equivalence.",
+      "The screenshot sample covers three points in the default clear material with dark tone, not all four presets, light wallpapers, fused dragging, reduced motion or iOS.",
+      "Windows desktop tests do not establish iOS/Android acceptance.",
+      "Initial diagnostic traces still saw a font-loading spike after a warmup attempt; they are diagnostic observations only. The formal paired runs recorded zero font loading events during every measured scene."
+    ],
+    "publication": {
+      "pushed": false,
+      "deployed": false,
+      "installedExtensionReplaced": false
+    },
+    "resultFile": "D:/claudecod1/st-verify/out/restart204/render-path-20261116/final-result.json",
+    "evidenceDirectory": "D:/claudecod1/st-verify/out/restart204/render-path-20261116"
+  },
+  "poseCompositor20261116": {
+    "date": "2026-11-16",
+    "localCandidateIntegrated": true,
+    "candidateVersion": "2.0.10-test.1",
+    "supersedesPrototypeEvaluation": "renderPath20261116",
+    "environment": {
+      "browser": "157.0.4341.60",
+      "cpuThrottle": 4,
+      "messages": 600,
+      "viewport": {
+        "width": 393,
+        "height": 759,
+        "dpr": 2
+      },
+      "hostVersion": "1.18.0",
+      "physicalPhone": false,
+      "companionThemeInstalled": false
+    },
+    "method": {
+      "rounds": 3,
+      "order": "Alternating paired arms by round",
+      "pointsPerPoseScene": 90,
+      "baseline": "The same final common modules and CSS with the original light-scope.js and without the new pose-layer CSS.",
+      "metric": "Median of cumulative CDP RecalcStyleDuration deltas; not FPS, frame duration or input latency."
+    },
+    "results": {
+      "baselineStyleMs": 679.158,
+      "candidateStyleMs": 296.56499999999994,
+      "reductionPercent": 56.333430512487524,
+      "extraLayersWhileLightMoves": 15,
+      "groups": [
+        {
+          "scene": "pose",
+          "arm": "baseline",
+          "rounds": 3,
+          "pointCounts": [
+            90,
+            90,
+            90
+          ],
+          "styleMs": 679.158,
+          "layoutMs": 0.6020000000000001,
+          "scriptMs": 4.266000000000006,
+          "taskMs": 2084.399,
+          "stylePasses": 101,
+          "layers": 621,
+          "drawingLayers": 615,
+          "fontLoadEvents": 0,
+          "fontsSettled": true
+        },
+        {
+          "scene": "pose",
+          "arm": "composited",
+          "rounds": 3,
+          "pointCounts": [
+            90,
+            90,
+            90
+          ],
+          "styleMs": 296.56499999999994,
+          "layoutMs": 0.782999999999999,
+          "scriptMs": 5.644999999999997,
+          "taskMs": 1610.654,
+          "stylePasses": 102,
+          "layers": 636,
+          "drawingLayers": 630,
+          "fontLoadEvents": 0,
+          "fontsSettled": true
+        },
+        {
+          "scene": "menus",
+          "arm": "baseline",
+          "rounds": 3,
+          "pointCounts": [
+            0,
+            0,
+            0
+          ],
+          "styleMs": 273.69200000000006,
+          "layoutMs": 10.652000000000001,
+          "scriptMs": 299.395,
+          "taskMs": 3408.044,
+          "stylePasses": 345,
+          "layers": 621,
+          "drawingLayers": 615,
+          "fontLoadEvents": 0,
+          "fontsSettled": true
+        },
+        {
+          "scene": "menus",
+          "arm": "composited",
+          "rounds": 3,
+          "pointCounts": [
+            0,
+            0,
+            0
+          ],
+          "styleMs": 282.092,
+          "layoutMs": 11.184,
+          "scriptMs": 300.788,
+          "taskMs": 3399.646,
+          "stylePasses": 349,
+          "layers": 621,
+          "drawingLayers": 615,
+          "fontLoadEvents": 0,
+          "fontsSettled": true
+        }
+      ],
+      "visualPairs": 35,
+      "pixelChannelThreshold": 8,
+      "maxPixelChannelDifference": 7,
+      "refractionAndSendToneParity": true,
+      "nativeDrag": {
+        "pose": {
+          "calls": 57,
+          "scope": {
+            "tracked": 18,
+            "active": true,
+            "applied": 5
+          },
+          "overlays": 4,
+          "ballLayer": true,
+          "dragging": false,
+          "position": "28px 645px",
+          "resizeErrors": []
+        },
+        "ballLayerSamples": 48,
+        "distinctBallPositions": 48,
+        "allNativeDragHandlersActive": true,
+        "pointerMoves": 48,
+        "presetAndSizeChanges": 12,
+        "engineDeltas": {
+          "map": 24,
+          "reflection": 12,
+          "ball": 76
+        },
+        "allSamplesRetainedRefraction": true,
+        "allQueuesSettled": true,
+        "overlapSamples": 0
+      }
+    },
+    "lifecycle": {
+      "edge": {
+        "passed": true,
+        "engine": "chromium",
+        "floorOriginalRimPreserved": true,
+        "floorCoordinatesCleaned": true,
+        "resizeErrors": [],
+        "localLayers": true,
+        "parentStyleWrites": 0,
+        "repeatedWrites": 0,
+        "poseUpdates": 30,
+        "stationaryPanelOpen": true,
+        "responsiveCentrePreserved": true,
+        "maxCentreError": 0.01961547851561818,
+        "nativeGeometryPreserved": true,
+        "childReplacementRecovered": true,
+        "hiddenAndDisconnectedClean": true,
+        "inputAndIframePreserved": true,
+        "cleanup": true,
+        "legacyFallback": true,
+        "errors": [],
+        "physicalPhone": false
+      },
+      "windowsWebKit": {
+        "passed": true,
+        "engine": "webkit",
+        "floorOriginalRimPreserved": true,
+        "floorCoordinatesCleaned": true,
+        "resizeErrors": [],
+        "localLayers": true,
+        "parentStyleWrites": 0,
+        "repeatedWrites": 0,
+        "poseUpdates": 30,
+        "stationaryPanelOpen": true,
+        "responsiveCentrePreserved": true,
+        "maxCentreError": 0.07936889648436818,
+        "nativeGeometryPreserved": true,
+        "childReplacementRecovered": true,
+        "hiddenAndDisconnectedClean": true,
+        "inputAndIframePreserved": true,
+        "cleanup": true,
+        "legacyFallback": true,
+        "errors": [],
+        "physicalPhone": false
+      }
+    },
+    "floor": "Keep the original floor-chip rim to preserve subpixel contour; larger surfaces use local moving layers.",
+    "limitations": [
+      "Desktop diagnostics do not establish Android/iPhone frame rate or GPU memory acceptance.",
+      "Extra compositor layers have not been measured for phone memory, raster traffic, thermal behavior or sustained use.",
+      "Menu-only measurements show no established gain; this change targets moving highlights.",
+      "The isolated host uses synthetic messages without the companion theme."
+    ],
+    "integrity": {
+      "root": "C:/Users/ASUS/.codex/worktrees/nvwa-204-restart/nvwa-test-repo",
+      "changedRuntime": [
+        "card-clarity.js",
+        "index.js",
+        "light-scope.js",
+        "mes-icons.js",
+        "style.css"
+      ],
+      "sourceHashes": {
+        "appearance-bookmark.js": "20fa0a95daa1cf6fa8de936d74a162a7f4a4df937e95b35ff0553537e2a67d53",
+        "ball-glass.js": "f629793b388911d9b8bb06b2a0db0bf7bd64232fba4a7f967623c14884675536",
+        "ball-raster.js": "fb8f5731e53c5e4d6fe921d5b2f1ab8bea8a714c0392f99bbe2e58e0d8ac8648",
+        "bundled-wallpapers.js": "bdb01b55b7ed76369d5cf34e1596bbc48f0b133865a78dc121c1f4a3142250d6",
+        "card-clarity.js": "15b98fa613a3683217316468f9723de7e3891ccda5e7edf8d1bf1e00986e9265",
+        "control-material.js": "308c972d8613336aca7930205bbdaac8201203dd233d91e3aa51d155d0bde5cd",
+        "fixed-position.js": "55b7033df7774fd06e28296cd482b2296a80313492136c27854b2dd134ea8a5b",
+        "glass-lighting.js": "f25a89579f5845ca67551992bf4089a3eaa583823b91e04f964285de5e330cce",
+        "glass-performance.js": "44c893649b55bec33b63e36927470c9acc4849a957782ca5cb690d87114d62f2",
+        "glass-reflections.js": "8e8734c122c09bc5f1bcb2d9626b9b3925d44587296bed19f89f107890e59fc8",
+        "glass-worker.js": "61de663fb95f0273d12c051b7a85e38398f31871c3c2f6e6cc6c52b26bf2d026",
+        "glass2.js": "6cc1ecd2244eb003dd0e75a8644b4450b49fc5278a3326ae577547490732f98b",
+        "host-interaction-state.js": "703b5ddc091104e060149ad75f59b4e0fcc9363e46e2670404ddfbf33b8835a5",
+        "icons.css": "ae590d1261c3d76bbc9615d0e633424fba6698c8f4c7e6f572a5ccaa501c04f9",
+        "index.js": "d90d2797e4da2df0cbabc78241b1e73d68b2f2c3348bb47bf884bed6c27809ff",
+        "interaction-diagnostics.js": "2935c92715ce84d128f25982405c530f1e20d1ffa38e681c7249d1350c2e7720",
+        "ios-wallpaper-refraction.js": "d1142323abde753915e1e5487dd3cb3533b1108574b114deb6e4c2d881ce93c3",
+        "light-scope.js": "7fd5654182c83bde1568f071bce35e65ee13767f337a6da46703ba11177ab698",
+        "liquid-glass-web.js": "90000721dbac9f5f34aec3167e08a88a5cdd7b24773ca5e6ef1596863f7754d8",
+        "manifest.json": "d27f3008e67733ef1e4320a4cb73854204682cd99d0da0209d2c5cd51c731c7e",
+        "mes-icons.js": "9e1dbd42726e0a47f6c6243a393a8bb559ee8babbcbc1dcd273ae04a7dcc059f",
+        "message-rendering.js": "fae89c1021bd9046c4bc86b1b6acb62de0cb189b222ad38a6941cf520a823bf4",
+        "optics-settings.js": "79d9daee4ef6555a07868d29db661f3fb67af5c8acb1e87ab56d8af97e09db41",
+        "orb.js": "d13fae161d3c587e68661337e86384176b93c7e91944cc4ae54f10b1b19f1248",
+        "reflection-raster.js": "f57f7f7c79a6c04282a37274a381dfca80f62be1260e7c2c962e117550e5c74a",
+        "settings-panel.css": "3430404905d80db2d0a4d3aa26e28561ae73ea1b9f1e8aaf7c73c966f878f4ea",
+        "settings-panel.js": "bf1e079da94770d96a30982655d47bb5212d08430a1cef63c8776a93259a1cb5",
+        "style.css": "857faf4002753b173968d85577bfcfdf4a7519fba00f59556180e998a205bafa",
+        "surface-policy.js": "07c512c88f3dbd789d1daf5b0a70edf3e16d5e2bb9aef64542d3137b85fbd876",
+        "viewport.js": "34ebca08aacffdb979bb8fc1dbd5818b9b0d706e7d64e99ffe435ff41c3c5345",
+        "wallpaper-sampling.js": "9b929d3d10d3e586796b3c8014c173e37fe30c142c09a609df3c77684f5bd003",
+        "web-map-cache.js": "62dd8e204233dac3b04e367be00affca6d45c872c4cb4a2f1b68e6e9482aadd8",
+        "web-map-raster.js": "ed1a8c16ac9cb3b056a4e4e8bb2f716e76da337f6f7d3c48c6bac0e58c1ebe00",
+        "web-presets.js": "fe3164cdd4a33687045411ad3c2b296a837bc4b9b66ea1e819f062e762385cb6"
+      },
+      "messageRenderingFixPreserved": true,
+      "sensorMathAndCadencePreserved": true
+    },
+    "publication": {
+      "target": "test",
+      "repository": "https://github.com/jjing8235-afk/test",
+      "branch": "main",
+      "version": "2.0.10-test.1",
+      "pushed": false,
+      "deployed": false,
+      "installedExtensionReplaced": false
+    },
+    "evidenceDirectory": "D:/claudecod1/st-verify/out/restart204/pose-compositor-20261116",
+    "resultFile": "D:/claudecod1/st-verify/out/restart204/pose-compositor-20261116/final-result.json"
+  },
+  "authoredUICompatibility20261116": {
+    "date": "2026-11-16",
+    "localCandidateIntegrated": true,
+    "candidateVersion": "2.0.10-test.1",
+    "sources": [
+      {
+        "file": "C:/Users/ASUS/Downloads/Meowssiah-2.1.6.json",
+        "sha256": "8a7239aa9c373a988d70639ee54720cc09170b4aefbe858a1c3cb60a9e51b137"
+      },
+      {
+        "file": "C:/Users/ASUS/Downloads/[主预设] V19.9.4 狐神抚.json",
+        "sha256": "157ff57d72901b97ad0f4ad1375543cbfee3499e7d29dc44aaad1577a629b468"
+      },
+      {
+        "repository": "https://github.com/AlbusKen/shujuku",
+        "commit": "c45d50ee7e40a0e20b0095b6c71d6a29dd837862",
+        "paths": [
+          "src/presentation/window/window-styles.ts",
+          "src/presentation/window/window-system.ts",
+          "src/presentation-v2/components/_lib/AcuDialogHost.vue"
+        ]
+      }
+    ],
+    "scope": {
+      "authoredDocuments": 15,
+      "activeDocuments": 6,
+      "optionalDisabledVariants": 9,
+      "database": "Pinned source styles for legacy window and v2 dialog, not a full live plugin installation.",
+      "authorScriptsExecuted": false,
+      "fullThirdPartyRuntimeExecuted": false
+    },
+    "results": {
+      "checksPerBrowser": 53,
+      "beforeFailedChecks": 36,
+      "edgePassed": true,
+      "windowsWebKitPassed": true,
+      "allPageErrors": [],
+      "allResizeErrors": [],
+      "reasoningBefore": {
+        "nativeOrb": true,
+        "authorOrb": true,
+        "authoredFrameHidden": true,
+        "plainPlaceholder": true
+      },
+      "reasoningAfter": {
+        "nativeOrb": true,
+        "authorOrb": false,
+        "authoredFrameHidden": false,
+        "plainPlaceholder": true
+      },
+      "nativePopupChecks": [
+        {
+          "kind": "plain-native",
+          "glass": true
+        },
+        {
+          "kind": "authored-native-shell",
+          "glass": false,
+          "on": [
+            {
+              "color": "rgb(190, 143, 99)",
+              "background": "rgb(45, 33, 50)",
+              "radius": "7px",
+              "shadow": "rgb(99, 44, 33) 2px 2px 1px",
+              "font": "Georgia"
+            },
+            {
+              "color": "rgb(201, 177, 133)",
+              "background": "rgb(65, 44, 77)",
+              "radius": "4px",
+              "shadow": "rgb(0, 0, 0) 0px 0px 2px",
+              "font": "\"Noto Sans\", sans-serif, sans-serif"
+            }
+          ],
+          "off": [
+            {
+              "color": "rgb(190, 143, 99)",
+              "background": "rgb(45, 33, 50)",
+              "radius": "7px",
+              "shadow": "rgb(99, 44, 33) 2px 2px 1px",
+              "font": "Georgia"
+            },
+            {
+              "color": "rgb(201, 177, 133)",
+              "background": "rgb(65, 44, 77)",
+              "radius": "4px",
+              "shadow": "rgb(0, 0, 0) 0px 0px 2px",
+              "font": "\"Noto Sans\", sans-serif, sans-serif"
+            }
+          ],
+          "value": "73",
+          "calls": 1,
+          "fill": "",
+          "nativeRegistered": true
+        },
+        {
+          "kind": "framework-native-shell",
+          "glass": false
+        },
+        {
+          "kind": "late-authored-content",
+          "glassReleased": true,
+          "poseReleased": true
+        }
+      ],
+      "nativeCombinedWorkload": {
+        "pose": {
+          "calls": 57,
+          "scope": {
+            "tracked": 18,
+            "active": true,
+            "applied": 5
+          },
+          "overlays": 4,
+          "ballLayer": true,
+          "dragging": false,
+          "position": "28px 645px",
+          "resizeErrors": []
+        },
+        "ballLayerSamples": 48,
+        "distinctBallPositions": 48,
+        "allNativeDragHandlersActive": true,
+        "pointerMoves": 48,
+        "presetAndSizeChanges": 12,
+        "engineDeltas": {
+          "map": 24,
+          "reflection": 12,
+          "ball": 76
+        },
+        "allSamplesRetainedRefraction": true,
+        "allQueuesSettled": true,
+        "overlapSamples": 0
+      },
+      "authoredRangeEvents": [
+        {
+          "selector": "#foreign-inline input[type=range]",
+          "value": "73",
+          "calls": 1,
+          "fill": "",
+          "tooltip": false
+        },
+        {
+          "selector": "#generic-foreign input[type=range]",
+          "value": "73",
+          "calls": 1,
+          "fill": "",
+          "tooltip": false
+        },
+        {
+          "selector": ".acu-window input[type=range]",
+          "value": "73",
+          "calls": 1,
+          "fill": "",
+          "tooltip": false
+        }
+      ]
+    },
+    "genericBoundaries": [
+      "Shared controls exclude message-authored content, custom popup content and semantic foreign dialogs.",
+      "Native-looking icons and reasoning headers inside authored content retain their own styles and behavior.",
+      "Mobile range guards, progress and value popovers act only on owned host/workbench controls.",
+      "Authored styled iframes retain all declarations; only plain same-origin message documents receive a removable fallback.",
+      "Opaque/cross-origin frames are checked before document access. External floating windows are no longer scanned by card clarity.",
+      "Registered host popups with embedded styles, frames, framework roots or explicit author ownership retain their own shell. Late authored content releases previously attached NVWA glass."
+    ],
+    "limitations": [
+      "The original preset prompts, helper scripts, variables and generation/business workflows were not executed.",
+      "The database plugin was inspected at a pinned source commit; complete plugin behavior was not installed or exercised.",
+      "Common structural boundaries also apply to similar plugins; unprovided plugins with unusual DOM or broad global CSS still need separate validation.",
+      "Windows WebKit is not iPhone acceptance, and no physical phone was tested."
+    ],
+    "integrity": {
+      "root": "C:/Users/ASUS/.codex/worktrees/nvwa-204-restart/nvwa-test-repo",
+      "changedRuntime": [
+        "card-clarity.js",
+        "index.js",
+        "light-scope.js",
+        "mes-icons.js",
+        "style.css"
+      ],
+      "sourceHashes": {
+        "appearance-bookmark.js": "20fa0a95daa1cf6fa8de936d74a162a7f4a4df937e95b35ff0553537e2a67d53",
+        "ball-glass.js": "f629793b388911d9b8bb06b2a0db0bf7bd64232fba4a7f967623c14884675536",
+        "ball-raster.js": "fb8f5731e53c5e4d6fe921d5b2f1ab8bea8a714c0392f99bbe2e58e0d8ac8648",
+        "bundled-wallpapers.js": "bdb01b55b7ed76369d5cf34e1596bbc48f0b133865a78dc121c1f4a3142250d6",
+        "card-clarity.js": "15b98fa613a3683217316468f9723de7e3891ccda5e7edf8d1bf1e00986e9265",
+        "control-material.js": "308c972d8613336aca7930205bbdaac8201203dd233d91e3aa51d155d0bde5cd",
+        "fixed-position.js": "55b7033df7774fd06e28296cd482b2296a80313492136c27854b2dd134ea8a5b",
+        "glass-lighting.js": "f25a89579f5845ca67551992bf4089a3eaa583823b91e04f964285de5e330cce",
+        "glass-performance.js": "44c893649b55bec33b63e36927470c9acc4849a957782ca5cb690d87114d62f2",
+        "glass-reflections.js": "8e8734c122c09bc5f1bcb2d9626b9b3925d44587296bed19f89f107890e59fc8",
+        "glass-worker.js": "61de663fb95f0273d12c051b7a85e38398f31871c3c2f6e6cc6c52b26bf2d026",
+        "glass2.js": "6cc1ecd2244eb003dd0e75a8644b4450b49fc5278a3326ae577547490732f98b",
+        "host-interaction-state.js": "703b5ddc091104e060149ad75f59b4e0fcc9363e46e2670404ddfbf33b8835a5",
+        "icons.css": "ae590d1261c3d76bbc9615d0e633424fba6698c8f4c7e6f572a5ccaa501c04f9",
+        "index.js": "d90d2797e4da2df0cbabc78241b1e73d68b2f2c3348bb47bf884bed6c27809ff",
+        "interaction-diagnostics.js": "2935c92715ce84d128f25982405c530f1e20d1ffa38e681c7249d1350c2e7720",
+        "ios-wallpaper-refraction.js": "d1142323abde753915e1e5487dd3cb3533b1108574b114deb6e4c2d881ce93c3",
+        "light-scope.js": "7fd5654182c83bde1568f071bce35e65ee13767f337a6da46703ba11177ab698",
+        "liquid-glass-web.js": "90000721dbac9f5f34aec3167e08a88a5cdd7b24773ca5e6ef1596863f7754d8",
+        "manifest.json": "d27f3008e67733ef1e4320a4cb73854204682cd99d0da0209d2c5cd51c731c7e",
+        "mes-icons.js": "9e1dbd42726e0a47f6c6243a393a8bb559ee8babbcbc1dcd273ae04a7dcc059f",
+        "message-rendering.js": "fae89c1021bd9046c4bc86b1b6acb62de0cb189b222ad38a6941cf520a823bf4",
+        "optics-settings.js": "79d9daee4ef6555a07868d29db661f3fb67af5c8acb1e87ab56d8af97e09db41",
+        "orb.js": "d13fae161d3c587e68661337e86384176b93c7e91944cc4ae54f10b1b19f1248",
+        "reflection-raster.js": "f57f7f7c79a6c04282a37274a381dfca80f62be1260e7c2c962e117550e5c74a",
+        "settings-panel.css": "3430404905d80db2d0a4d3aa26e28561ae73ea1b9f1e8aaf7c73c966f878f4ea",
+        "settings-panel.js": "bf1e079da94770d96a30982655d47bb5212d08430a1cef63c8776a93259a1cb5",
+        "style.css": "857faf4002753b173968d85577bfcfdf4a7519fba00f59556180e998a205bafa",
+        "surface-policy.js": "07c512c88f3dbd789d1daf5b0a70edf3e16d5e2bb9aef64542d3137b85fbd876",
+        "viewport.js": "34ebca08aacffdb979bb8fc1dbd5818b9b0d706e7d64e99ffe435ff41c3c5345",
+        "wallpaper-sampling.js": "9b929d3d10d3e586796b3c8014c173e37fe30c142c09a609df3c77684f5bd003",
+        "web-map-cache.js": "62dd8e204233dac3b04e367be00affca6d45c872c4cb4a2f1b68e6e9482aadd8",
+        "web-map-raster.js": "ed1a8c16ac9cb3b056a4e4e8bb2f716e76da337f6f7d3c48c6bac0e58c1ebe00",
+        "web-presets.js": "fe3164cdd4a33687045411ad3c2b296a837bc4b9b66ea1e819f062e762385cb6"
+      },
+      "messageRenderingFixPreserved": true,
+      "sensorMathAndCadencePreserved": true
+    },
+    "publication": {
+      "target": "test",
+      "repository": "https://github.com/jjing8235-afk/test",
+      "branch": "main",
+      "version": "2.0.10-test.1",
+      "pushed": false,
+      "deployed": false,
+      "installedExtensionReplaced": false
+    },
+    "evidenceDirectory": "D:/claudecod1/st-verify/out/restart204/preset-plugin-compat-20261116",
+    "resultFile": "D:/claudecod1/st-verify/out/restart204/preset-plugin-compat-20261116/final-result.json"
+  },
+  "testRelease2010": {
+    "date": "2026-11-16",
+    "version": "2.0.10-test.1",
+    "status": "prepared-for-test-publication",
+    "target": {
+      "repository": "https://github.com/jjing8235-afk/test",
+      "branch": "main",
+      "previousHead": "d3bf9f4aafe4c299fc9733b488b0fce3708675b9"
+    },
+    "baseline": {
+      "version": "2.0.4-test.1",
+      "commit": "c18e29fe8c9fe47f609e9a8ba3aaf391ee780dcc",
+      "rebuildCommit": "8e97b13d569ec766a8f59168d7bca0895e8deff7",
+      "history": "Retain 2.0.5–2.0.9 in Git history while publishing the explicitly requested 2.0.4-based candidate tree."
+    },
+    "checks": {
+      "syntaxFiles": 43,
+      "syntaxPassed": true,
+      "diffCheckPassed": true,
+      "sourceInputsUnchanged": true,
+      "authoredDocuments": 15,
+      "authoredChecksPerBrowser": 53,
+      "edge": true,
+      "windowsWebKit": true,
+      "nativeHostMessages": 600,
+      "nativeHostPassed": true,
+      "poseVisualPairs": 35,
+      "priorValidationRecordsPreserved": 25
+    },
+    "evidenceRecords": [
+      "fontMenu20261114",
+      "mapCore20261114",
+      "engineCoordination20261114",
+      "resizeObserver20261116",
+      "poseCompositor20261116",
+      "authoredUICompatibility20261116"
+    ],
+    "limits": [
+      "Selected checks passed; inherited home-avatar and ios-material fixture failures were reproduced on the pristine 2.0.4 baseline and remain documented.",
+      "Windows WebKit and desktop Edge do not establish physical iPhone or Android acceptance.",
+      "Preset display fixtures do not establish complete third-party generation or database business workflows."
+    ],
+    "publication": {
+      "pushed": false,
+      "deployed": false,
+      "installedExtensionReplaced": false
+    },
+    "installedVersion": "2.0.9-test.1"
   }
 }
