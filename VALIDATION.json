@@ -1,6 +1,6 @@
 {
-  "currentVersion": "2.0.10-test.3",
-  "currentDisplayVersion": "2.0.10-test.3",
+  "currentVersion": "2.0.10-test.4",
+  "currentDisplayVersion": "2.0.10-test.4",
   "date": "2026-11-05",
   "version": "1.4.4-local.9",
   "baseline": "1.4.4-local.8",
@@ -5432,5 +5432,92 @@
     },
     "evidenceDirectory": "D:/claudecod1/st-verify/out/restart204/composer-ui-20261116",
     "hashFormat": "Source hashes describe validated workspace bytes; remote file hashes are recorded against the immutable runtime commit after Git line-ending normalization."
+  },
+  "composerBacking20261116": {
+    "date": "2026-11-16",
+    "version": "2.0.10-test.4",
+    "status": "prepared-for-test",
+    "baseCommit": "e16c5ed4b7d2538b5354c9a33daece72fcbf401a",
+    "scope": [
+      "Redesign all three composer tray backings with smoke-blue/cool-white material, an 18px silhouette, fine rim and recessed frame.",
+      "Reduce nested cards: grouped chat actions, separated two-column tools, one shared quick-entry backing.",
+      "Keep native nodes and event handlers, authored content boundaries, optical filters and highlight layers.",
+      "Preserve backing details across physical/legacy original glass, liquid-web and CSS compatibility material."
+    ],
+    "runtimeFilesChanged": [
+      "style.css",
+      "index.js"
+    ],
+    "javascriptBehaviorChanged": false,
+    "sourceHashes": {
+      "index.js": "750e0daf951277a5f784340ebf88e4df0f2bf848b0aaa7a82fc13fb3fc0b0aa3",
+      "style.css": "410ae981d7d4408bc005e200cd9c91e8679c51e1fb93df08a93c7f3b0a8d8ccd"
+    },
+    "verification": {
+      "hostVersion": "1.18.0",
+      "nativeChecksPerBrowser": 61,
+      "otherAuthoredChecksPerBrowser": 53,
+      "edgePassed": true,
+      "windowsWebKitPassed": true,
+      "viewports": [
+        {
+          "width": 393,
+          "height": 759
+        },
+        {
+          "width": 320,
+          "height": 568
+        },
+        {
+          "width": 844,
+          "height": 390
+        },
+        {
+          "width": 1280,
+          "height": 900
+        }
+      ],
+      "themes": [
+        "dark",
+        "light"
+      ],
+      "materialChecksPerBrowser": 24,
+      "materials": [
+        "physical/original",
+        "legacy/original",
+        "physical/liquid-web",
+        "CSS compatibility blur"
+      ],
+      "draftPreserved": true,
+      "originalNodesPreserved": true,
+      "keyboardAndContextActions": true,
+      "masterSwitchCleanup": true,
+      "pageErrors": [],
+      "offlineScriptsPassed": 8,
+      "renderedDarkAndLightReviewed": true
+    },
+    "performanceScope": {
+      "newDOM": false,
+      "newObservers": false,
+      "newFrameLoops": false,
+      "newBackdropFilters": false,
+      "newRemoteAssets": false,
+      "mobileFPSMeasured": false
+    },
+    "limits": [
+      "Mobile-size checks ran in desktop Edge and Windows WebKit; physical phones have not accepted this revision.",
+      "Native menus and representative extension/quick-reply launchers were exercised; full third-party business workflows were not run.",
+      "No claim of measured phone FPS or GPU scheduling improvement."
+    ],
+    "publication": {
+      "target": "test",
+      "repository": "https://github.com/jjing8235-afk/test",
+      "branch": "main",
+      "version": "2.0.10-test.4",
+      "pushed": false,
+      "installedExtensionReplaced": false
+    },
+    "evidenceDirectory": "D:/claudecod1/st-verify/out/restart204/composer-backing-20261116",
+    "hashFormat": "Source hashes identify tested workspace bytes; publication proof checks immutable Git bytes after line-ending normalization."
   }
 }

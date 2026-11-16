@@ -422,11 +422,21 @@ html.ilg body #options {
 html.ilg body #options .options-content,
 html.ilg body #extensionsMenu,
 html.ilg.ilg-qrfold body #form_sheld #qr--bar {
-    --ilg-tray-face: rgba(21, 23, 30, .78);
+    --ilg-tray-face: rgba(20, 29, 42, .83);
+    --ilg-tray-shadow: inset 0 1px 0 var(--ilg-tray-rim),
+        inset 0 0 0 5px var(--ilg-tray-frame),
+        inset 0 -1px 0 var(--ilg-tray-line),
+        0 2px 4px rgba(0, 8, 20, .12),
+        0 14px 32px -12px rgba(0, 8, 20, .42);
+    --ilg-tray-edge: rgba(190, 211, 235, .24);
+    --ilg-tray-rim: rgba(221, 234, 249, .15);
+    --ilg-tray-frame: rgba(4, 10, 19, .16);
+    --ilg-tray-wash: rgba(137, 166, 199, .14);
+    --ilg-tray-well: rgba(3, 9, 18, .19);
     --ilg-tray-ink: #f0f1f5;
     --ilg-tray-muted: #c9ccd6;
     --ilg-tray-accent: #edc990;
-    --ilg-tray-cell: rgba(255, 255, 255, .055);
+    --ilg-tray-cell: rgba(180, 203, 230, .075);
     --ilg-tray-hover: rgba(255, 255, 255, .115);
     --ilg-tray-line: rgba(226, 230, 245, .12);
     --ilg-tray-danger: #ff8c85;
@@ -439,7 +449,12 @@ html.ilg.ilg-qrfold body #form_sheld #qr--bar {
 html.ilg.ilg-light body #options .options-content,
 html.ilg.ilg-light body #extensionsMenu,
 html.ilg.ilg-qrfold.ilg-light body #form_sheld #qr--bar {
-    --ilg-tray-face: rgba(246, 247, 251, .88);
+    --ilg-tray-face: rgba(235, 241, 248, .91);
+    --ilg-tray-edge: rgba(68, 91, 121, .23);
+    --ilg-tray-rim: rgba(255, 255, 255, .85);
+    --ilg-tray-frame: rgba(255, 255, 255, .38);
+    --ilg-tray-wash: rgba(255, 255, 255, .64);
+    --ilg-tray-well: rgba(107, 131, 162, .08);
     --ilg-tray-ink: #272c39;
     --ilg-tray-muted: #525969;
     --ilg-tray-accent: #785321;
@@ -456,9 +471,9 @@ html.ilg body :is(#options .options-content, #extensionsMenu) {
     min-width: 0;
     max-width: calc(100vw - 24px);
     max-height: min(620px, calc(100dvh - var(--ilg-form-h, 64px) - 48px));
-    padding: 12px;
-    border: 0;
-    border-radius: 24px;
+    padding: 16px 12px 12px;
+    border: 1px solid var(--ilg-tray-edge);
+    border-radius: 18px;
     background-color: var(--ilg-tray-face);
     overflow-y: auto;
     overscroll-behavior: contain;
@@ -480,8 +495,8 @@ html.ilg body #extensionsMenu > div:not(.extension_container):not([data-nvwa-sty
     padding: 11px 10px;
     margin: 0;
     border: 0;
-    border-radius: 13px;
-    background: var(--ilg-tray-cell);
+    border-radius: 9px;
+    background: transparent;
     color: var(--ilg-tray-ink);
     font-size: 14px;
     line-height: 1.4;
@@ -510,7 +525,20 @@ html.ilg body #options .options-content > :is(#option_select_chat, #option_delet
     padding-inline: 13px;
     text-align: start;
 }
-html.ilg body #options .options-content > #option_continue { background: var(--ilg-tray-hover); }
+/* The inset action row and the quiet utility row give the backing its own hierarchy. */
+html.ilg body #options .options-content > :is(#option_toggle_AN, #option_toggle_CFG, #option_toggle_logprobs) {
+    background: var(--ilg-tray-cell);
+    box-shadow: inset 0 1px var(--ilg-tray-line);
+}
+html.ilg body #options .options-content > #option_continue {
+    background: var(--ilg-tray-cell);
+    border: 1px solid var(--ilg-tray-line);
+}
+html.ilg body #extensionsMenu > .extension_container:not([data-nvwa-style="author"]) > div:not([data-nvwa-style="author"]),
+html.ilg body #extensionsMenu > div:not(.extension_container):not([data-nvwa-style="author"]) {
+    border-bottom: 1px solid var(--ilg-tray-line);
+    border-radius: 8px 8px 3px 3px;
+}
 html.ilg body #options .options-content > #option_delete_mes { color: var(--ilg-tray-danger); }
 html.ilg body #options .options-content > a > i,
 html.ilg body #extensionsMenu :is(.list-group-item > i, .extensionsMenuExtensionButton) {
@@ -530,7 +558,7 @@ html.ilg body #options .options-content > hr {
     grid-column: 1 / -1;
     width: auto;
     min-height: 1px;
-    margin: 3px 4px;
+    margin: 5px 2px;
     border: 0;
     background: var(--ilg-tray-line);
 }
@@ -623,6 +651,23 @@ html.ilg body :is(#top-bar, #nonQRFormItems, #ilg-floor, .ilg-island, .ilg-glass
         0 calc(5px * var(--ilg-sh-mul, 1)) calc(14px * var(--ilg-sh-mul, 1)) rgba(var(--ilg-drop-rgb), calc(0.18 * var(--ilg-sh))),
         0 calc(16px * var(--ilg-sh-mul, 1)) calc(36px * var(--ilg-sh-mul, 1)) rgba(var(--ilg-drop-rgb), calc(0.14 * var(--ilg-sh)));
 }
+/* Composer tray backing: one static surface, a fine rim and a recessed inner frame.
+   Keep the engine's backdrop filter and highlight pseudo-elements; the physical
+   geometry reads the same 18px corner radius as the visible CSS silhouette. */
+html.ilg body #options .options-content,
+html.ilg body #extensionsMenu,
+html.ilg.ilg-qrfold body #form_sheld #qr--bar {
+    background-image:
+        linear-gradient(180deg, var(--ilg-tray-wash), transparent 86px),
+        linear-gradient(0deg, var(--ilg-tray-well), transparent 70%);
+    background-clip: padding-box;
+}
+html.ilg body #options .options-content.ilg-glass,
+html.ilg body #extensionsMenu.ilg-glass,
+html.ilg.ilg-qrfold body #form_sheld #qr--bar.ilg-glass {
+    box-shadow: var(--ilg-tray-shadow);
+}
+
 /* 旧版的渐变亮边让开（输入框获得焦点时的蓝圈也不要：和滤镜里的高光叠在一起像描了两层边） */
 html.ilg body .ilg-glass.ilg-phys:where(#top-bar, #top-bar *, #top-settings-holder, #top-settings-holder *, #sheld, #sheld *, #options, #options *, #extensionsMenu, #extensionsMenu *, #toast-container, #toast-container *, #ilg-fold-menu, #ilg-fold-menu *, dialog.popup.ilg-glass, dialog.popup.ilg-glass > .popup-body > .popup-controls *):where(:not(.popup:not(.ilg-glass), .popup:not(.ilg-glass) *, dialog:not(.ilg-glass), dialog:not(.ilg-glass) *, [role="dialog"]:not(.ilg-recent):not(.ilg-glass), [role="dialog"]:not(.ilg-recent):not(.ilg-glass) *, .popup-content, .popup-content *, .mes_text, .mes_text *, .mes_reasoning, .mes_reasoning *, [role="alertdialog"], [role="alertdialog"] *, [data-nvwa-style="author"], [data-nvwa-style="author"] *, #catgod-oracle-qrbar, #catgod-oracle-qrbar *))::before { opacity: 0; }
 /* 楼层胶囊由同一物理材质管理，不能继续叠加降级白描边。 */
@@ -1010,8 +1055,9 @@ html.ilg.ilg-qrfold.ilg-qr-open body #form_sheld #qr--bar {
     width: min(336px, calc(100vw - 24px));
     max-width: 100%;
     max-height: min(420px, calc(100dvh - var(--ilg-form-h, 64px) - 96px));
-    padding: 10px;
-    border-radius: 24px;
+    padding: 16px 12px 12px;
+    border: 1px solid var(--ilg-tray-edge);
+    border-radius: 18px;
     background-color: var(--ilg-tray-face);
     overflow-x: hidden;
     overflow-y: auto;
@@ -1031,8 +1077,8 @@ html.ilg.ilg-qrfold body #form_sheld #qr--bar .qr--button:where(:not(#catgod-ora
     margin: 0;
     padding: 13px 12px;
     border: 0;
-    border-radius: 14px;
-    background-color: var(--ilg-tray-cell);
+    border-radius: 9px;
+    background-color: transparent;
     color: var(--ilg-tray-ink);
     font-size: 15px;
     line-height: 1.4;
@@ -4641,6 +4687,12 @@ html.ilg.ilg-css-glass.ilg-light {
 }
 html.ilg.ilg-css-glass body:not(.no-blur) :is(.ilg-css-surface, #chat .mes.ilg-css-surface) {
     box-shadow:0 1px 2px rgba(12,24,42,.08),0 9px 22px -12px var(--ilg-css-drop);
+}
+/* The composer backing keeps its inset frame in the CSS material as well. */
+html.ilg.ilg-css-glass body:not(.no-blur) #options .options-content.ilg-css-surface,
+html.ilg.ilg-css-glass body:not(.no-blur) #extensionsMenu.ilg-glass.ilg-css-surface,
+html.ilg.ilg-css-glass.ilg-qrfold body:not(.no-blur) #form_sheld #qr--bar.ilg-css-surface {
+    box-shadow: var(--ilg-tray-shadow);
 }
 html.ilg.ilg-css-glass body:not(.no-blur) :is(.ilg-css-surface, #chat .mes.ilg-css-surface)::after {
     content:"" !important;
