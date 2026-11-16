@@ -30,7 +30,7 @@ window.__ilgLoaded = new URL('.', import.meta.url).pathname;
 
 let studioUI = null;
 const MODULE = 'iosLiquidGlass';
-const BUILD_VERSION = '2.0.10-test.1';
+const BUILD_VERSION = '2.0.10-test.2';
 const ENGINE_NAMES = Object.freeze({performance:'御风性能引擎',refraction:'棱光折射引擎'});
 const NS = 'http://www.w3.org/2000/svg';
 const ctx = SillyTavern.getContext();
@@ -788,6 +788,7 @@ const PILL_SEL = '#nonQRFormItems';
 const BAR_SEL = `#top-bar, ${PILL_SEL}`;
 // 只处理酒馆 Popup 注册表里的标准外壳；不扫描、标记或改造第三方浮窗。
 const NATIVE_POPUP_SEL = 'dialog.popup[data-id]:not(.transparent_dialogue_popup)';
+const HOST_MENU_SEL = '#options .options-content, #extensionsMenu';
 const PANEL_SEL = '#top-settings-holder > .drawer > .drawer-content, #character_popup, #world_popup, #options .options-content, #extensionsMenu, ' + NATIVE_POPUP_SEL;
 const HOST_UI_SEL = '#top-settings-holder, #sheld, #options, #extensionsMenu, #ilg-fold-menu';
 // 世界书编辑器在抽屉里时，不再叠第二层玻璃。
@@ -799,11 +800,12 @@ function isNativePopup(el) {
 // 仅对原生 Popup 内固定内容根做定点适配，不通过标题、类名或相似结构猜测所有权。
 const ADAPTED_PANEL_SEL = ':scope > .popup-body > .popup-content > :is(#nvwa-panel, #nvwa-memory)';
 function popupOwnsStyle(el) {
+    if (adaptedPanel(el)) return false;
     const content = el.querySelector?.(':scope > .popup-body > .popup-content');
     return !!content?.matches?.('[data-nvwa-style="author"]') || !!content?.querySelector?.('style, link[rel~="stylesheet"], iframe, [data-v-app], [data-reactroot], [data-nvwa-style="author"]');
 }
 function adaptedPanel(el) {
-    return isNativePopup(el) && !popupOwnsStyle(el) ? el.querySelector(ADAPTED_PANEL_SEL) : null;
+    return isNativePopup(el) ? el.querySelector(ADAPTED_PANEL_SEL) : null;
 }
 function trackable(el) {
     const popup = el.closest('dialog, .popup, [role="dialog"]:not(.ilg-recent)');
@@ -947,6 +949,8 @@ document.addEventListener('focusin', e => { if (e.target.id === 'send_textarea')
 function surfaceBlur(it, el) {
     if (it.kind === 'mes' && S.chatBackground === 'transparent') return 0;
     const blur = KIND[it.kind].blur();
+    // Native input menus sit over message text; keep that text from competing with their labels.
+    if (it.kind === 'panel' && el.matches(HOST_MENU_SEL)) return Math.max(10, blur);
     return controlReadable(el) ? Math.max(1.1, blur) : blur;
 }
 // 新版：模糊、调色、折射全在一个 SVG 滤镜里，所以 backdrop-filter 只写 url()
@@ -1209,7 +1213,10 @@ function track(el, kind) {
     if (isNativePopup(el)) {
         const content = el.querySelector(':scope > .popup-body > .popup-content');
         if (content) {
-            it.contentObserver = new MutationObserver(() => { if (popupOwnsStyle(el)) untrack(el); });
+            it.contentObserver = new MutationObserver(() => {
+                if (popupOwnsStyle(el)) { untrack(el); return; }
+                if (el.classList.contains('ilg-adapted') !== !!adaptedPanel(el)) paint(el);
+            });
             it.contentObserver.observe(content, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-nvwa-style'] });
         }
     }

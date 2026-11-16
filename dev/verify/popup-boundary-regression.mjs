@@ -10,9 +10,12 @@ const nativeBody=source.match(/function isNativePopup\(el\) \{([\s\S]*?)\n\}/)[1
 const trackBody=source.match(/function trackable\(el\) \{([\s\S]*?)\n\}/)[1];
 const registry=[]; const ctx={Popup:{util:{popups:registry}}};
 const ownedBody=source.match(/function popupOwnsStyle\(el\) \{([\s\S]*?)\n\}/)[1];
-function ownsStyle(el){return vm.runInNewContext('(function(el){'+ownedBody+'})(el)',{el});}
+const panelSelector=source.match(/const ADAPTED_PANEL_SEL = '([^']+)'/)[1];
+const panelBody=source.match(/function adaptedPanel\(el\) \{([\s\S]*?)\n\}/)[1];
+function adapted(el){return vm.runInNewContext('(function(el){'+panelBody+'})(el)',{el,isNativePopup:native,ADAPTED_PANEL_SEL:panelSelector});}
+function ownsStyle(el){return vm.runInNewContext('(function(el){'+ownedBody+'})(el)',{el,adaptedPanel:adapted});}
 function native(el,host=ctx){return vm.runInNewContext('(function(el){'+nativeBody+'})(el)',{el,ctx:host,NATIVE_POPUP_SEL:selector});}
-function popup(matches=true){return {matches(s){assert.equal(s,selector);return matches;}};}
+function popup(matches=true){return {matches(s){assert.equal(s,selector);return matches;},querySelector(){return null;}};}
 const standard=popup();registry.push({dlg:standard});assert(native(standard));
 assert(!native(popup()),'An unregistered look-alike is not a host popup');
 const transparent=popup(false);registry.push({dlg:transparent});assert(!native(transparent));
@@ -38,17 +41,15 @@ for (const [workbench,host,foreign,allowed] of [[false,true,false,true],[false,t
 }
 passed.push('Progress includes the owned workbench and host controls; foreign dialog ranges remain untouched');
 passed.push('No preserve markers or injected close button; content boundary and shared-control scopes are explicit');
-const panelSelector=source.match(/const ADAPTED_PANEL_SEL = '([^']+)'/)[1];
-const panelBody=source.match(/function adaptedPanel\(el\) \{([\s\S]*?)\n\}/)[1];
-function adapted(el){return vm.runInNewContext('(function(el){'+panelBody+'})(el)',{el,isNativePopup:native,popupOwnsStyle:ownsStyle,ADAPTED_PANEL_SEL:panelSelector});}
 function contentPopup(registered,root,authored=false){const el=popup();el.querySelector=s=>{if(s===':scope > .popup-body > .popup-content')return{matches:()=>false,querySelector:()=>authored?{}:null};assert.equal(s,':scope > .popup-body > .popup-content > :is(#nvwa-panel, #nvwa-memory)');return root;};if(registered)registry.push({dlg:el});return el;}
 assert(adapted(contentPopup(true,{id:'nvwa-panel'})));
 assert(adapted(contentPopup(true,{id:'nvwa-memory'})));
 assert(!adapted(contentPopup(false,{id:'nvwa-panel'})),'A foreign preset look-alike must not be adapted');
 assert(!adapted(contentPopup(false,{id:'nvwa-memory'})),'A foreign memory look-alike must not be adapted');
 assert(!adapted(contentPopup(true,null)),'Unrelated native content is not a compatible NVWA panel');
-const authored=contentPopup(true,{id:'nvwa-panel'},true);assert(ownsStyle(authored));assert(!adapted(authored),'A styled preset keeps its own appearance even inside a registered Popup');assert(!track({container:authored}),'An authored popup must not acquire a second material');
-passed.push('Registered popups with authored styles or embedded UI retain their own shell and controls');
+for(const id of ['nvwa-panel','nvwa-memory']){const authored=contentPopup(true,{id},true);assert(!ownsStyle(authored),'Explicit NVWA roots retain their requested glass despite embedded styles');assert(adapted(authored));assert(track({container:authored}));const lookalike=contentPopup(false,{id},true);assert(ownsStyle(lookalike));assert(!adapted(lookalike));assert(!track({container:lookalike}));}
+const foreignAuthored=contentPopup(true,null,true);assert(ownsStyle(foreignAuthored));assert(!adapted(foreignAuthored));assert(!track({container:foreignAuthored}),'Other authored popups retain their own shell');
+passed.push('Other registered authored popups keep their shell; explicitly supported NVWA roots retain glass');
 const scopedRules=[...css.matchAll(/([^{}]+)\{[^{}]*\}/g)].filter(m=>/#nvwa-(panel|memory)/.test(m[1]));
 assert(scopedRules.length>=7);
 assert(scopedRules.every(m=>m[1].trim().startsWith('html.ilg')&&m[1].includes('dialog.popup.ilg-adapted > .popup-body > .popup-content > ')));
@@ -62,4 +63,13 @@ const material=source.match(/const KIND = (\{[\s\S]*?\n\});/)[1];
 const kinds=vm.runInNewContext('('+material+')',{S:{barBlur:1,mesBlur:3,panelBlur:8}});
 assert.equal(kinds.bar.blur(),1);assert.equal(kinds.toast.blur(),10);
 passed.push('Floor shares input bar material, not toast blur');
+
+const menuSelector=source.match(/const HOST_MENU_SEL = '([^']+)'/)[1];
+const surfaceBlurSource=source.match(/function surfaceBlur\(it, el\) \{[^]*?\n\}/)[0];
+const blurSettings={barBlur:.25,mesBlur:.5,panelBlur:1.5,panelRead:false,chatBackground:'glass'};
+const blurKinds=vm.runInNewContext('('+material+')',{S:blurSettings});
+const getSurfaceBlur=vm.runInNewContext(surfaceBlurSource+';surfaceBlur',{S:blurSettings,KIND:blurKinds,HOST_MENU_SEL:menuSelector,controlReadable:()=>false});
+for(const menu of [true,false]){const el={matches(selector){assert.equal(selector,menuSelector);return menu;}};assert.equal(getSurfaceBlur({kind:'panel'},el),menu?10:1.5);assert.equal(getSurfaceBlur({kind:'clearPanel'},el),1.25);}
+blurSettings.panelBlur=18;assert.equal(getSurfaceBlur({kind:'panel'},{matches:()=>true}),18);
+passed.push('Native input menus keep readable glass; other panels, explicit NVWA clear material, and stronger user blur stay unchanged');
 console.log(JSON.stringify({passed},null,2));

@@ -1,6 +1,6 @@
 {
-  "currentVersion": "2.0.10-test.1",
-  "currentDisplayVersion": "2.0.10-test.1",
+  "currentVersion": "2.0.10-test.2",
+  "currentDisplayVersion": "2.0.10-test.2",
   "date": "2026-11-05",
   "version": "1.4.4-local.9",
   "baseline": "1.4.4-local.8",
@@ -5288,5 +5288,55 @@
       }
     ],
     "historySnapshots": "Earlier unpublished/delivery fields record their original observation times; this testRelease2010 field is the current publication receipt."
+  },
+  "menuNVWARestore20261116": {
+    "date": "2026-11-16",
+    "status": "prepared-for-test-publication",
+    "baseVersion": "2.0.10-test.1",
+    "baseCommit": "d813d01901a5638b964d45506118be3c582af382",
+    "scope": [
+      "Native input menus keep their translucent background and existing refraction while making background text unreadable through a minimum local blur. Stronger user blur is retained.",
+      "Restore the prior clear-glass adaptation only for direct #nvwa-panel and #nvwa-memory roots inside registered host Popups.",
+      "Other authored presets, cards and plugins retain their existing protection. Nested or unregistered NVWA look-alikes remain excluded.",
+      "Handle late NVWA content and release the material if replaced with another authored UI."
+    ],
+    "runtimeFilesChanged": [
+      "index.js"
+    ],
+    "sourceHash": "bb99e7e3c6b4192e5002049267877bf51252012a18f27666c59c1ce5d5c6b491",
+    "styleCssUnchanged": true,
+    "userPresetUnchanged": true,
+    "verification": {
+      "hostVersion": "1.18.0",
+      "sourceStyleDocuments": 2,
+      "sourcePreset": "NVWA-Chaos5-ST.json",
+      "beforeFailedChecks": 11,
+      "hostChecksPerBrowser": 17,
+      "edgePassed": true,
+      "windowsWebKitPassed": true,
+      "actualLightAndDarkClassesAsserted": true,
+      "otherAuthoredChecksPerBrowser": 53,
+      "otherAuthoredEdgePassed": true,
+      "otherAuthoredWebKitPassed": true,
+      "deterministicScripts": 8,
+      "pageErrors": [],
+      "draftPreserved": true,
+      "masterSwitchCleanup": true
+    },
+    "limitations": [
+      "Windows Edge and WebKit at mobile viewport sizes do not establish physical phone acceptance.",
+      "The NVWA display fixtures use the supplied source CSS and representative markup, without executing the complete preset or memory business scripts.",
+      "No mobile frame-rate or sustained GPU-cost measurement was performed for this visual fix."
+    ],
+    "publication": {
+      "target": "test",
+      "repository": "https://github.com/jjing8235-afk/test",
+      "branch": "main",
+      "pushed": false,
+      "installedExtensionReplaced": false
+    },
+    "evidenceDirectory": "D:/claudecod1/st-verify/out/restart204/menu-nvwa-restore-20261116",
+    "candidateVersion": "2.0.10-test.2",
+    "versionOnlyDeltaSinceBrowserChecks": true
   }
 }
