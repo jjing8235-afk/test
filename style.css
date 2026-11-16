@@ -418,47 +418,137 @@ html.ilg body #options {
     box-shadow: none;
     padding: 0;
 }
+/* ---------- 输入区工具盘：紧凑操作、双列工具和独立快捷入口 ---------- */
+html.ilg body #options .options-content,
+html.ilg body #extensionsMenu,
+html.ilg.ilg-qrfold body #form_sheld #qr--bar {
+    --ilg-tray-face: rgba(21, 23, 30, .78);
+    --ilg-tray-ink: #f0f1f5;
+    --ilg-tray-muted: #c9ccd6;
+    --ilg-tray-accent: #edc990;
+    --ilg-tray-cell: rgba(255, 255, 255, .055);
+    --ilg-tray-hover: rgba(255, 255, 255, .115);
+    --ilg-tray-line: rgba(226, 230, 245, .12);
+    --ilg-tray-danger: #ff8c85;
+    color: var(--ilg-tray-ink);
+    font-size: 14px;
+    line-height: 1.4;
+    text-shadow: none;
+    color-scheme: dark;
+}
+html.ilg.ilg-light body #options .options-content,
+html.ilg.ilg-light body #extensionsMenu,
+html.ilg.ilg-qrfold.ilg-light body #form_sheld #qr--bar {
+    --ilg-tray-face: rgba(246, 247, 251, .88);
+    --ilg-tray-ink: #272c39;
+    --ilg-tray-muted: #525969;
+    --ilg-tray-accent: #785321;
+    --ilg-tray-cell: rgba(36, 45, 65, .045);
+    --ilg-tray-hover: rgba(36, 45, 65, .095);
+    --ilg-tray-line: rgba(36, 45, 65, .12);
+    --ilg-tray-danger: #ad302c;
+    color-scheme: light;
+}
 html.ilg body :is(#options .options-content, #extensionsMenu) {
-    padding: 6px;
+    display: grid;
+    gap: 6px;
+    width: min(332px, calc(100vw - 24px));
+    min-width: 0;
+    max-width: calc(100vw - 24px);
+    max-height: min(620px, calc(100dvh - var(--ilg-form-h, 64px) - 48px));
+    padding: 12px;
     border: 0;
-    border-radius: 20px;
-    min-width: 210px;
-    background-color: rgba(22, 16, 30, 0.5);
-    /* The host already fades these menus; avoid resampling glass through a second scale animation. */
+    border-radius: 24px;
+    background-color: var(--ilg-tray-face);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--ilg-tray-line) transparent;
     animation: none;
 }
-html.ilg.ilg-light body :is(#options .options-content, #extensionsMenu) { background-color: rgba(255, 255, 255, 0.62); }
+html.ilg body #options .options-content { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+html.ilg body #extensionsMenu { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+html.ilg body #extensionsMenu > .extension_container:not([data-nvwa-style="author"]) { display: contents; }
+html.ilg body #options .options-content > a,
+html.ilg body #extensionsMenu > .extension_container:not([data-nvwa-style="author"]) > div:not([data-nvwa-style="author"]),
+html.ilg body #extensionsMenu > div:not(.extension_container):not([data-nvwa-style="author"]) {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    min-height: 58px;
+    gap: 10px;
+    padding: 11px 10px;
+    margin: 0;
+    border: 0;
+    border-radius: 13px;
+    background: var(--ilg-tray-cell);
+    color: var(--ilg-tray-ink);
+    font-size: 14px;
+    line-height: 1.4;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    text-shadow: none;
+    opacity: 1;
+    cursor: pointer;
+    transition: background-color .14s ease-out, color .14s ease-out;
+}
+html.ilg body #options .options-content > a {
+    grid-column: span 3;
+    flex-direction: column;
+    justify-content: center;
+    gap: 7px;
+    min-height: 70px;
+    padding: 11px 7px;
+    text-align: center;
+}
+html.ilg body #options .options-content > :is(#option_toggle_AN, #option_toggle_CFG, #option_toggle_logprobs) { grid-column: span 2; }
+html.ilg body #options .options-content > :is(#option_select_chat, #option_delete_mes, #option_continue) {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    justify-content: flex-start;
+    min-height: 44px;
+    padding-inline: 13px;
+    text-align: start;
+}
+html.ilg body #options .options-content > #option_continue { background: var(--ilg-tray-hover); }
+html.ilg body #options .options-content > #option_delete_mes { color: var(--ilg-tray-danger); }
+html.ilg body #options .options-content > a > i,
+html.ilg body #extensionsMenu :is(.list-group-item > i, .extensionsMenuExtensionButton) {
+    flex: 0 0 24px;
+    width: 24px;
+    min-width: 24px;
+    height: 24px;
+    margin: 0;
+    color: var(--ilg-tray-accent);
+    font-size: 19px;
+    line-height: 24px;
+    text-align: center;
+    opacity: 1;
+}
+html.ilg body #options .options-content > #option_delete_mes > i { color: inherit; }
+html.ilg body #options .options-content > hr {
+    grid-column: 1 / -1;
+    width: auto;
+    min-height: 1px;
+    margin: 3px 4px;
+    border: 0;
+    background: var(--ilg-tray-line);
+}
+html.ilg body :is(#options .options-content > a, #extensionsMenu .list-group-item):focus-visible {
+    outline: 2px solid var(--ilg-tray-accent);
+    outline-offset: -2px;
+}
+@media (hover: hover) {
+    html.ilg body #options .options-content > a:hover,
+    html.ilg body #extensionsMenu > .extension_container:not([data-nvwa-style="author"]) > div:not([data-nvwa-style="author"]):hover,
+    html.ilg body #extensionsMenu > div:not(.extension_container):not([data-nvwa-style="author"]):hover { background: var(--ilg-tray-hover); }
+}
+html.ilg body #options .options-content > a:active,
+html.ilg body #extensionsMenu .list-group-item:active { background: var(--ilg-tray-line); transform: none; }
 @keyframes ilg-menu-in {
     from { opacity: 0; scale: 0.95; translate: 0 6px; }
     to { opacity: 1; scale: 1; translate: 0 0; }
 }
-html.ilg body :is(.options-content a, #extensionsMenu > .extension_container > div, #extensionsMenu > div:not(.extension_container)) {
-    opacity: 1;
-    padding: 9px 12px;
-    border-radius: 12px;
-    column-gap: 12px;
-    align-items: center;
-    color: var(--SmartThemeBodyColor);
-    transition: background-color .15s, transform .25s cubic-bezier(.3, 1.6, .5, 1);
-}
-html.ilg:not(.ilg-light) body :is(.options-content a, #extensionsMenu > .extension_container > div, #extensionsMenu > div:not(.extension_container)) {
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-}
-html.ilg body :is(.options-content a, #extensionsMenu > .extension_container > div, #extensionsMenu > div:not(.extension_container)):hover {
-    background-color: rgba(255, 255, 255, 0.12);
-}
-html.ilg.ilg-light body :is(.options-content a, #extensionsMenu > .extension_container > div, #extensionsMenu > div:not(.extension_container)):hover {
-    background-color: rgba(0, 0, 0, 0.06);
-}
-html.ilg body :is(.options-content a, #extensionsMenu > .extension_container > div, #extensionsMenu > div:not(.extension_container)):active {
-    transform: scale(0.97);
-}
-html.ilg body .options-content a i:where(#top-bar, #top-bar *, #top-settings-holder, #top-settings-holder *, #sheld, #sheld *, #options, #options *, #extensionsMenu, #extensionsMenu *, #toast-container, #toast-container *, #ilg-fold-menu, #ilg-fold-menu *, dialog.popup.ilg-glass, dialog.popup.ilg-glass > .popup-body > .popup-controls *):where(:not(.popup:not(.ilg-glass), .popup:not(.ilg-glass) *, dialog:not(.ilg-glass), dialog:not(.ilg-glass) *, [role="dialog"]:not(.ilg-recent):not(.ilg-glass), [role="dialog"]:not(.ilg-recent):not(.ilg-glass) *, .popup-content, .popup-content *, .mes_text, .mes_text *, .mes_reasoning, .mes_reasoning *, [role="alertdialog"], [role="alertdialog"] *, [data-nvwa-style="author"], [data-nvwa-style="author"] *, #catgod-oracle-qrbar, #catgod-oracle-qrbar *)) { opacity: 0.88; }
-html.ilg body .options-content hr:where(#top-bar, #top-bar *, #top-settings-holder, #top-settings-holder *, #sheld, #sheld *, #options, #options *, #extensionsMenu, #extensionsMenu *, #toast-container, #toast-container *, #ilg-fold-menu, #ilg-fold-menu *, dialog.popup.ilg-glass, dialog.popup.ilg-glass > .popup-body > .popup-controls *):where(:not(.popup:not(.ilg-glass), .popup:not(.ilg-glass) *, dialog:not(.ilg-glass), dialog:not(.ilg-glass) *, [role="dialog"]:not(.ilg-recent):not(.ilg-glass), [role="dialog"]:not(.ilg-recent):not(.ilg-glass) *, .popup-content, .popup-content *, .mes_text, .mes_text *, .mes_reasoning, .mes_reasoning *, [role="alertdialog"], [role="alertdialog"] *, [data-nvwa-style="author"], [data-nvwa-style="author"] *, #catgod-oracle-qrbar, #catgod-oracle-qrbar *)) { margin: 5px 10px; border-top-color: rgba(255, 255, 255, 0.12); }
-html.ilg.ilg-light body .options-content hr:where(#top-bar, #top-bar *, #top-settings-holder, #top-settings-holder *, #sheld, #sheld *, #options, #options *, #extensionsMenu, #extensionsMenu *, #toast-container, #toast-container *, #ilg-fold-menu, #ilg-fold-menu *, dialog.popup.ilg-glass, dialog.popup.ilg-glass > .popup-body > .popup-controls *):where(:not(.popup:not(.ilg-glass), .popup:not(.ilg-glass) *, dialog:not(.ilg-glass), dialog:not(.ilg-glass) *, [role="dialog"]:not(.ilg-recent):not(.ilg-glass), [role="dialog"]:not(.ilg-recent):not(.ilg-glass) *, .popup-content, .popup-content *, .mes_text, .mes_text *, .mes_reasoning, .mes_reasoning *, [role="alertdialog"], [role="alertdialog"] *, [data-nvwa-style="author"], [data-nvwa-style="author"] *, #catgod-oracle-qrbar, #catgod-oracle-qrbar *)) { border-top-color: rgba(0, 0, 0, 0.08); }
-/* 删除是危险操作，标红 */
-html.ilg body #options .options-content a#option_delete_mes { color: #ff6b62; }
-html.ilg.ilg-light body #options .options-content a#option_delete_mes { color: #d70015; }
 
 /* ---------- 提示弹窗（toast）：iOS 通知样式。中性玻璃底，类型只靠彩色图标区分（图标在 icons.css） ---------- */
 html.ilg body > #toast-container { margin-top: calc(var(--topBarBlockSize) + 14px); }
@@ -911,32 +1001,78 @@ html.ilg.ilg-qrfold body #form_sheld #qr--bar { display: none; }
 html.ilg.ilg-qrfold.ilg-qr-open body #form_sheld #qr--bar {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    align-items: stretch;
+    gap: 8px;
     position: absolute;
     left: 50%;
-    bottom: calc(100% + 10px);
+    bottom: calc(100% + 12px);
     transform: translateX(-50%);
-    width: max-content;
-    max-width: min(100%, 460px);
+    width: min(336px, calc(100vw - 24px));
+    max-width: 100%;
+    max-height: min(420px, calc(100dvh - var(--ilg-form-h, 64px) - 96px));
     padding: 10px;
-    border-radius: 22px;
-    overflow: visible;
+    border-radius: 24px;
+    background-color: var(--ilg-tray-face);
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    opacity: 1;
     z-index: 2;
-    background-color: rgba(22, 16, 30, 0.55);
-    transform-origin: bottom center;
-    animation: ilg-menu-in .24s cubic-bezier(.3, 1.3, .5, 1);
+    animation: none;
 }
-html.ilg.ilg-qrfold.ilg-qr-open.ilg-light body #form_sheld #qr--bar { background-color: rgba(255, 255, 255, 0.68); }
-html.ilg.ilg-qrfold body #form_sheld #qr--bar > .qr--buttons { flex-wrap: wrap; justify-content: center; }
-/* 外面那块已经是折射玻璃了，按钮自己不再模糊（嵌套的模糊只能“看到”外层），改成浅色小胶囊 */
-html.ilg.ilg-qrfold body #form_sheld #send_form .qr--button:where(:not(#catgod-oracle-qrbar *, [data-nvwa-style="author"], [data-nvwa-style="author"] *)) {
-    padding: 8px 14px;
-    background-color: var(--ilg-chip);
+html.ilg.ilg-qrfold body #form_sheld #qr--bar > .qr--buttons { display: flex; width: 100%; min-width: 0; align-self: stretch; flex-wrap: wrap; justify-content: flex-start; gap: 8px; }
+html.ilg.ilg-qrfold body #form_sheld #qr--bar > .qr--buttons > .qr--buttons { display: contents; }
+/* Keep host quick-reply nodes and their click/context-menu listeners intact. */
+html.ilg.ilg-qrfold body #form_sheld #qr--bar .qr--button:where(:not(#catgod-oracle-qrbar *, [data-nvwa-style="author"], [data-nvwa-style="author"] *)) {
+    flex: 1 1 130px;
+    min-width: 0;
+    min-height: 70px;
+    max-width: 100%;
+    margin: 0;
+    padding: 13px 12px;
+    border: 0;
+    border-radius: 14px;
+    background-color: var(--ilg-tray-cell);
+    color: var(--ilg-tray-ink);
+    font-size: 15px;
+    line-height: 1.4;
+    text-align: start;
+    white-space: normal;
+    overflow-wrap: anywhere;
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
     box-shadow: none;
+    transition: background-color .14s ease-out;
 }
-html.ilg.ilg-qrfold body #form_sheld #send_form .qr--button:where(:not(#catgod-oracle-qrbar *, [data-nvwa-style="author"], [data-nvwa-style="author"] *)):hover { background-color: var(--ilg-chip-hover); }
+html.ilg.ilg-qrfold body #form_sheld #qr--bar .qr--button[data-ilg-entry] {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr) auto;
+    grid-template-rows: auto auto;
+    column-gap: 10px;
+    row-gap: 3px;
+}
+html.ilg.ilg-qrfold body #form_sheld #qr--bar .qr--button[data-ilg-entry] > .qr--button-icon { display: none; }
+html.ilg.ilg-qrfold body #form_sheld #qr--bar .qr--button[data-ilg-entry] > .qr--button-label { grid-column: 2; grid-row: 1; font-weight: 600; }
+html.ilg.ilg-qrfold body #form_sheld #qr--bar .ilg-quick-caption { grid-column: 2; grid-row: 2; color: var(--ilg-tray-muted); font-size: 11px; font-weight: 400; }
+html.ilg.ilg-qrfold body #form_sheld #qr--bar .ilg-quick-icon {
+    grid-column: 1;
+    grid-row: 1 / 3;
+    align-self: center;
+    width: 24px;
+    height: 24px;
+    background: var(--ilg-tray-accent);
+    -webkit-mask: var(--ilg-entry-icon) center / contain no-repeat;
+    mask: var(--ilg-entry-icon) center / contain no-repeat;
+    pointer-events: none;
+}
+html.ilg.ilg-qrfold body #form_sheld #qr--bar [data-ilg-entry="preset"] { --ilg-entry-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.7' stroke-linecap='round'%3E%3Cpath d='M4 6h16M4 12h16M4 18h16M8 3v6M16 9v6M9 15v6'/%3E%3C/svg%3E"); }
+html.ilg.ilg-qrfold body #form_sheld #qr--bar [data-ilg-entry="memory"] { --ilg-entry-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 6v15M12 6C9 4 5 4 3 5v14c3-1 6-1 9 2 3-3 6-3 9-2V5c-2-1-6-1-9 1Z'/%3E%3C/svg%3E"); }
+html.ilg.ilg-qrfold body #form_sheld #qr--bar .qr--button > .qr--button-expander { display: none; }
+html.ilg.ilg-qrfold body #form_sheld #qr--bar .qr--button.qr--hasCtx > .qr--button-expander { display: block; }
+html.ilg.ilg-qrfold body #form_sheld #qr--bar .qr--button[data-ilg-entry] > .qr--button-expander { grid-column: 3; grid-row: 1 / 3; width: 22px; margin: 0; }
+html.ilg.ilg-qrfold body #form_sheld #qr--bar .qr--button:where(:not(#catgod-oracle-qrbar *, [data-nvwa-style="author"], [data-nvwa-style="author"] *)):focus-visible { outline: 2px solid var(--ilg-tray-accent); outline-offset: -2px; }
+html.ilg.ilg-qrfold body #form_sheld #qr--bar .qr--button:where(:not(#catgod-oracle-qrbar *, [data-nvwa-style="author"], [data-nvwa-style="author"] *)):active { background-color: var(--ilg-tray-line); }
+@media (hover: hover) { html.ilg.ilg-qrfold body #form_sheld #qr--bar .qr--button:where(:not(#catgod-oracle-qrbar *, [data-nvwa-style="author"], [data-nvwa-style="author"] *)):hover { background-color: var(--ilg-tray-hover); } }
 html.ilg body.reduced-motion #form_sheld #qr--bar { animation: none; }
 @media (prefers-reduced-motion: reduce) {
     html.ilg body #form_sheld #qr--bar { animation: none; }

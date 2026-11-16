@@ -30,7 +30,7 @@ window.__ilgLoaded = new URL('.', import.meta.url).pathname;
 
 let studioUI = null;
 const MODULE = 'iosLiquidGlass';
-const BUILD_VERSION = '2.0.10-test.2';
+const BUILD_VERSION = '2.0.10-test.3';
 const ENGINE_NAMES = Object.freeze({performance:'御风性能引擎',refraction:'棱光折射引擎'});
 const NS = 'http://www.w3.org/2000/svg';
 const ctx = SillyTavern.getContext();
@@ -2177,6 +2177,59 @@ appearancePanel.querySelectorAll('[name="ilg-custom-text"]').forEach(el => el.ad
 }));
 // 快捷回复折叠：输入框左边一个按钮，点开后快捷回复按钮浮在输入胶囊上方的一块玻璃里，点了某个按钮就收起
 const qrBar = () => document.getElementById('qr--bar');
+
+// Decorate the two NVWA launchers in place; host quick-reply handlers stay on their original nodes.
+const qrEntryUi = new Map();
+function clearQrEntry(button, state) {
+    state.icon.remove(); state.caption.remove();
+    button.removeAttribute('data-ilg-entry');
+    if (state.roleAdded && button.getAttribute('role') === 'button') button.removeAttribute('role');
+    if (state.tabAdded && button.getAttribute('tabindex') === '0') button.removeAttribute('tabindex');
+    qrEntryUi.delete(button);
+}
+function clearQrPresentation(bar = null) {
+    for (const [button, state] of qrEntryUi) {
+        if (!bar || bar.contains(button)) clearQrEntry(button, state);
+    }
+}
+function decorateQrEntries(bar) {
+    const found = new Set();
+    for (const button of bar.querySelectorAll('.qr--button')) {
+        if (button.closest('#catgod-oracle-qrbar, [data-nvwa-style="author"]')) continue;
+        const label = (button.querySelector('.qr--button-label')?.textContent
+            || [...button.childNodes].filter(node => node.nodeType === 3).map(node => node.textContent).join('')).replace(/^\s*NVWA\s*/i, '').trim();
+        const entry = label === '预设面板' ? 'preset' : label === '记忆' ? 'memory' : null;
+        if (!entry) continue;
+        found.add(button);
+        let state = qrEntryUi.get(button);
+        if (!state) {
+            const icon = document.createElement('span'), caption = document.createElement('span');
+            icon.className = 'ilg-quick-icon'; icon.setAttribute('aria-hidden', 'true');
+            caption.className = 'ilg-quick-caption';
+            state = { icon, caption, roleAdded: !button.hasAttribute('role'), tabAdded: !button.hasAttribute('tabindex') };
+            qrEntryUi.set(button, state);
+            button.prepend(icon); button.append(caption);
+            if (state.roleAdded) button.setAttribute('role', 'button');
+            if (state.tabAdded) button.setAttribute('tabindex', '0');
+        }
+        if (button.dataset.ilgEntry !== entry) button.dataset.ilgEntry = entry;
+        const caption = entry === 'preset' ? '提示词与风格' : '剧情与状态';
+        if (state.caption.textContent !== caption) state.caption.textContent = caption;
+    }
+    for (const [button, state] of qrEntryUi) {
+        if (!found.has(button)) clearQrEntry(button, state);
+    }
+}
+const qrMenuUiObserver = new MutationObserver(() => syncQrPresentation(true));
+function syncQrPresentation(open) {
+    qrMenuUiObserver.disconnect();
+    const bar = qrBar();
+    if (!S.enabled || !S.qrFold) { clearQrPresentation(); return; }
+    if (!open || !bar || !document.getElementById('form_sheld').contains(bar)) return;
+    decorateQrEntries(bar);
+    qrMenuUiObserver.observe(bar, { childList: true, subtree: true, characterData: true });
+}
+
 const qrToggle = document.createElement('div');
 qrToggle.id = 'ilg-qr-toggle';
 qrToggle.className = 'interactable';
@@ -2188,7 +2241,7 @@ qrToggle.setAttribute('aria-expanded', 'false');
 function applyQrFold() {
     const on = S.enabled && S.qrFold;
     root.classList.toggle('ilg-qrfold', on);
-    if (!on) { setQrOpen(false); const bar=qrBar();if(bar&&items.has(bar))untrack(bar);qrToggle.remove();return; }
+    if (!on) { setQrOpen(false); syncQrPresentation(false); const bar=qrBar();if(bar&&items.has(bar))untrack(bar);qrToggle.remove();return; }
     const left = document.getElementById('leftSendForm');
     if (left && qrToggle.parentElement !== left) left.appendChild(qrToggle);
 }
@@ -2198,17 +2251,26 @@ function setQrOpen(open) {
     if (root.classList.contains('ilg-qr-open') === open) return;
     root.classList.toggle('ilg-qr-open', open);
     qrToggle.setAttribute('aria-expanded', String(open));
+    syncQrPresentation(open);
     if (!bar) return;
     if (open) {
         if (!items.has(bar)) track(bar, 'panel');
         else { const it=items.get(bar);it.visible=true;visibleItems.add(bar);paint(bar); }
-    } else { const it=items.get(bar);if(it)it.visible=false;visibleItems.delete(bar); }
+    } else { const it=items.get(bar);if(it)it.visible=false;visibleItems.delete(bar); if (bar.contains(document.activeElement)) qrToggle.focus({ preventScroll: true }); }
 }
 qrToggle.addEventListener('click', () => setQrOpen(!root.classList.contains('ilg-qr-open')));
 qrToggle.addEventListener('keydown', e => {
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setQrOpen(!root.classList.contains('ilg-qr-open')); }
     if (e.key === 'Escape') setQrOpen(false);
 });
+
+document.getElementById('form_sheld').addEventListener('keydown', e => {
+    if (e.defaultPrevented || !S.enabled || !root.classList.contains('ilg-qr-open') || !['Enter', ' '].includes(e.key)) return;
+    const state = qrEntryUi.get(e.target);
+    if (!state?.roleAdded || e.target.matches('button, a[href], input, [disabled], [aria-disabled="true"], .disabled')) return;
+    e.preventDefault(); e.target.click();
+});
+
 // 点了某个快捷回复（不是它旁边的小箭头）就收起；点外面也收起
 document.getElementById('form_sheld').addEventListener('click', e => {
     if (!root.classList.contains('ilg-qr-open')) return;
@@ -2275,7 +2337,8 @@ function setHome(on) {
 }
 const hostInteractionState = createHostInteractionState({ holder, form: document.getElementById('form_sheld'), home, qrToggle,
     onQrBar(previous,next){
-        if(previous&&items.has(previous))untrack(previous);
+        if(previous){clearQrPresentation(previous);if(items.has(previous))untrack(previous);}
+        syncQrPresentation(root.classList.contains('ilg-qr-open'));
         if(next&&S.enabled&&root.classList.contains('ilg-qr-open'))track(next,'panel');
         if(!next&&root.classList.contains('ilg-qr-open'))setQrOpen(false);
     },

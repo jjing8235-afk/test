@@ -1,6 +1,6 @@
 {
-  "currentVersion": "2.0.10-test.2",
-  "currentDisplayVersion": "2.0.10-test.2",
+  "currentVersion": "2.0.10-test.3",
+  "currentDisplayVersion": "2.0.10-test.3",
   "date": "2026-11-05",
   "version": "1.4.4-local.9",
   "baseline": "1.4.4-local.8",
@@ -5345,5 +5345,84 @@
     "evidenceDirectory": "D:/claudecod1/st-verify/out/restart204/menu-nvwa-restore-20261116",
     "candidateVersion": "2.0.10-test.2",
     "versionOnlyDeltaSinceBrowserChecks": true
+  },
+  "composerMenus20261116": {
+    "date": "2026-11-16",
+    "version": "2.0.10-test.3",
+    "status": "prepared-for-test-publication",
+    "baseCommit": "4ea2030b722fc5c86e4fa563115171c63f101064",
+    "scope": [
+      "Native chat actions become grouped compact cards with distinct destructive styling.",
+      "Native extension launchers use a responsive two-column tool tray.",
+      "NVWA preset and memory quick entries receive removable icons and captions without replacing host nodes.",
+      "Existing authored popup boundaries and NVWA-specific glass adaptation remain."
+    ],
+    "runtimeFilesChanged": [
+      "index.js",
+      "style.css"
+    ],
+    "sourceHashes": {
+      "index.js": "c864b0b02a5a5cf854616e29ddb2d6e30b6a5d75a317e063d8b97b0b8e076b0c",
+      "style.css": "27002673574b9b418bced3184239842eb52c8006c58e110f71b7c587bbf781db"
+    },
+    "testedSourceHashes": {
+      "index.js": "58053439d508bd6e075f746309ea05a31f65b034504cabc3c5c602553d9b9ac2",
+      "style.css": "27002673574b9b418bced3184239842eb52c8006c58e110f71b7c587bbf781db"
+    },
+    "versionOnlyDeltaSinceBrowserMatrix": true,
+    "verification": {
+      "hostVersion": "1.18.0",
+      "nativeChecksPerBrowser": 37,
+      "quickLifecycleChecksPerBrowser": 15,
+      "otherAuthoredChecksPerBrowser": 53,
+      "edgePassed": true,
+      "windowsWebKitPassed": true,
+      "viewports": [
+        {
+          "width": 393,
+          "height": 759
+        },
+        {
+          "width": 320,
+          "height": 568
+        },
+        {
+          "width": 844,
+          "height": 390
+        },
+        {
+          "width": 1280,
+          "height": 900
+        }
+      ],
+      "themes": [
+        "dark",
+        "light"
+      ],
+      "draftPreserved": true,
+      "originalNodesPreserved": true,
+      "keyboardAndContextActions": true,
+      "masterSwitchCleanup": true,
+      "pageErrors": []
+    },
+    "designReview": {
+      "renderedDarkAndLightReviewed": true,
+      "detectorFindings": 14,
+      "newFindingsInChangedUi": 0,
+      "existingUnrelatedTypographyAndMotionAdvisoriesRetained": true
+    },
+    "limits": [
+      "Mobile viewport checks ran in desktop Edge and Windows WebKit, without physical phone acceptance.",
+      "Extension-launcher fixtures exercise representative buttons; full third-party business workflows were not run.",
+      "This visual change has no measured mobile FPS or sustained GPU-cost claim."
+    ],
+    "publication": {
+      "target": "test",
+      "repository": "https://github.com/jjing8235-afk/test",
+      "branch": "main",
+      "pushed": false,
+      "installedExtensionReplaced": false
+    },
+    "evidenceDirectory": "D:/claudecod1/st-verify/out/restart204/composer-ui-20261116"
   }
 }
