@@ -5436,7 +5436,7 @@
   "composerBacking20261116": {
     "date": "2026-11-16",
     "version": "2.0.10-test.4",
-    "status": "prepared-for-test",
+    "status": "published-to-test",
     "baseCommit": "e16c5ed4b7d2538b5354c9a33daece72fcbf401a",
     "scope": [
       "Redesign all three composer tray backings with smoke-blue/cool-white material, an 18px silhouette, fine rim and recessed frame.",
@@ -5514,8 +5514,13 @@
       "repository": "https://github.com/jjing8235-afk/test",
       "branch": "main",
       "version": "2.0.10-test.4",
-      "pushed": false,
-      "installedExtensionReplaced": false
+      "pushed": true,
+      "installedExtensionReplaced": false,
+      "runtimeCommit": "3a585069d052415c8934b2ae224ba57d09ea608e",
+      "verifiedAt": "2026-11-16T11:15:42.553Z",
+      "verifiedFiles": 7,
+      "remoteTreeVerified": true,
+      "verificationResultFile": "D:/claudecod1/st-verify/out/restart204/composer-backing-20261116/runtime-publication.json"
     },
     "evidenceDirectory": "D:/claudecod1/st-verify/out/restart204/composer-backing-20261116",
     "hashFormat": "Source hashes identify tested workspace bytes; publication proof checks immutable Git bytes after line-ending normalization."
