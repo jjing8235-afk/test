@@ -1,3 +1,15 @@
+# 2.0.10-test.6 · 测试发布维护入口（2026-11-16）
+
+输入区改用连续的高透液态玻璃背板，30px 外圆角、薄底色、方向性细亮边。聊天操作按用途分组，仅少量常用动作保留胶囊；扩展工具三列、360px 以下两列；快捷面板使用两个开放入口。
+
+composer-icons.css 使用离线打包的 Ionicons 7.4.0 轮廓图标，许可见 LICENSE-ionicons.txt。源 SVG 保存在 dev/assets/ionicons-composer.json，dev/build-composer-icons.mjs 可确定性重建。运行时不联网加载图标。旧 composer-matrix.css、点阵生成器及粒子光场已撤回。图标的渐变亮面与短接触阴影为静态效果，快捷图标使用伪元素蒙版，将阴影留在外层，避免被蒙版裁掉。
+
+composer-tools.js 管理单入口、聊天／扩展页签、焦点与开关还原。复用 options_button，隐藏但保留 extensionsMenuButton 的定位几何；原生动作不克隆、不迁移。用户激活时通过宿主 jQuery.triggerHandler 调用原菜单开关，完成原生淡入淡出以避免快速切换时状态滞后。页签阻止自身点击冒泡，避免被宿主全局监听提前收起。缺少该 jQuery 能力时保留原入口。
+
+一个局部 MutationObserver 只观察两块原生菜单的 style／hidden；禁用时断开。焦点使用一次性 requestAnimationFrame，没有新增常驻帧循环。禁用会撤回页签、监听、临时属性与入口合并样式；重新启用或重新跟踪时可重建。
+
+三块背板标记为 ilg-composer-liquid，继续走已有的 physical／legacy／web／CSS 或兼容模糊路径。physical 使用固定的清透 lens 参数和既有贴图缓存，模糊为 6px。漾卿路径包含这三块背板，iOS 壁纸模式继续复用已有独立壁纸平面，不能当作整页像素折射。按钮不增加独立 backdrop-filter，其他表面参数、设置 v9 与作者内容边界保留。验证及发布记录见 VALIDATION.json.composerLiquid20261116；以下为历史记录。
+
 # 2.0.10-test.5 · 测试发布维护入口（2026-11-16）
 
 本轮局部重做加号、魔杖和折叠快捷入口的视觉。点阵图标与光场为原创静态 SVG；dev/build-composer-matrix.mjs 可确定性重建 composer-matrix.css 和 assets/composer-particle-field.svg。菜单标题每块只有一个自有节点，重用、重新挂载及关闭扩展时正确撤回，不替换宿主动作节点和监听。

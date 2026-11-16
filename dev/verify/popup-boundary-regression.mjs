@@ -66,10 +66,17 @@ passed.push('Floor shares input bar material, not toast blur');
 
 const menuSelector=source.match(/const HOST_MENU_SEL = '([^']+)'/)[1];
 const surfaceBlurSource=source.match(/function surfaceBlur\(it, el\) \{[^]*?\n\}/)[0];
-const blurSettings={barBlur:.25,mesBlur:.5,panelBlur:1.5,panelRead:false,chatBackground:'glass'};
+const blurSettings={barBlur:.25,mesBlur:.5,panelBlur:1.5,panelRead:false,chatBackground:'glass',qrFold:true};
 const blurKinds=vm.runInNewContext('('+material+')',{S:blurSettings});
-const getSurfaceBlur=vm.runInNewContext(surfaceBlurSource+';surfaceBlur',{S:blurSettings,KIND:blurKinds,HOST_MENU_SEL:menuSelector,controlReadable:()=>false});
-for(const menu of [true,false]){const el={matches(selector){assert.equal(selector,menuSelector);return menu;}};assert.equal(getSurfaceBlur({kind:'panel'},el),menu?10:1.5);assert.equal(getSurfaceBlur({kind:'clearPanel'},el),1.25);}
-blurSettings.panelBlur=18;assert.equal(getSurfaceBlur({kind:'panel'},{matches:()=>true}),18);
-passed.push('Native input menus keep readable glass; other panels, explicit NVWA clear material, and stronger user blur stay unchanged');
+const composerSource=source.match(/const composerGlassSurface = el =>[^]*?;\n/)[0];
+const getSurfaceBlur=vm.runInNewContext(composerSource+surfaceBlurSource+';surfaceBlur',{S:blurSettings,KIND:blurKinds,HOST_MENU_SEL:menuSelector,controlReadable:()=>false});
+const surface=(menu=false,quick=false,authored=false)=>({matches(selector){return selector===menuSelector?menu:selector==='#form_sheld #qr--bar'?quick:false;},closest(){return authored?{}:null;}});
+assert.equal(getSurfaceBlur({kind:'panel'},surface(true)),6);
+assert.equal(getSurfaceBlur({kind:'panel'},surface(false)),1.5);
+assert.equal(getSurfaceBlur({kind:'clearPanel'},surface(false)),1.25);
+assert.equal(getSurfaceBlur({kind:'panel'},surface(false,true)),6);
+assert.equal(getSurfaceBlur({kind:'panel'},surface(false,true,true)),1.5);
+blurSettings.qrFold=false;assert.equal(getSurfaceBlur({kind:'panel'},surface(false,true)),1.5);
+blurSettings.panelBlur=18;assert.equal(getSurfaceBlur({kind:'panel'},surface(true)),6);assert.equal(getSurfaceBlur({kind:'panel'},surface()),18);
+passed.push('Native composer menus and the owned folded quick tray use a stable liquid-glass blur; other panels, authored quick bars and explicit NVWA material retain their settings');
 console.log(JSON.stringify({passed},null,2));

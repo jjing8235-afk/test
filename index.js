@@ -10,6 +10,7 @@ import { createInteractionDiagnostics } from './interaction-diagnostics.js';
 import { positionFixed } from './fixed-position.js';
 import { createMessageRendering } from './message-rendering.js';
 import { createHostInteractionState } from './host-interaction-state.js';
+import { createComposerTools } from './composer-tools.js';
 import { migrateClearOptics, restoreOriginalRefraction } from './optics-settings.js';
 import { WEB_PRESETS, normalizeWebPreset, webPresetOf } from './web-presets.js';
 import { createBallGlass } from './ball-glass.js';
@@ -30,7 +31,7 @@ window.__ilgLoaded = new URL('.', import.meta.url).pathname;
 
 let studioUI = null;
 const MODULE = 'iosLiquidGlass';
-const BUILD_VERSION = '2.0.10-test.5';
+const BUILD_VERSION = '2.0.10-test.6';
 const ENGINE_NAMES = Object.freeze({performance:'御风性能引擎',refraction:'棱光折射引擎'});
 const NS = 'http://www.w3.org/2000/svg';
 const ctx = SillyTavern.getContext();
@@ -789,6 +790,8 @@ const BAR_SEL = `#top-bar, ${PILL_SEL}`;
 // 只处理酒馆 Popup 注册表里的标准外壳；不扫描、标记或改造第三方浮窗。
 const NATIVE_POPUP_SEL = 'dialog.popup[data-id]:not(.transparent_dialogue_popup)';
 const HOST_MENU_SEL = '#options .options-content, #extensionsMenu';
+const composerGlassSurface = el => el.matches(HOST_MENU_SEL)
+    || (S.qrFold && el.matches('#form_sheld #qr--bar') && !el.closest('[data-nvwa-style="author"], #catgod-oracle-qrbar'));
 const PANEL_SEL = '#top-settings-holder > .drawer > .drawer-content, #character_popup, #world_popup, #options .options-content, #extensionsMenu, ' + NATIVE_POPUP_SEL;
 const HOST_UI_SEL = '#top-settings-holder, #sheld, #options, #extensionsMenu, #ilg-fold-menu';
 // 世界书编辑器在抽屉里时，不再叠第二层玻璃。
@@ -814,6 +817,7 @@ function trackable(el) {
 const MES_SEL = '.mes:not(.smallSysMes)';
 
 const root = document.documentElement;
+const composerTools = createComposerTools({root});
 const lightScope = createLightScope(root);
 const webGlass = createLiquidGlassWeb();
 const reflections = createGlassReflections();
@@ -947,6 +951,7 @@ for (const type of ['compositionstart', 'compositionupdate', 'compositionend']) 
 }, true);
 document.addEventListener('focusin', e => { if (e.target.id === 'send_textarea') syncInputMaterial(); });
 function surfaceBlur(it, el) {
+    if (composerGlassSurface(el)) return 6;
     if (it.kind === 'mes' && S.chatBackground === 'transparent') return 0;
     const blur = KIND[it.kind].blur();
     // Native input menus sit over message text; keep that text from competing with their labels.
@@ -969,6 +974,12 @@ function buildPhysical(it, el, w, h, r) {
         // 只留弧度：滤镜里不画高光、边缘反光、厚度阴影和聚光。法线贴图和光照节点因此不再生成，GPU 也少算几层。
         ...ARC_ONLY,
     };
+    // Compact clear lens for composer sheets, using the existing physical map cache.
+    if (it.kind === 'panel' && composerGlassSurface(el)) Object.assign(o, {
+        profile: 'lens', ior: 1.45, magnify: 1.35, bezel: Math.min(14, r * .65),
+        thickness: 28, strength: .9, aberration: .15, blur: 6,
+        saturate: 1.15, brightness: 1.02, contrast: 1,
+    });
     const maps = getMaps(w, h, r, o), key = JSON.stringify(o);
     const previous = it.physical;
     // Nine-slice maps already share their pixels. Keep the filter nodes too when only its bounds change.
@@ -1078,9 +1089,11 @@ function paint(el, geo) {
     el.classList.toggle('ilg-control-surface', control);
     el.classList.toggle('ilg-control-readable', control && controlReadable(el));
     it.renderPath = 'pending'; it.fallbackReason = '';
+    const composer = it.kind === 'panel' && composerGlassSurface(el);
+    el.classList.toggle('ilg-composer-liquid', composer);
     const cssMode = cssGlassActive();
     el.classList.toggle('ilg-css-surface', cssMode);
-    const useWeb = it.kind === 'bar' && webStyleEnabled();
+    const useWeb = (it.kind === 'bar' || composer) && webStyleEnabled();
     if (!useWeb) webGlass.release(el);
     if (!useWeb||!iosWallpaperRequested()) iosWallpaper.release(el);
     if (document.body.classList.contains('no-blur')) {
@@ -1111,7 +1124,7 @@ function paint(el, geo) {
         return;
     }
     // Offscreen messages retain their CSS material; rasterise their contour on entry.
-    if (it.kind === 'mes' && !it.visible) reflections.release(el);
+    if (composer || (it.kind === 'mes' && !it.visible)) reflections.release(el);
     else reflections.paint(el, w, h, r);
     if (useWeb) {
         it.renderPath = 'web-compatible';
@@ -1227,6 +1240,7 @@ function track(el, kind) {
 }
 
 function untrack(el) {
+    composerTools.release(el);
     releaseTrayHeading(el);
     lightScope.release(el);
     messageRendering.release(el);
@@ -1240,7 +1254,7 @@ function untrack(el) {
     it.backdrop?.remove();
     ro.unobserve(el);
     io.unobserve(el);
-    el.classList.remove('ilg-glass', 'ilg-sheen', 'ilg-clear', 'ilg-phys', 'ilg-adapted', 'ilg-message-backdrop', 'ilg-control-surface', 'ilg-control-readable', 'ilg-css-surface');
+    el.classList.remove('ilg-glass', 'ilg-sheen', 'ilg-clear', 'ilg-phys', 'ilg-adapted', 'ilg-message-backdrop', 'ilg-control-surface', 'ilg-control-readable', 'ilg-css-surface', 'ilg-composer-liquid');
     if (el.id === 'nonQRFormItems') el.querySelectorAll('[data-ilg-input-tone]').forEach(action => delete action.dataset.ilgInputTone);
     el.style.backdropFilter = '';
     el.style.webkitBackdropFilter = '';
@@ -2198,6 +2212,7 @@ function mountTrayHeading(el) {
         trayHeadings.set(el, heading);
     }
     if (heading.parentElement !== el) el.prepend(heading);
+    if (el.id !== 'qr--bar') composerTools.decorate(el);
 }
 function releaseTrayHeading(el) {
     trayHeadings.get(el)?.remove();
@@ -2677,6 +2692,7 @@ function applyRoot() {
     applyChatFontSize();
     applyProseSpacing();
     root.classList.toggle('ilg', S.enabled);
+    composerTools.setEnabled(S.enabled);
     root.classList.toggle('ilg-clear-optics', S.enabled);
     root.classList.toggle('ilg-css-glass', cssGlassActive());
     root.classList.toggle('ilg-liquid-web', webStyleEnabled());
