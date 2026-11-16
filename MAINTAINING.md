@@ -1,3 +1,13 @@
+# 2.0.10-test.7 · 测试发布维护入口（2026-11-17）
+
+输入区用原有节点组成三列 grid：左侧圆形 options_button、弹性 textarea、右侧原生发送区。输入胶囊的两个伪元素覆盖第二到第三列；＋和胶囊通过 --ilg-composer-fill 共用高透底色与柔光。关闭旧的输入后发送键放大规则在合并模式下的作用，避免遮挡文字和挤出边距。发送键显示仍由宿主控制，不在产品中强制显示。
+
+composer-tools.js 管理聊天／扩展／快捷三个 pane。通过原节点 .click() 连接宿主事件，兼容 ST 的 jQuery 与 TT 的 addEventListener；routing 防止递归。旧 triggerHandler 绕过 TT 原生监听，是此前打不开的根因。保留宿主锚点和动作节点，不克隆、不移动。快捷回复接原有 setQrOpen，关闭回焦可见＋。Escape 仅处理当前面板内事件，排除第三方 dialog、作者区、上下文菜单、select2 与输入法组合事件。
+
+菜单 style／hidden 和 html class 使用局部观察器；扩展内容观察器只在扩展面板打开时工作，一次性 RAF 合并分类，不引入常驻帧循环。只有普通 list-group-item 参与布局，长标题整行；输入控件、媒体、自绘或作者标记区域保留容器。第三方图标与背景配色不替换，伯宝书也按该通用边界处理。TT 打开时写入的 inline flex 仅由自有 ilg-composer-open 类适配为 grid，关闭移除。
+
+自有 Ionicons 7.4.0 资源精简为 16 枚，dev/build-composer-icons.mjs 可重建，许可见 LICENSE-ionicons.txt。设置 v9、材质引擎与其他作者内容边界保留。主要新增可重复检查为 dev/verify/composer-tools-browser.mjs，通过 NVWA_TT_POPUP_SOURCE 指向固定 TT 源文件；固定来源、源文件哈希、宿主验证和测试发布回执见 VALIDATION.json.composerUnified20261117。以下为历史记录，旧的二页签、triggerHandler 与第三方图标映射说明不再适用于本版。
+
 # 2.0.10-test.6 · 测试发布维护入口（2026-11-16）
 
 输入区改用连续的高透液态玻璃背板，30px 外圆角、薄底色、方向性细亮边。聊天操作按用途分组，仅少量常用动作保留胶囊；扩展工具三列、360px 以下两列；快捷面板使用两个开放入口。

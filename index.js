@@ -31,7 +31,7 @@ window.__ilgLoaded = new URL('.', import.meta.url).pathname;
 
 let studioUI = null;
 const MODULE = 'iosLiquidGlass';
-const BUILD_VERSION = '2.0.10-test.6';
+const BUILD_VERSION = '2.0.10-test.7';
 const ENGINE_NAMES = Object.freeze({performance:'御风性能引擎',refraction:'棱光折射引擎'});
 const NS = 'http://www.w3.org/2000/svg';
 const ctx = SillyTavern.getContext();
@@ -2212,7 +2212,7 @@ function mountTrayHeading(el) {
         trayHeadings.set(el, heading);
     }
     if (heading.parentElement !== el) el.prepend(heading);
-    if (el.id !== 'qr--bar') composerTools.decorate(el);
+    composerTools.decorate(el);
 }
 function releaseTrayHeading(el) {
     trayHeadings.get(el)?.remove();
@@ -2301,7 +2301,7 @@ function setQrOpen(open) {
     if (open) {
         if (!items.has(bar)) track(bar, 'panel');
         else { const it=items.get(bar);it.visible=true;visibleItems.add(bar);paint(bar); }
-    } else { const it=items.get(bar);if(it)it.visible=false;visibleItems.delete(bar); if (bar.contains(document.activeElement)) qrToggle.focus({ preventScroll: true }); }
+    } else { const it=items.get(bar);if(it)it.visible=false;visibleItems.delete(bar); if (bar.contains(document.activeElement)) { if(root.classList.contains('ilg-merged-tools'))composerTools.focusLauncher();else qrToggle.focus({ preventScroll: true }); } }
 }
 qrToggle.addEventListener('click', () => setQrOpen(!root.classList.contains('ilg-qr-open')));
 qrToggle.addEventListener('keydown', e => {
@@ -2324,7 +2324,7 @@ document.getElementById('form_sheld').addEventListener('click', e => {
 });
 document.addEventListener('pointerdown', e => {
     if (!root.classList.contains('ilg-qr-open')) return;
-    if (qrBar()?.contains(e.target) || qrToggle.contains(e.target) || e.target.closest?.('.ctx-menu, .list-group')) return;
+    if ((root.classList.contains('ilg-merged-tools') && document.getElementById('options_button')?.contains(e.target)) || qrBar()?.contains(e.target) || qrToggle.contains(e.target) || e.target.closest?.('.ctx-menu, .list-group')) return;
     setQrOpen(false);
 }, true);
 document.addEventListener('keydown', e => { if (e.key === 'Escape') setQrOpen(false); });
@@ -2382,6 +2382,7 @@ function setHome(on) {
 }
 const hostInteractionState = createHostInteractionState({ holder, form: document.getElementById('form_sheld'), home, qrToggle,
     onQrBar(previous,next){
+        composerTools.refresh();
         if(previous){clearQrPresentation(previous);if(items.has(previous))untrack(previous);}
         syncQrPresentation(root.classList.contains('ilg-qr-open'));
         if(next&&S.enabled&&root.classList.contains('ilg-qr-open'))track(next,'panel');

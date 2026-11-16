@@ -1,6 +1,6 @@
 {
-  "currentVersion": "2.0.10-test.6",
-  "currentDisplayVersion": "2.0.10-test.6",
+  "currentVersion": "2.0.10-test.7",
+  "currentDisplayVersion": "2.0.10-test.7",
   "date": "2026-11-05",
   "version": "1.4.4-local.9",
   "baseline": "1.4.4-local.8",
@@ -5750,6 +5750,122 @@
       "verificationResultFile": "D:/claudecod1/st-verify/out/restart204/composer-liquid-20261116/runtime-publication.json"
     },
     "evidenceDirectory": "D:/claudecod1/st-verify/out/restart204/composer-liquid-20261116",
+    "hashFormat": "Source hashes identify validated workspace bytes; immutable Git bytes are checked after line-ending normalization."
+  },
+  "composerUnified20261117": {
+    "date": "2026-11-17",
+    "version": "2.0.10-test.7",
+    "status": "prepared-for-test",
+    "baseCommit": "591e79a87563523be2ed51260e6cbad1bd6eaf12",
+    "scope": [
+      "One visible plus for native chat, extension tools and folded quick replies; preserve native nodes and listeners.",
+      "Shared transparent composer fill, soft reflection and border for plus and input capsule; native send visibility retained.",
+      "Fix TT native addEventListener activation via DOM click, keyboard focus and inline flex layout.",
+      "Generic two-column layout for plain plugin entries; preserve original icons, colours, borders and authored widgets, including bookmark launchers.",
+      "Reduce own bundled icons to 16; retain settings v9 and existing material engines."
+    ],
+    "runtimeFilesChanged": [
+      "index.js",
+      "style.css",
+      "composer-tools.js",
+      "composer-icons.css"
+    ],
+    "sourceHashes": {
+      "index.js": "edc29ae09a81f76cb8508f96301bd941429ea033ba7a504fca6345fb2a243c30",
+      "style.css": "b1d36bbe99f5255e09060b1a6a911fc21716895e229b58e6afb6d5735b697f99",
+      "composer-tools.js": "42e80840811272450233b0be3c2e7b62b420565f97fcce88bd4604905ee88411",
+      "composer-icons.css": "f9e4680aafbd9abb6b91665eb9251f233c284aa3974c5f9bcc8fd1979c1d7d4e",
+      "manifest.json": "b5f6876d1664588b861129b5b713bbabf234ffa8238eea9c53c73329c1af3e37",
+      "dev/verify/composer-tools-browser.mjs": "93df0c8d9bb98833e067630c7ffaab8e904bd65e2bf74ad0c87ed642839b9a4d",
+      "dev/verify/quick-menu-ui-browser.mjs": "02098156b6f96994009931d2e378ddc36778da49d53b57a344e8cee37cb8ab29",
+      "dev/assets/ionicons-composer.json": "c703c0b61dafc14d1fcf280cc839036fc1969eaff908fbf0d6dbffdfdff41189"
+    },
+    "verification": {
+      "hostVersion": "1.18.0",
+      "nativeChecksPerBrowser": 86,
+      "ttControllerChecksPerBrowser": 19,
+      "quickLifecycleChecksPerBrowser": 19,
+      "otherAuthoredChecksPerBrowser": 53,
+      "edgePassed": true,
+      "windowsWebKitPassed": true,
+      "viewports": [
+        {
+          "width": 393,
+          "height": 759
+        },
+        {
+          "width": 320,
+          "height": 568
+        },
+        {
+          "width": 844,
+          "height": 390
+        },
+        {
+          "width": 1280,
+          "height": 900
+        }
+      ],
+      "themes": [
+        "dark",
+        "light"
+      ],
+      "materials": [
+        "physical/original",
+        "legacy/original",
+        "physical/liquid-web",
+        "CSS compatibility blur"
+      ],
+      "sharedFillComputedStyleMatched": true,
+      "sendGeometryAndNativeVisibilityChecked": true,
+      "originalNodesPreserved": true,
+      "thirdPartyIconsColoursAndWidgetsPreserved": true,
+      "noJQueryTTActivationChecked": true,
+      "foreignDialogEscapePreserved": true,
+      "disableCleanupChecked": true,
+      "pageErrors": [],
+      "offlineScriptsPassed": 9,
+      "syntaxChecked": true,
+      "assetRebuildByteIdentical": true,
+      "validatedWorkspaceHashesMatchServedBytes": true
+    },
+    "ttSource": {
+      "repository": "https://github.com/Darkatse/TauriTavern",
+      "commit": "85dc99089e3fcc9d3a0aafc085564bd642895261",
+      "file": "src/scripts/popup-menu.js",
+      "localFixture": "D:/claudecod1/st-verify/out/restart204/composer-unified-20261116/tt-popup-menu.js",
+      "sha256": "25ed2713ddd33fa6025aeaa686776f2815bfbcea6f600fbf90faa2e89ec4e291",
+      "execution": "Actual upstream controller in an isolated browser; not a complete or physical TT runtime."
+    },
+    "designReview": {
+      "preview": "D:/claudecod1/st-verify/out/restart204/composer-unified-20261116/unified-preview.png",
+      "edgeVisualReviewed": true,
+      "windowsWebKitLayoutReviewed": true,
+      "windowsWebKitBackdropPixelsConfirmed": false,
+      "previewBackground": "Actual menus in an independent host; warm/cool display gradient demonstrates transparency."
+    },
+    "performanceScope": {
+      "newContinuousFrameLoops": false,
+      "newRemoteRuntimeAssets": false,
+      "perButtonBackdropFilter": false,
+      "extensionContentObserver": "Active only while extension pane is open; one RAF batches content classification.",
+      "mobileFPSMeasured": false
+    },
+    "limits": [
+      "Desktop Edge and Windows WebKit with emulated viewports; no physical iPhone/Android or TT acceptance.",
+      "Windows WebKit blur pixels are not established as equivalent to Safari; structure and events are verified.",
+      "Representative third-party launchers and actual TT controller were exercised; complete third-party business workflows were not run.",
+      "Send visibility remains native-controlled; the isolated fixture uses representative visible states for geometry checks."
+    ],
+    "publication": {
+      "target": "test",
+      "repository": "https://github.com/jjing8235-afk/test",
+      "branch": "main",
+      "version": "2.0.10-test.7",
+      "pushed": false,
+      "installedExtensionReplaced": false
+    },
+    "evidenceDirectory": "D:/claudecod1/st-verify/out/restart204/composer-unified-20261116",
     "hashFormat": "Source hashes identify validated workspace bytes; immutable Git bytes are checked after line-ending normalization."
   }
 }

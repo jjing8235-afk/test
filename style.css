@@ -405,7 +405,7 @@ html.ilg body #nonQRFormItems.ilg-glass:focus-within::before {
 }
 /* 打了字，发送键微微放大发光 */
 html.ilg.ilg-icons #send_but { transition: transform .3s cubic-bezier(.3, 1.6, .5, 1), filter .3s; }
-html.ilg.ilg-icons body #nonQRFormItems:has(#send_textarea:not(:placeholder-shown)) #send_but {
+html.ilg.ilg-icons:not(.ilg-merged-tools) body #nonQRFormItems:has(#send_textarea:not(:placeholder-shown)) #send_but {
     transform: scale(1.1);
     filter: drop-shadow(0 3px 8px rgba(10, 132, 255, 0.55));
 }
@@ -508,10 +508,8 @@ html.ilg body :is(#options .options-content, #extensionsMenu) {
 }
 html.ilg body #options .options-content { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 html.ilg body #extensionsMenu { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-html.ilg body #extensionsMenu > .extension_container:not([data-nvwa-style="author"]) { display: contents; }
-html.ilg body #options .options-content > a,
-html.ilg body #extensionsMenu > .extension_container:not([data-nvwa-style="author"]) > div:not([data-nvwa-style="author"]),
-html.ilg body #extensionsMenu > div:not(.extension_container):not([data-nvwa-style="author"]) {
+html.ilg body #extensionsMenu > .extension_container.ilg-tool-group { display: contents; }
+html.ilg body #options .options-content > a {
     display: flex;
     align-items: center;
     min-width: 0;
@@ -552,8 +550,7 @@ html.ilg body #options .options-content > :is(#option_toggle_AN, #option_toggle_
 }
 html.ilg body #options .options-content > :is(#option_select_chat, #option_delete_mes, #option_continue) { grid-column: 1 / -1; }
 html.ilg body #options .options-content > #option_delete_mes { color: var(--ilg-tray-danger); }
-html.ilg body #options .options-content > a > i,
-html.ilg body #extensionsMenu :is(.list-group-item > i, .extensionsMenuExtensionButton) {
+html.ilg body #options .options-content > a > i {
     flex: 0 0 28px;
     width: 28px;
     min-width: 28px;
@@ -574,17 +571,17 @@ html.ilg body #options .options-content > hr {
     border: 0;
     background: var(--ilg-tray-line);
 }
-html.ilg body :is(#options .options-content > a, #extensionsMenu .list-group-item):focus-visible {
+html.ilg body :is(#options .options-content > a, #extensionsMenu .list-group-item.ilg-tool-row):focus-visible {
     outline: 2px solid var(--ilg-tray-accent);
     outline-offset: -2px;
 }
 @media (hover: hover) {
     html.ilg body #options .options-content > a:hover,
-    html.ilg body #extensionsMenu > .extension_container:not([data-nvwa-style="author"]) > div:not([data-nvwa-style="author"]):hover,
-    html.ilg body #extensionsMenu > div:not(.extension_container):not([data-nvwa-style="author"]):hover { background: var(--ilg-tray-hover); }
+    html.ilg body #extensionsMenu > .extension_container.ilg-tool-group > .ilg-tool-row:hover,
+    html.ilg body #extensionsMenu > .ilg-tool-row:hover { background: var(--ilg-tray-hover); }
 }
 html.ilg body #options .options-content > a:active,
-html.ilg body #extensionsMenu .list-group-item:active { background: var(--ilg-tray-line); transform: none; }
+html.ilg body #extensionsMenu .list-group-item.ilg-tool-row:active { background: var(--ilg-tray-line); transform: none; }
 
 /* Scoped iOS outline icons: keep host nodes, labels and unknown plugin glyphs. */
 html.ilg.ilg-icons body #options .options-content > #option_toggle_AN > i { --ilg-composer-icon: var(--ilg-ui-edit); }
@@ -609,36 +606,7 @@ html.ilg.ilg-icons body #options .options-content > a > i::before {
     -webkit-mask: var(--ilg-composer-icon, var(--ilg-icon)) center / contain no-repeat;
     mask: var(--ilg-composer-icon, var(--ilg-icon)) center / contain no-repeat;
 }
-html.ilg.ilg-icons body :is(#extensionsMenu, #extensionsMenu > .extension_container) > .list-group-item:where(:not([data-nvwa-style="author"], [data-nvwa-style="author"] *)) > i.fa-book-open { --ilg-composer-icon: var(--ilg-ui-book); }
-html.ilg.ilg-icons body :is(#extensionsMenu, #extensionsMenu > .extension_container) > .list-group-item:where(:not([data-nvwa-style="author"], [data-nvwa-style="author"] *)) > i.fa-paperclip { --ilg-composer-icon: var(--ilg-ui-paperclip); }
-html.ilg.ilg-icons body :is(#extensionsMenu, #extensionsMenu > .extension_container) > .list-group-item:where(:not([data-nvwa-style="author"], [data-nvwa-style="author"] *)) > i.fa-paint-brush { --ilg-composer-icon: var(--ilg-ui-brush); }
-html.ilg.ilg-icons body :is(#extensionsMenu, #extensionsMenu > .extension_container) > .list-group-item:where(:not([data-nvwa-style="author"], [data-nvwa-style="author"] *)) > i.fa-paintbrush { --ilg-composer-icon: var(--ilg-ui-brush); }
-html.ilg.ilg-icons body :is(#extensionsMenu, #extensionsMenu > .extension_container) > .list-group-item:where(:not([data-nvwa-style="author"], [data-nvwa-style="author"] *)) > i.fa-image { --ilg-composer-icon: var(--ilg-ui-image); }
-html.ilg.ilg-icons body :is(#extensionsMenu, #extensionsMenu > .extension_container) > .list-group-item:where(:not([data-nvwa-style="author"], [data-nvwa-style="author"] *)) > i.fa-images { --ilg-composer-icon: var(--ilg-ui-images); }
-html.ilg.ilg-icons body :is(#extensionsMenu, #extensionsMenu > .extension_container) > .list-group-item:where(:not([data-nvwa-style="author"], [data-nvwa-style="author"] *)) > i.fa-volume-high { --ilg-composer-icon: var(--ilg-ui-sound); }
-html.ilg.ilg-icons body :is(#extensionsMenu, #extensionsMenu > .extension_container) > .list-group-item:where(:not([data-nvwa-style="author"], [data-nvwa-style="author"] *)) > i.fa-volume-up { --ilg-composer-icon: var(--ilg-ui-sound); }
-html.ilg.ilg-icons body :is(#extensionsMenu, #extensionsMenu > .extension_container) > .list-group-item:where(:not([data-nvwa-style="author"], [data-nvwa-style="author"] *)) > i.fa-hashtag { --ilg-composer-icon: var(--ilg-ui-hash); }
-html.ilg.ilg-icons body :is(#extensionsMenu, #extensionsMenu > .extension_container) > .list-group-item:where(:not([data-nvwa-style="author"], [data-nvwa-style="author"] *)) > i.fa-language { --ilg-composer-icon: var(--ilg-ui-language); }
-html.ilg.ilg-icons body :is(#extensionsMenu, #extensionsMenu > .extension_container) > .list-group-item:where(:not([data-nvwa-style="author"], [data-nvwa-style="author"] *)) > i.fa-keyboard { --ilg-composer-icon: var(--ilg-ui-keyboard); }
-html.ilg.ilg-icons body :is(#extensionsMenu, #extensionsMenu > .extension_container) > .list-group-item:where(:not([data-nvwa-style="author"], [data-nvwa-style="author"] *)) > i.fa-layer-group { --ilg-composer-icon: var(--ilg-ui-layers); }
-html.ilg.ilg-icons body :is(#extensionsMenu, #extensionsMenu > .extension_container) > .list-group-item:where(:not([data-nvwa-style="author"], [data-nvwa-style="author"] *)) > i.fa-book-bookmark { --ilg-composer-icon: var(--ilg-ui-bookmark); }
-html.ilg.ilg-icons body :is(#extensionsMenu, #extensionsMenu > .extension_container) > .list-group-item:where(:not([data-nvwa-style="author"], [data-nvwa-style="author"] *)) > i.fa-magnifying-glass { --ilg-composer-icon: var(--ilg-ui-search); }
-html.ilg.ilg-icons body :is(#extensionsMenu, #extensionsMenu > .extension_container) > .list-group-item:where(:not([data-nvwa-style="author"], [data-nvwa-style="author"] *)) > i.fa-search { --ilg-composer-icon: var(--ilg-ui-search); }
-html.ilg.ilg-icons body :is(#extensionsMenu, #extensionsMenu > .extension_container) > .list-group-item:where(:not([data-nvwa-style="author"], [data-nvwa-style="author"] *)) > i.fa-sliders { --ilg-composer-icon: var(--ilg-ui-sliders); }
-html.ilg.ilg-icons body :is(#extensionsMenu, #extensionsMenu > .extension_container) > .list-group-item:where(:not([data-nvwa-style="author"], [data-nvwa-style="author"] *)) > i.fa-sliders-h { --ilg-composer-icon: var(--ilg-ui-sliders); }
-html.ilg.ilg-icons body :is(#extensionsMenu, #extensionsMenu > .extension_container) > .list-group-item:where(:not([data-nvwa-style="author"], [data-nvwa-style="author"] *)) > i.fa-file-lines { --ilg-composer-icon: var(--ilg-ui-file); }
-html.ilg.ilg-icons body :is(#extensionsMenu, #extensionsMenu > .extension_container) > .list-group-item:where(:not([data-nvwa-style="author"], [data-nvwa-style="author"] *)) > i.fa-file-alt { --ilg-composer-icon: var(--ilg-ui-file); }
-html.ilg.ilg-icons body :is(#extensionsMenu, #extensionsMenu > .extension_container) > .list-group-item:where(:not([data-nvwa-style="author"], [data-nvwa-style="author"] *)) > i.fa-database { --ilg-composer-icon: var(--ilg-ui-layers); }
-html.ilg.ilg-icons body :is(#extensionsMenu, #extensionsMenu > .extension_container) > .list-group-item:where(:not([data-nvwa-style="author"], [data-nvwa-style="author"] *)) > i.fa-wand-magic-sparkles { --ilg-composer-icon: var(--ilg-ui-wand); }
-html.ilg.ilg-icons body :is(#extensionsMenu, #extensionsMenu > .extension_container) > .list-group-item:where(:not([data-nvwa-style="author"], [data-nvwa-style="author"] *)) > i:is(.fa-book-open, .fa-paperclip, .fa-paint-brush, .fa-paintbrush, .fa-image, .fa-images, .fa-volume-high, .fa-volume-up, .fa-hashtag, .fa-language, .fa-keyboard, .fa-layer-group, .fa-book-bookmark, .fa-magnifying-glass, .fa-search, .fa-sliders, .fa-sliders-h, .fa-file-lines, .fa-file-alt, .fa-database, .fa-wand-magic-sparkles)::before {
-    content: '' !important;
-    display: block;
-    width: 28px; height: 28px;
-    background: currentColor;
-    -webkit-mask: var(--ilg-composer-icon) center / contain no-repeat;
-    mask: var(--ilg-composer-icon) center / contain no-repeat;
-}
-html.ilg.ilg-icons body #form_sheld #options_button { --ilg-icon: var(--ilg-ui-sliders); }
+html.ilg.ilg-icons body #form_sheld #options_button { --ilg-icon: var(--ilg-svg-plus); }
 html.ilg.ilg-icons body #form_sheld #extensionsMenuButton { --ilg-icon: var(--ilg-ui-wand); }
 html.ilg.ilg-qrfold body #ilg-qr-toggle::before { -webkit-mask-image: var(--ilg-ui-grid); mask-image: var(--ilg-ui-grid); }
 
@@ -844,7 +812,7 @@ html.ilg.ilg-merged-tools body #nonQRFormItems #options_button[aria-expanded="tr
 }
 html.ilg.ilg-icons body #nonQRFormItems #leftSendForm > div:hover,
 html.ilg.ilg-icons body #nonQRFormItems #rightSendForm > div:not(.mes_stop):not(#send_but):hover { background-color: var(--ilg-chip-hover); }
-html.ilg.ilg-icons body #nonQRFormItems #options_button { --ilg-icon: var(--ilg-ui-sliders); }
+html.ilg.ilg-icons body #nonQRFormItems #options_button { --ilg-icon: var(--ilg-svg-plus); }
 html.ilg.ilg-icons body #nonQRFormItems #options_button::before { width: 22px; height: 22px; }
 html.ilg.ilg-icons body #nonQRFormItems #send_but { width: 40px; height: 40px; opacity: 0.45; }
 html.ilg.ilg-icons body #nonQRFormItems:has(#send_textarea:not(:placeholder-shown)) #send_but { opacity: 1; }
@@ -1226,8 +1194,6 @@ html.ilg body.reduced-motion #form_sheld #qr--bar { animation: none; }
 /* One continuous liquid-glass sheet. Primary controls get a subtle lens;
    secondary actions stay open and light, with generous touch targets. */
 html.ilg body #options .options-content > a,
-html.ilg body #extensionsMenu > .extension_container:not([data-nvwa-style="author"]) > .list-group-item:not([data-nvwa-style="author"]),
-html.ilg body #extensionsMenu > .list-group-item:not([data-nvwa-style="author"]),
 html.ilg.ilg-qrfold body #form_sheld #qr--bar .qr--button:where(:not(#catgod-oracle-qrbar *, [data-nvwa-style="author"], [data-nvwa-style="author"] *)) {
     border: 0;
     border-radius: 16px;
@@ -1251,19 +1217,6 @@ html.ilg body #options .options-content > :is(#option_start_new_chat, #option_co
     background: linear-gradient(150deg,rgba(255,255,255,.065),rgba(255,255,255,.015));
     box-shadow: inset 0 1px 0 rgba(255,255,255,.28), inset 0 -1px 0 rgba(255,255,255,.10), 0 3px 8px -5px rgba(0,0,0,.24);
 }
-html.ilg body #extensionsMenu { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 4px; padding: 16px 12px; }
-html.ilg body #extensionsMenu > .extension_container:not([data-nvwa-style="author"]) > .list-group-item:not([data-nvwa-style="author"]),
-html.ilg body #extensionsMenu > .list-group-item:not([data-nvwa-style="author"]) {
-    flex-direction: column;
-    justify-content: flex-start;
-    min-height: 84px;
-    gap: 8px;
-    padding: 12px 5px 10px;
-    text-align: center;
-    font-size: 12px;
-    line-height: 1.45;
-}
-html.ilg body #extensionsMenu .list-group-item > i { flex-basis: 28px; }
 html.ilg body #options .options-content > hr { margin: 5px 8px; opacity: .7; }
 html.ilg.ilg-qrfold body #form_sheld #qr--bar .qr--button[data-ilg-entry] {
     min-height: 96px;
@@ -1280,23 +1233,22 @@ html.ilg.ilg-qrfold body #form_sheld #qr--bar .qr--button[data-ilg-entry] + .qr-
 }
 @media (hover:hover) {
     html.ilg body #options .options-content > a:hover,
-    html.ilg body #extensionsMenu .list-group-item:where(:not([data-nvwa-style="author"], [data-nvwa-style="author"] *)):hover,
+    html.ilg body #extensionsMenu .list-group-item.ilg-tool-row:where(:not([data-nvwa-style="author"], [data-nvwa-style="author"] *)):hover,
     html.ilg.ilg-qrfold body #form_sheld #qr--bar .qr--button:where(:not(#catgod-oracle-qrbar *, [data-nvwa-style="author"], [data-nvwa-style="author"] *)):hover { background-color: var(--ilg-tray-hover); }
 }
 html.ilg body #options .options-content > a:active,
-html.ilg body #extensionsMenu .list-group-item:where(:not([data-nvwa-style="author"], [data-nvwa-style="author"] *)):active,
 html.ilg.ilg-qrfold body #form_sheld #qr--bar .qr--button:where(:not(#catgod-oracle-qrbar *, [data-nvwa-style="author"], [data-nvwa-style="author"] *)):active { background-color: var(--ilg-tray-hover); }
 html.ilg body #options .options-content > a:is([disabled], [aria-disabled="true"], .disabled),
-html.ilg body #extensionsMenu .list-group-item:is([disabled], [aria-disabled="true"], .disabled) { opacity: .45; }
+html.ilg body #extensionsMenu .list-group-item.ilg-tool-row:is([disabled], [aria-disabled="true"], .disabled) { opacity: .45; }
 @media (prefers-reduced-motion:reduce) {
     html.ilg body #options .options-content > a,
-    html.ilg body #extensionsMenu .list-group-item,
+    html.ilg body #extensionsMenu .list-group-item.ilg-tool-row,
     html.ilg.ilg-qrfold body #form_sheld #qr--bar .qr--button { transition: none; }
 }
 
 
 html.ilg body.reduced-motion #options .options-content > a,
-html.ilg body.reduced-motion #extensionsMenu .list-group-item:where(:not([data-nvwa-style="author"], [data-nvwa-style="author"] *)),
+html.ilg body.reduced-motion #extensionsMenu .list-group-item.ilg-tool-row:where(:not([data-nvwa-style="author"], [data-nvwa-style="author"] *)),
 html.ilg.ilg-qrfold body.reduced-motion #form_sheld #qr--bar .qr--button:where(:not(#catgod-oracle-qrbar *, [data-nvwa-style="author"], [data-nvwa-style="author"] *)) { transition: none; transform: none; }
 
 /* ---------- 首页：水墨 logo + 一句按手机时间变化的问候 + “聊天记录”按钮 ---------- */
@@ -5059,7 +5011,6 @@ html.ilg.ilg-light body .ilg-pose-overlay > .ilg-pose-layer { background:radial-
 html.ilg { --ilg-icon-contact: rgba(0, 9, 18, .42); --ilg-label-shadow: 0 1px 2px rgba(0, 8, 18, .24); }
 html.ilg.ilg-light { --ilg-icon-contact: rgba(28, 45, 66, .22); --ilg-label-shadow: 0 1px 0 rgba(255,255,255,.18); }
 html.ilg.ilg-icons body #options .options-content > a > i::before,
-html.ilg.ilg-icons body :is(#extensionsMenu, #extensionsMenu > .extension_container) > .list-group-item:where(:not([data-nvwa-style="author"], [data-nvwa-style="author"] *)) > i:is(.fa-book-open,.fa-paperclip,.fa-paint-brush,.fa-paintbrush,.fa-image,.fa-images,.fa-volume-high,.fa-volume-up,.fa-hashtag,.fa-language,.fa-keyboard,.fa-layer-group,.fa-book-bookmark,.fa-magnifying-glass,.fa-search,.fa-sliders,.fa-sliders-h,.fa-file-lines,.fa-file-alt,.fa-database,.fa-wand-magic-sparkles)::before,
 html.ilg.ilg-qrfold body #form_sheld #qr--bar .ilg-quick-icon,
 html.ilg.ilg-icons body #nonQRFormItems #options_button::before,
 html.ilg.ilg-qrfold body #ilg-qr-toggle::before {
@@ -5067,11 +5018,9 @@ html.ilg.ilg-qrfold body #ilg-qr-toggle::before {
 }
 html.ilg.ilg-qrfold body #form_sheld #qr--bar .ilg-quick-icon { color: var(--ilg-tray-accent); }
 html.ilg body #options .options-content > a,
-html.ilg body #extensionsMenu .list-group-item:where(:not([data-nvwa-style="author"], [data-nvwa-style="author"] *)),
 html.ilg.ilg-qrfold body #form_sheld #qr--bar .qr--button:where(:not(#catgod-oracle-qrbar *, [data-nvwa-style="author"], [data-nvwa-style="author"] *)) { text-shadow: var(--ilg-label-shadow); }
 
 html.ilg.ilg-icons body #options .options-content > a > i,
-html.ilg.ilg-icons body :is(#extensionsMenu, #extensionsMenu > .extension_container) > .list-group-item:where(:not([data-nvwa-style="author"], [data-nvwa-style="author"] *)) > i:is(.fa-book-open,.fa-paperclip,.fa-paint-brush,.fa-paintbrush,.fa-image,.fa-images,.fa-volume-high,.fa-volume-up,.fa-hashtag,.fa-language,.fa-keyboard,.fa-layer-group,.fa-book-bookmark,.fa-magnifying-glass,.fa-search,.fa-sliders,.fa-sliders-h,.fa-file-lines,.fa-file-alt,.fa-database,.fa-wand-magic-sparkles),
 html.ilg.ilg-qrfold body #form_sheld #qr--bar .ilg-quick-icon { filter: drop-shadow(0 .75px .35px var(--ilg-icon-contact)); }
 html.ilg.ilg-qrfold body #form_sheld #qr--bar .ilg-quick-icon {
     background: none;
@@ -5100,9 +5049,11 @@ html.ilg.ilg-merged-tools body #leftSendForm > #extensionsMenuButton {
     pointer-events: none !important;
 }
 html.ilg.ilg-merged-tools body #options .options-content > .ilg-tray-heading,
-html.ilg.ilg-merged-tools body #extensionsMenu > .ilg-tray-heading { display: none; }
+html.ilg.ilg-merged-tools body #extensionsMenu > .ilg-tray-heading,
+html.ilg.ilg-merged-tools body #qr--bar > .ilg-tray-heading { display: none; }
 html.ilg.ilg-merged-tools body #options .options-content > .ilg-composer-tabs,
-html.ilg.ilg-merged-tools body #extensionsMenu > .ilg-composer-tabs {
+html.ilg.ilg-merged-tools body #extensionsMenu > .ilg-composer-tabs,
+html.ilg.ilg-merged-tools body #qr--bar > .ilg-composer-tabs {
     display: flex;
     grid-column: 1 / -1;
     position: sticky;
@@ -5140,4 +5091,117 @@ html.ilg.ilg-merged-tools body .ilg-composer-tabs > button[aria-selected="true"]
 html.ilg.ilg-merged-tools body .ilg-composer-tabs > button:focus-visible {
     outline: 2px solid var(--ilg-tray-accent);
     outline-offset: -2px;
+}
+
+/* Three-in-one composer: native nodes stay put, two glass silhouettes share the existing material. */
+html.ilg.ilg-merged-tools body #form_sheld #nonQRFormItems {
+    --ilg-composer-fill: radial-gradient(ellipse 90px 34px at var(--ilg-reflection-x,25%) var(--ilg-reflection-y,10%),rgba(251,254,255,.08),transparent 80%),linear-gradient(145deg,rgba(255,255,255,.08),rgba(255,255,255,.015) 55%),var(--ilg-tint);
+    display: grid;
+    grid-template-columns: auto minmax(0,1fr) auto;
+    position: relative;
+    isolation: isolate;
+    gap: 0;
+    min-height: 54px;
+    padding: 0;
+    border: 0;
+    border-radius: 28px;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+html.ilg.ilg-merged-tools body #form_sheld #nonQRFormItems::before,
+html.ilg.ilg-merged-tools body #form_sheld #nonQRFormItems::after {
+    content: '' !important;
+    position: absolute;
+    inset: 0;
+    grid-column: 2 / 4;
+    grid-row: 1;
+    height: auto;
+    border-radius: 28px;
+    pointer-events: none;
+}
+html.ilg.ilg-merged-tools body #form_sheld #nonQRFormItems::before {
+    z-index: -1;
+    opacity: 1 !important;
+    padding: 0;
+    border: 1px solid rgba(255,255,255,.12);
+    background: var(--ilg-composer-fill) !important;
+    -webkit-mask: none;
+    mask: none;
+    box-shadow: inset 0 1px 1px rgba(255,255,255,.46),inset 0 -1px 1px rgba(255,255,255,.12),0 7px 16px -10px rgba(0,7,18,.4);
+}
+html.ilg.ilg-merged-tools body #form_sheld #nonQRFormItems::after {
+    z-index: 0;
+    opacity: .55 !important;
+    padding: 1px;
+    background: conic-gradient(from 145deg,rgba(255,255,255,.65),transparent 24%,rgba(255,255,255,.08) 40%,rgba(255,255,255,.62) 58%,transparent 80%,rgba(255,255,255,.65));
+    -webkit-mask: linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+    mask: linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+}
+html.ilg.ilg-merged-tools body #form_sheld #nonQRFormItems > :is(#leftSendForm,#send_textarea,#rightSendForm) { position: relative; z-index: 1; }
+html.ilg.ilg-merged-tools body #form_sheld #nonQRFormItems #leftSendForm { grid-column:1;grid-row:1;flex:0 0 auto;min-width:48px;width:auto;margin:0 12px 0 0; align-self:flex-end; padding:0 0 3px; }
+html.ilg.ilg-merged-tools body #form_sheld #nonQRFormItems #leftSendForm > #options_button {
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:48px;
+    height:48px;
+    padding:0;
+    margin:0;
+    border:1px solid rgba(255,255,255,.12);
+    border-radius:50%;
+    background:var(--ilg-composer-fill);
+    box-shadow:inset 0 1px 1px rgba(255,255,255,.46),inset 0 -1px 1px rgba(255,255,255,.12),0 7px 13px -8px rgba(0,7,18,.4);
+}
+html.ilg.ilg-merged-tools body #form_sheld #nonQRFormItems #options_button::before { width:25px;height:25px; }
+html.ilg.ilg-merged-tools body #leftSendForm > #ilg-qr-toggle { display:none !important; }
+html.ilg.ilg-merged-tools body #form_sheld #nonQRFormItems #send_textarea { grid-column:2;grid-row:1;width:100%;min-height:54px;padding:16px 6px 14px 16px;line-height:24px; }
+html.ilg.ilg-merged-tools body #form_sheld #nonQRFormItems #rightSendForm { grid-column:3;grid-row:1;gap:4px;padding:7px 7px 7px 0;align-self:end; }
+html.ilg.ilg-merged-tools body #form_sheld #nonQRFormItems #send_but {
+    --ilg-icon:var(--ilg-ui-arrow);
+    width:40px;height:40px;border-radius:50%;
+    color:#fff;background:#101216;border:1px solid rgba(255,255,255,.14);
+    transform:none;filter:none;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 3px 7px rgba(0,0,0,.14);
+}
+html.ilg.ilg-merged-tools body #form_sheld #nonQRFormItems #send_but::before { width:24px;height:24px;background:#fff;transform:rotate(-90deg); }
+html.ilg.ilg-merged-tools body .ilg-composer-tabs > button { font-size:13px; padding:9px 8px; }
+html.ilg.ilg-merged-tools body .ilg-composer-tabs > button:disabled { opacity:.38;cursor:default; }
+html.ilg.ilg-merged-tools.ilg-qr-open body #form_sheld #qr--bar { left:0;transform:none;width:min(368px,calc(100vw - 24px));max-width:calc(100vw - 24px); }
+html.ilg body :is(#options .options-content,#extensionsMenu),
+html.ilg.ilg-qrfold body #form_sheld #qr--bar { --ilg-tray-shadow:inset 0 1px 1px rgba(255,255,255,.30),inset 0 -1px 1px rgba(255,255,255,.08),0 14px 30px -16px rgba(0,7,18,.5); }
+/* Unknown or authored plugin widgets own a full row; only plain launchers receive layout. */
+html.ilg body #extensionsMenu { grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:14px; }
+html.ilg body #extensionsMenu > .extension_container { grid-column:1 / -1;min-width:0;max-width:100%; }
+html.ilg body #extensionsMenu > .extension_container.ilg-tool-group { display:contents; }
+html.ilg body #extensionsMenu > :not(.ilg-tool-row):not(.ilg-tool-group) { grid-column:1 / -1; }
+html.ilg body #extensionsMenu .ilg-tool-row {
+    display:flex;flex-direction:row;align-items:center;justify-content:flex-start;
+    gap:10px;min-height:54px;min-width:0;max-width:100%;
+    margin:0;padding:12px 10px;border-radius:14px;
+    text-align:start;white-space:normal;overflow-wrap:anywhere;
+    font-size:13px;line-height:1.5;
+}
+html.ilg body #extensionsMenu .ilg-tool-row > :is(i,svg,img) { flex-shrink:0; }
+html.ilg body #extensionsMenu .ilg-tool-row.ilg-tool-wide { grid-column:1 / -1; }
+html.ilg body.noShadows #nonQRFormItems::before,
+html.ilg body.noShadows #nonQRFormItems #leftSendForm > #options_button { box-shadow:none; }
+html.ilg.ilg-merged-tools body.no-blur #nonQRFormItems { --ilg-composer-fill:rgba(24,29,37,.94); }
+html.ilg.ilg-merged-tools.ilg-light body.no-blur #nonQRFormItems { --ilg-composer-fill:rgba(250,251,253,.94); }
+
+html.ilg.ilg-merged-tools body #extensionsMenu.ilg-composer-open { display:grid !important; }
+
+html.ilg.ilg-merged-tools body #form_sheld #options_button::before {
+    content:'' !important;display:block;width:25px;height:25px;
+    background:currentColor;
+    -webkit-mask:var(--ilg-svg-plus) center / contain no-repeat;
+    mask:var(--ilg-svg-plus) center / contain no-repeat;
+}
+html.ilg.ilg-merged-tools body #form_sheld #send_but::before {
+    content:'' !important;display:block;width:24px;height:24px;
+    background:#fff;
+    -webkit-mask:var(--ilg-ui-arrow) center / contain no-repeat;
+    mask:var(--ilg-ui-arrow) center / contain no-repeat;
+    transform:rotate(-90deg);
 }
