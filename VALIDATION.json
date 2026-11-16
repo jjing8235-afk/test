@@ -5528,7 +5528,7 @@
   "composerMatrix20261116": {
     "date": "2026-11-16",
     "version": "2.0.10-test.5",
-    "status": "prepared-for-test",
+    "status": "published-to-test",
     "baseCommit": "1cfad9e37343e62ec81df50c84896d7cc2726250",
     "scope": [
       "Replace all three composer tray visuals with an optical particle-matrix backing, fine grid and ice-cyan/teal palette.",
@@ -5622,8 +5622,13 @@
       "repository": "https://github.com/jjing8235-afk/test",
       "branch": "main",
       "version": "2.0.10-test.5",
-      "pushed": false,
-      "installedExtensionReplaced": false
+      "pushed": true,
+      "installedExtensionReplaced": false,
+      "runtimeCommit": "e1ae002688b6cabbe8369dff2a11aabb544b6337",
+      "verifiedAt": "2026-11-16T13:38:35.014Z",
+      "verifiedFiles": 11,
+      "remoteTreeVerified": true,
+      "verificationResultFile": "D:/claudecod1/st-verify/out/restart204/composer-matrix-20261116/runtime-publication.json"
     },
     "evidenceDirectory": "D:/claudecod1/st-verify/out/restart204/composer-matrix-20261116",
     "hashFormat": "Source hashes identify validated workspace bytes; publication checks immutable Git bytes after line-ending normalization."
