@@ -5636,7 +5636,7 @@
   "composerLiquid20261116": {
     "date": "2026-11-16",
     "version": "2.0.10-test.6",
-    "status": "prepared-for-test-publication",
+    "status": "published-to-test",
     "baseCommit": "5c7c105c42944f3ada782bdb015eeb95a0793852",
     "scope": [
       "Merge native chat/extension launcher into one control with two reversible tabs; keep host action nodes in place.",
@@ -5740,8 +5740,14 @@
       "repository": "https://github.com/jjing8235-afk/test",
       "branch": "main",
       "version": "2.0.10-test.6",
-      "pushed": false,
-      "installedExtensionReplaced": false
+      "pushed": true,
+      "installedExtensionReplaced": false,
+      "runtimeCommit": "2adf1d03c8b1a2f3c764a7e4e0c775f2ee572d1d",
+      "verifiedAt": "2026-11-16T15:13:39.625Z",
+      "verifiedFiles": 14,
+      "remoteTreeVerified": true,
+      "removedFilesVerified": true,
+      "verificationResultFile": "D:/claudecod1/st-verify/out/restart204/composer-liquid-20261116/runtime-publication.json"
     },
     "evidenceDirectory": "D:/claudecod1/st-verify/out/restart204/composer-liquid-20261116",
     "hashFormat": "Source hashes identify validated workspace bytes; immutable Git bytes are checked after line-ending normalization."
