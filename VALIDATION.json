@@ -4884,9 +4884,16 @@
       "repository": "https://github.com/jjing8235-afk/test",
       "branch": "main",
       "version": "2.0.10-test.1",
-      "pushed": false,
+      "pushed": true,
       "deployed": false,
-      "installedExtensionReplaced": false
+      "installedExtensionReplaced": false,
+      "runtimeCommit": "792008f97d5d91f69fb33a96c8080fd7415212ad",
+      "verifiedAt": "2026-11-16T09:14:25.889Z",
+      "remoteHeadVerified": true,
+      "remoteManifestVerified": true,
+      "verifiedFiles": 18,
+      "verificationResultFile": "D:/claudecod1/st-verify/out/restart204/preset-plugin-compat-20261116/remote-runtime-verification.json",
+      "verificationMethod": "GitHub contents and Git Data API read-back"
     },
     "evidenceDirectory": "D:/claudecod1/st-verify/out/restart204/pose-compositor-20261116",
     "resultFile": "D:/claudecod1/st-verify/out/restart204/pose-compositor-20261116/final-result.json"
@@ -5115,9 +5122,16 @@
       "repository": "https://github.com/jjing8235-afk/test",
       "branch": "main",
       "version": "2.0.10-test.1",
-      "pushed": false,
+      "pushed": true,
       "deployed": false,
-      "installedExtensionReplaced": false
+      "installedExtensionReplaced": false,
+      "runtimeCommit": "792008f97d5d91f69fb33a96c8080fd7415212ad",
+      "verifiedAt": "2026-11-16T09:14:25.889Z",
+      "remoteHeadVerified": true,
+      "remoteManifestVerified": true,
+      "verifiedFiles": 18,
+      "verificationResultFile": "D:/claudecod1/st-verify/out/restart204/preset-plugin-compat-20261116/remote-runtime-verification.json",
+      "verificationMethod": "GitHub contents and Git Data API read-back"
     },
     "evidenceDirectory": "D:/claudecod1/st-verify/out/restart204/preset-plugin-compat-20261116",
     "resultFile": "D:/claudecod1/st-verify/out/restart204/preset-plugin-compat-20261116/final-result.json"
@@ -5125,7 +5139,7 @@
   "testRelease2010": {
     "date": "2026-11-16",
     "version": "2.0.10-test.1",
-    "status": "prepared-for-test-publication",
+    "status": "published-to-test",
     "target": {
       "repository": "https://github.com/jjing8235-afk/test",
       "branch": "main",
@@ -5165,10 +5179,114 @@
       "Preset display fixtures do not establish complete third-party generation or database business workflows."
     ],
     "publication": {
-      "pushed": false,
+      "target": "test",
+      "repository": "https://github.com/jjing8235-afk/test",
+      "branch": "main",
+      "version": "2.0.10-test.1",
+      "pushed": true,
       "deployed": false,
-      "installedExtensionReplaced": false
+      "installedExtensionReplaced": false,
+      "runtimeCommit": "792008f97d5d91f69fb33a96c8080fd7415212ad",
+      "verifiedAt": "2026-11-16T09:14:25.889Z",
+      "remoteHeadVerified": true,
+      "remoteManifestVerified": true,
+      "verifiedFiles": 18,
+      "verificationResultFile": "D:/claudecod1/st-verify/out/restart204/preset-plugin-compat-20261116/remote-runtime-verification.json",
+      "verificationMethod": "GitHub contents and Git Data API read-back"
     },
-    "installedVersion": "2.0.9-test.1"
+    "installedVersion": "2.0.9-test.1",
+    "remoteRuntimeHashes": [
+      {
+        "file": "manifest.json",
+        "sha256": "d27f3008e67733ef1e4320a4cb73854204682cd99d0da0209d2c5cd51c731c7e",
+        "matched": true
+      },
+      {
+        "file": "index.js",
+        "sha256": "c8f3e2c8d3d5fbd88342f71f60e47828c9ef2462a14186d91d5afa687ffa7559",
+        "matched": true
+      },
+      {
+        "file": "style.css",
+        "sha256": "857faf4002753b173968d85577bfcfdf4a7519fba00f59556180e998a205bafa",
+        "matched": true
+      },
+      {
+        "file": "light-scope.js",
+        "sha256": "7fd5654182c83bde1568f071bce35e65ee13767f337a6da46703ba11177ab698",
+        "matched": true
+      },
+      {
+        "file": "card-clarity.js",
+        "sha256": "c47fc46d8e261084c7e033a6a765be282e2f9fcf516c588e7ef65d4735247fbc",
+        "matched": true
+      },
+      {
+        "file": "mes-icons.js",
+        "sha256": "9e1dbd42726e0a47f6c6243a393a8bb559ee8babbcbc1dcd273ae04a7dcc059f",
+        "matched": true
+      },
+      {
+        "file": "message-rendering.js",
+        "sha256": "bdf362176caa28ef15c2ade57bf70fbf33f8673db37f770a7fa3f9f0d9e67576",
+        "matched": true
+      },
+      {
+        "file": "glass-lighting.js",
+        "sha256": "00bf9835ce8d8687612f774ad4a13658bacda03c47c6f27a0f713a493eb1f0f3",
+        "matched": true
+      },
+      {
+        "file": "glass-performance.js",
+        "sha256": "0bc658c1e263ddb2ed160d7f1a56c23a58fbc106eb9de66713aa311af466da2a",
+        "matched": true
+      },
+      {
+        "file": "glass-worker.js",
+        "sha256": "9dd50c4ab0ac48a1dd85de3b5c68391de01ba64713776568bf0997d7dd09253f",
+        "matched": true
+      },
+      {
+        "file": "ball-raster.js",
+        "sha256": "952e5f9544add4e8a52f9bcf904fad9cbf1979560a511782267d7344154380c3",
+        "matched": true
+      },
+      {
+        "file": "liquid-glass-web.js",
+        "sha256": "2efbff0a4afb85c9cb96be14f22df2e8f09d8bcca97fd9a500af992a11813c63",
+        "matched": true
+      },
+      {
+        "file": "interaction-diagnostics.js",
+        "sha256": "df60498395b39c8376a521120d38d1fe1ea9da5d4b8df2d5a8a6221c92faa4fa",
+        "matched": true
+      },
+      {
+        "file": "web-map-cache.js",
+        "sha256": "62dd8e204233dac3b04e367be00affca6d45c872c4cb4a2f1b68e6e9482aadd8",
+        "matched": true
+      },
+      {
+        "file": "web-map-raster.js",
+        "sha256": "5c3604e6ef3022a0f01336132705699c14e61b7a640aa009bafb708607763964",
+        "matched": true
+      },
+      {
+        "file": "README.md",
+        "sha256": "48242e7632df1565caf6f7f27d159d4f8b817797d8246bf4a30431c6fce18f43",
+        "matched": true
+      },
+      {
+        "file": "CHANGELOG.md",
+        "sha256": "92ba6b19a602b0886562b0c096f67c2a22028536952953393c39a2ced94ca679",
+        "matched": true
+      },
+      {
+        "file": "VALIDATION.json",
+        "sha256": "3c4a6cbee804e66a1c24b99c62dbd3294e6e5c3dc0b785b29873c64f1fbc9391",
+        "matched": true
+      }
+    ],
+    "historySnapshots": "Earlier unpublished/delivery fields record their original observation times; this testRelease2010 field is the current publication receipt."
   }
 }
