@@ -5349,7 +5349,7 @@
   "composerMenus20261116": {
     "date": "2026-11-16",
     "version": "2.0.10-test.3",
-    "status": "prepared-for-test-publication",
+    "status": "published-to-test",
     "baseCommit": "4ea2030b722fc5c86e4fa563115171c63f101064",
     "scope": [
       "Native chat actions become grouped compact cards with distinct destructive styling.",
@@ -5403,7 +5403,8 @@
       "originalNodesPreserved": true,
       "keyboardAndContextActions": true,
       "masterSwitchCleanup": true,
-      "pageErrors": []
+      "pageErrors": [],
+      "offlineScriptsPassed": 8
     },
     "designReview": {
       "renderedDarkAndLightReviewed": true,
@@ -5420,9 +5421,16 @@
       "target": "test",
       "repository": "https://github.com/jjing8235-afk/test",
       "branch": "main",
-      "pushed": false,
-      "installedExtensionReplaced": false
+      "version": "2.0.10-test.3",
+      "pushed": true,
+      "installedExtensionReplaced": false,
+      "runtimeCommit": "07e8c84f32c6d03ce2b52cd27c17af4eb4d21428",
+      "verifiedAt": "2026-11-16T10:39:36.783Z",
+      "verifiedFiles": 8,
+      "remoteTreeVerified": true,
+      "verificationResultFile": "D:/claudecod1/st-verify/out/restart204/composer-ui-20261116/runtime-publication.json"
     },
-    "evidenceDirectory": "D:/claudecod1/st-verify/out/restart204/composer-ui-20261116"
+    "evidenceDirectory": "D:/claudecod1/st-verify/out/restart204/composer-ui-20261116",
+    "hashFormat": "Source hashes describe validated workspace bytes; remote file hashes are recorded against the immutable runtime commit after Git line-ending normalization."
   }
 }
