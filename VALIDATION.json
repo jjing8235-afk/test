@@ -5755,7 +5755,7 @@
   "composerUnified20261117": {
     "date": "2026-11-17",
     "version": "2.0.10-test.7",
-    "status": "prepared-for-test",
+    "status": "published-to-test",
     "baseCommit": "591e79a87563523be2ed51260e6cbad1bd6eaf12",
     "scope": [
       "One visible plus for native chat, extension tools and folded quick replies; preserve native nodes and listeners.",
@@ -5862,8 +5862,13 @@
       "repository": "https://github.com/jjing8235-afk/test",
       "branch": "main",
       "version": "2.0.10-test.7",
-      "pushed": false,
-      "installedExtensionReplaced": false
+      "pushed": true,
+      "installedExtensionReplaced": false,
+      "runtimeCommit": "dc7d3e1ac86fcddda2600792c60c827d958305bd",
+      "verifiedAt": "2026-11-16T16:33:56.168Z",
+      "verifiedFiles": 15,
+      "remoteTreeVerified": true,
+      "verificationResultFile": "D:/claudecod1/st-verify/out/restart204/composer-unified-20261116/runtime-publication.json"
     },
     "evidenceDirectory": "D:/claudecod1/st-verify/out/restart204/composer-unified-20261116",
     "hashFormat": "Source hashes identify validated workspace bytes; immutable Git bytes are checked after line-ending normalization."
