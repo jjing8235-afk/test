@@ -30,7 +30,7 @@ window.__ilgLoaded = new URL('.', import.meta.url).pathname;
 
 let studioUI = null;
 const MODULE = 'iosLiquidGlass';
-const BUILD_VERSION = '2.0.10-test.4';
+const BUILD_VERSION = '2.0.10-test.5';
 const ENGINE_NAMES = Object.freeze({performance:'御风性能引擎',refraction:'棱光折射引擎'});
 const NS = 'http://www.w3.org/2000/svg';
 const ctx = SillyTavern.getContext();
@@ -1057,6 +1057,7 @@ function paintMany(list, measured = null) {
 function paint(el, geo) {
     const it = items.get(el);
     if (!it) return;
+    if (it.kind === 'panel' && el.matches(HOST_MENU_SEL)) mountTrayHeading(el);
     if (!geo) {
         if (!el.isConnected) { untrack(el); return; }
         if (!trackable(el)) { untrack(el); return; }
@@ -1226,6 +1227,7 @@ function track(el, kind) {
 }
 
 function untrack(el) {
+    releaseTrayHeading(el);
     lightScope.release(el);
     messageRendering.release(el);
     reflections.release(el);
@@ -2178,6 +2180,30 @@ appearancePanel.querySelectorAll('[name="ilg-custom-text"]').forEach(el => el.ad
 // 快捷回复折叠：输入框左边一个按钮，点开后快捷回复按钮浮在输入胶囊上方的一块玻璃里，点了某个按钮就收起
 const qrBar = () => document.getElementById('qr--bar');
 
+// A single owned heading per tray; never replace or clone host action nodes.
+const trayHeadings = new Map();
+function mountTrayHeading(el) {
+    if (el.closest('[data-nvwa-style="author"], #catgod-oracle-qrbar')) return;
+    const title = el.id === 'extensionsMenu' ? '扩展工具'
+        : el.id === 'qr--bar' ? '快捷面板'
+        : el.matches('#options .options-content') ? '聊天操作' : null;
+    if (!title) return;
+    let heading = trayHeadings.get(el);
+    if (!heading) {
+        heading = document.createElement('span');
+        heading.className = 'ilg-tray-heading';
+        heading.setAttribute('role', 'heading');
+        heading.setAttribute('aria-level', '2');
+        heading.textContent = title;
+        trayHeadings.set(el, heading);
+    }
+    if (heading.parentElement !== el) el.prepend(heading);
+}
+function releaseTrayHeading(el) {
+    trayHeadings.get(el)?.remove();
+    trayHeadings.delete(el);
+}
+
 // Decorate the two NVWA launchers in place; host quick-reply handlers stay on their original nodes.
 const qrEntryUi = new Map();
 function clearQrEntry(button, state) {
@@ -2188,6 +2214,9 @@ function clearQrEntry(button, state) {
     qrEntryUi.delete(button);
 }
 function clearQrPresentation(bar = null) {
+    for (const el of trayHeadings.keys()) {
+        if (el.id === 'qr--bar' && (!bar || bar === el)) releaseTrayHeading(el);
+    }
     for (const [button, state] of qrEntryUi) {
         if (!bar || bar.contains(button)) clearQrEntry(button, state);
     }
@@ -2226,6 +2255,7 @@ function syncQrPresentation(open) {
     const bar = qrBar();
     if (!S.enabled || !S.qrFold) { clearQrPresentation(); return; }
     if (!open || !bar || !document.getElementById('form_sheld').contains(bar)) return;
+    mountTrayHeading(bar);
     decorateQrEntries(bar);
     qrMenuUiObserver.observe(bar, { childList: true, subtree: true, characterData: true });
 }
