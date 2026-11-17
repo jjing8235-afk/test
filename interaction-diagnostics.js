@@ -156,7 +156,18 @@ export function createInteractionDiagnostics({snapshot=()=>({}),onFinish=()=>{},
     const input=e=>{if(e.target?.id==='send_textarea'){if(active&&!active.events.composerInputs)record('composer-input');count('composerInputs');}};
     const composition=e=>{if(active&&e.target?.id==='send_textarea'){active.composing=e.type==='compositionstart';count(active.composing?'compositionStarts':'compositionEnds');record(active.composing?'composition-start':'composition-end');}};
     const clicked=e=>{if(e.target?.closest?.('#ilg-tone-button')){count('appearanceClicks');record('appearance-click');}if(e.target?.closest?.('#options_button')){count('optionsClicks');record('options-click');}if(e.target?.closest?.('#extensionsMenuButton')){count('extensionMenuClicks');record('extensions-menu-click');}};
-    const runtimeError=e=>{if(!active)return;count(e.type==='unhandledrejection'?'unhandledRejections':'runtimeErrors');const name=(e.type==='unhandledrejection'?e.reason:e.error)?.name;record('page-error',{kind:ERROR_NAMES.has(name)?name:'Other',source:e.type==='unhandledrejection'?'rejection':'error'});};
+    const runtimeError = event => {
+        if (!active) return;
+        const rejection = event.type === 'unhandledrejection';
+        count(rejection ? 'unhandledRejections' : 'runtimeErrors');
+        const name = (rejection ? event.reason : event.error)?.name;
+        // Read only enough to classify; never retain messages, stacks, URLs or payloads.
+        const kind = !rejection && /^ResizeObserver loop/.test(event.message || '') ? 'ResizeObserverLoop'
+            : ERROR_NAMES.has(name) ? name
+            : !rejection && ['SCRIPT','IMG','LINK','IFRAME','VIDEO','AUDIO','SOURCE'].includes(event.target?.tagName) ? 'ResourceError'
+            : !rejection && event.message === 'Script error.' ? 'CrossOriginScriptError' : 'Other';
+        record('page-error', { kind, source: rejection ? 'rejection' : 'error' });
+    };
     const listeners=[[doc,'pointerdown',pointerDown],[doc,'pointermove',pointerMove],[doc,'pointerup',pointerUp],[doc,'pointercancel',pointerUp],[doc,'scroll',scroll],[doc,'input',input],[doc,'click',clicked],[doc,'compositionstart',composition],[doc,'compositionend',composition],
         [doc,'visibilitychange',()=>{if(doc.hidden)finish('hidden');}],[doc,'focusin',focused],[doc,'focusout',blurred],
         [win,'pagehide',()=>finish('pagehide')],[win,'error',runtimeError],[win,'unhandledrejection',runtimeError],

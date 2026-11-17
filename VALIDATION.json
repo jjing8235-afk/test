@@ -1,6 +1,6 @@
 {
-  "currentVersion": "2.0.10-test.7",
-  "currentDisplayVersion": "2.0.10-test.7",
+  "currentVersion": "2.0.10-test.9",
+  "currentDisplayVersion": "2.0.10-test.9",
   "date": "2026-11-05",
   "version": "1.4.4-local.9",
   "baseline": "1.4.4-local.8",
@@ -5872,5 +5872,128 @@
     },
     "evidenceDirectory": "D:/claudecod1/st-verify/out/restart204/composer-unified-20261116",
     "hashFormat": "Source hashes identify validated workspace bytes; immutable Git bytes are checked after line-ending normalization."
+  },
+  "composerLayouts20261117": {
+    "version": "2.0.10-test.8",
+    "status": "local-verified-not-published",
+    "date": "2026-11-17",
+    "changes": [
+      "Three illustrated layout choices with persistence",
+      "Independent split glass surfaces and transparent 16px gap",
+      "Light mode black send and stop; dark mode blue send and stop",
+      "44px action buttons, rounded stop square and interaction states"
+    ],
+    "checks": {
+      "chromium": 238,
+      "webkitWithIPhoneUA": 238,
+      "ttChromium": 19,
+      "ttWebkit": 19,
+      "extensionManifest": "passed",
+      "relatedRegressions": "passed"
+    },
+    "limitations": [
+      "Desktop browser checks are not physical phone or TT device acceptance",
+      "Stop state uses the real host node with fixture visibility; no paid model generation was triggered"
+    ],
+    "publication": {
+      "pushed": false,
+      "installedExtensionReplaced": false
+    }
+  },
+  "ttScrollAndComposer20261117": {
+    "version": "2.0.10-test.9",
+    "status": "verified-ready-to-publish",
+    "verifiedAt": "2026-11-17T08:26:42.776Z",
+    "scope": [
+      "classic/unified/split illustrated composer picker",
+      "light black / dark blue send and stop controls",
+      "gesture-aware reading anchor",
+      "deferred idempotent form height update",
+      "oversized Android WebView CSS fallback",
+      "privacy-safe error classification and numeric scroll state"
+    ],
+    "rootCauses": {
+      "readingAnchor": {
+        "before": {
+          "imageLoad": 900,
+          "queuedViewport": 900
+        },
+        "after": {
+          "imageLoad": 1200,
+          "queuedViewport": 1160
+        },
+        "stationaryReadingDrift": 0
+      },
+      "largeMessage": {
+        "recordedSizes": [
+          [
+            349,
+            3000,
+            3.25
+          ],
+          [
+            392,
+            5536,
+            3.25
+          ],
+          [
+            358,
+            3781,
+            4
+          ]
+        ],
+        "before": "legacy SVG displacement after guard",
+        "after": "CSS blur; old SVG filter removed; restore on shrink",
+        "scope": "Android WebView messages only",
+        "visualTradeoff": "Oversized message pixel displacement is disabled while its tint, blur and glass rim remain"
+      },
+      "formHeight": {
+        "before": "layout writes inside ResizeObserver notifications; reproduced WebKit observer warning",
+        "after": "one queued frame, latest height, no same-height rewrites",
+        "observerWriteRegression": {
+          "before": 100,
+          "after": 0,
+          "notifications": 100
+        }
+      }
+    },
+    "checks": {
+      "chromiumLayout": 238,
+      "webkitLayout": 238,
+      "androidUARealHost": 11,
+      "readingAnchor": [
+        "chromium",
+        "webkit"
+      ],
+      "messageResizeLoop": [
+        "chromium",
+        "webkit"
+      ],
+      "offline": [
+        "webview-message-guard",
+        "form-resize",
+        "keyboard-lifecycle",
+        "tt-compat",
+        "interaction-diagnostics",
+        "long-frame-diagnostics",
+        "resize-batch",
+        "popup-boundary",
+        "glass-performance"
+      ],
+      "manifest": "passed",
+      "syntax": "passed",
+      "diffCheck": "passed"
+    },
+    "limitations": [
+      "Desktop browser and local ST checks are not physical TT phone acceptance",
+      "Original 2.0.3 generic error sources remain unknown; new diagnostic categories improve future attribution",
+      "No phone FPS gain or elimination of every flicker is claimed"
+    ],
+    "publication": {
+      "repository": "jjing8235-afk/test",
+      "branch": "main",
+      "pushed": false,
+      "installedExtensionReplaced": false
+    }
   }
 }

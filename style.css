@@ -5093,9 +5093,8 @@ html.ilg.ilg-merged-tools body .ilg-composer-tabs > button:focus-visible {
     outline-offset: -2px;
 }
 
-/* Three-in-one composer: native nodes stay put, two glass silhouettes share the existing material. */
+/* Three layouts share native actions; split mode owns two independently filtered silhouettes. */
 html.ilg.ilg-merged-tools body #form_sheld #nonQRFormItems {
-    --ilg-composer-fill: radial-gradient(ellipse 90px 34px at var(--ilg-reflection-x,25%) var(--ilg-reflection-y,10%),rgba(251,254,255,.08),transparent 80%),linear-gradient(145deg,rgba(255,255,255,.08),rgba(255,255,255,.015) 55%),var(--ilg-tint);
     display: grid;
     grid-template-columns: auto minmax(0,1fr) auto;
     position: relative;
@@ -5103,60 +5102,18 @@ html.ilg.ilg-merged-tools body #form_sheld #nonQRFormItems {
     gap: 0;
     min-height: 54px;
     padding: 0;
-    border: 0;
     border-radius: 28px;
-    background: transparent !important;
-    box-shadow: none !important;
 }
-html.ilg.ilg-merged-tools body #form_sheld #nonQRFormItems::before,
-html.ilg.ilg-merged-tools body #form_sheld #nonQRFormItems::after {
-    content: '' !important;
-    position: absolute;
-    inset: 0;
-    grid-column: 2 / 4;
-    grid-row: 1;
-    height: auto;
-    border-radius: 28px;
-    pointer-events: none;
-}
-html.ilg.ilg-merged-tools body #form_sheld #nonQRFormItems::before {
-    z-index: -1;
-    opacity: 1 !important;
-    padding: 0;
-    border: 1px solid rgba(255,255,255,.12);
-    background: var(--ilg-composer-fill) !important;
-    -webkit-mask: none;
-    mask: none;
-    box-shadow: inset 0 1px 1px rgba(255,255,255,.46),inset 0 -1px 1px rgba(255,255,255,.12),0 7px 16px -10px rgba(0,7,18,.4);
-}
-html.ilg.ilg-merged-tools body #form_sheld #nonQRFormItems::after {
-    z-index: 0;
-    opacity: .55 !important;
-    padding: 1px;
-    background: conic-gradient(from 145deg,rgba(255,255,255,.65),transparent 24%,rgba(255,255,255,.08) 40%,rgba(255,255,255,.62) 58%,transparent 80%,rgba(255,255,255,.65));
-    -webkit-mask: linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
-    mask: linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-}
-html.ilg.ilg-merged-tools body #form_sheld #nonQRFormItems > :is(#leftSendForm,#send_textarea,#rightSendForm) { position: relative; z-index: 1; }
-html.ilg.ilg-merged-tools body #form_sheld #nonQRFormItems #leftSendForm { grid-column:1;grid-row:1;flex:0 0 auto;min-width:48px;width:auto;margin:0 12px 0 0; align-self:flex-end; padding:0 0 3px; }
+html.ilg.ilg-merged-tools body #form_sheld #nonQRFormItems > :is(#leftSendForm,#send_textarea,#rightSendForm) { position:relative;z-index:1; }
+html.ilg.ilg-merged-tools body #form_sheld #nonQRFormItems #leftSendForm { grid-column:1;grid-row:1;flex:0 0 auto;min-width:44px;width:auto;margin:0 0 0 6px;align-self:flex-end;padding:0 0 5px; }
 html.ilg.ilg-merged-tools body #form_sheld #nonQRFormItems #leftSendForm > #options_button {
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    width:48px;
-    height:48px;
-    padding:0;
-    margin:0;
-    border:1px solid rgba(255,255,255,.12);
-    border-radius:50%;
-    background:var(--ilg-composer-fill);
-    box-shadow:inset 0 1px 1px rgba(255,255,255,.46),inset 0 -1px 1px rgba(255,255,255,.12),0 7px 13px -8px rgba(0,7,18,.4);
+    display:flex;align-items:center;justify-content:center;
+    width:44px;height:44px;padding:0;margin:0;border:0;border-radius:50%;
+    background:transparent;box-shadow:none;
 }
 html.ilg.ilg-merged-tools body #form_sheld #nonQRFormItems #options_button::before { width:25px;height:25px; }
 html.ilg.ilg-merged-tools body #leftSendForm > #ilg-qr-toggle { display:none !important; }
-html.ilg.ilg-merged-tools body #form_sheld #nonQRFormItems #send_textarea { grid-column:2;grid-row:1;width:100%;min-height:54px;padding:16px 6px 14px 16px;line-height:24px; }
+html.ilg.ilg-merged-tools body #form_sheld #nonQRFormItems #send_textarea { grid-column:2;grid-row:1;width:100%;min-height:54px;padding:16px 6px 14px 12px;line-height:24px; }
 html.ilg.ilg-merged-tools body #form_sheld #nonQRFormItems #rightSendForm { grid-column:3;grid-row:1;gap:4px;padding:7px 7px 7px 0;align-self:end; }
 html.ilg.ilg-merged-tools body #form_sheld #nonQRFormItems #send_but {
     --ilg-icon:var(--ilg-ui-arrow);
@@ -5166,6 +5123,33 @@ html.ilg.ilg-merged-tools body #form_sheld #nonQRFormItems #send_but {
     box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 3px 7px rgba(0,0,0,.14);
 }
 html.ilg.ilg-merged-tools body #form_sheld #nonQRFormItems #send_but::before { width:24px;height:24px;background:#fff;transform:rotate(-90deg); }
+/* The shared parent must have no backdrop: even a transparent fill would refract the gap. */
+html.ilg.ilg-composer-split body #form_sheld #nonQRFormItems {
+    border:0;background:transparent !important;box-shadow:none !important;
+    -webkit-backdrop-filter:none !important;backdrop-filter:none !important;
+}
+html.ilg.ilg-composer-split body #form_sheld #nonQRFormItems::before,
+html.ilg.ilg-composer-split body #form_sheld #nonQRFormItems::after { content:none !important; }
+html.ilg.ilg-composer-split body #form_sheld #nonQRFormItems #leftSendForm { min-width:48px;margin:0 16px 0 0;padding:0 0 3px; }
+html.ilg.ilg-composer-split body #form_sheld #nonQRFormItems #leftSendForm > #options_button { width:48px;height:48px; }
+html.ilg.ilg-composer-split body #form_sheld #nonQRFormItems #send_textarea { padding-left:16px; }
+html.ilg.ilg-composer-split body #form_sheld #nonQRFormItems > .ilg-composer-glass {
+    position:absolute;z-index:0;grid-row:1;pointer-events:none;overflow:hidden;box-sizing:border-box;
+    border:1px solid rgba(255,255,255,.12);
+    background:rgba(18,26,38,.035);
+    box-shadow:inset 0 1px 1px rgba(255,255,255,.25),inset 0 -1px .5px rgba(255,255,255,.08),0 4px 10px -7px rgba(0,7,18,.3);
+}
+html.ilg.ilg-composer-split body #form_sheld #nonQRFormItems > #ilg-composer-input-glass { grid-column:2 / 4;inset:0;border-radius:28px; }
+html.ilg.ilg-composer-split body #form_sheld #nonQRFormItems > #ilg-composer-plus-glass {
+    grid-column:1;left:0;bottom:3px;width:48px;height:48px;border-radius:50%;
+    background:radial-gradient(ellipse at 28% 7%,rgba(255,255,255,.10),transparent 48%),rgba(255,255,255,.012);
+}
+html.ilg.ilg-composer-split.ilg-light body #form_sheld #nonQRFormItems > #ilg-composer-input-glass { background:rgba(255,255,255,.035); }
+html.ilg.ilg-composer-split body #form_sheld #nonQRFormItems > #ilg-composer-input-glass.ilg-control-readable { background:rgba(18,26,38,.11); }
+html.ilg.ilg-composer-split.ilg-light body #form_sheld #nonQRFormItems > #ilg-composer-input-glass.ilg-control-readable { background:rgba(255,255,255,.11); }
+html.ilg.ilg-composer-split body.noShadows #form_sheld #nonQRFormItems > .ilg-composer-glass { box-shadow:none; }
+html.ilg.ilg-composer-split body.no-blur #form_sheld #nonQRFormItems > :is(#ilg-composer-input-glass,#ilg-composer-plus-glass) { background:rgba(18,26,38,.86); }
+html.ilg.ilg-composer-split.ilg-light body.no-blur #form_sheld #nonQRFormItems > .ilg-composer-glass { background:rgba(250,249,246,.90); }
 html.ilg.ilg-merged-tools body .ilg-composer-tabs > button { font-size:13px; padding:9px 8px; }
 html.ilg.ilg-merged-tools body .ilg-composer-tabs > button:disabled { opacity:.38;cursor:default; }
 html.ilg.ilg-merged-tools.ilg-qr-open body #form_sheld #qr--bar { left:0;transform:none;width:min(368px,calc(100vw - 24px));max-width:calc(100vw - 24px); }
@@ -5187,8 +5171,6 @@ html.ilg body #extensionsMenu .ilg-tool-row > :is(i,svg,img) { flex-shrink:0; }
 html.ilg body #extensionsMenu .ilg-tool-row.ilg-tool-wide { grid-column:1 / -1; }
 html.ilg body.noShadows #nonQRFormItems::before,
 html.ilg body.noShadows #nonQRFormItems #leftSendForm > #options_button { box-shadow:none; }
-html.ilg.ilg-merged-tools body.no-blur #nonQRFormItems { --ilg-composer-fill:rgba(24,29,37,.94); }
-html.ilg.ilg-merged-tools.ilg-light body.no-blur #nonQRFormItems { --ilg-composer-fill:rgba(250,251,253,.94); }
 
 html.ilg.ilg-merged-tools body #extensionsMenu.ilg-composer-open { display:grid !important; }
 
@@ -5205,3 +5187,40 @@ html.ilg.ilg-merged-tools body #form_sheld #send_but::before {
     mask:var(--ilg-ui-arrow) center / contain no-repeat;
     transform:rotate(-90deg);
 }
+
+/* Send and stop keep one footprint in all three layouts. Host controls visibility and actions. */
+html.ilg body #form_sheld #send_form #nonQRFormItems {
+    --ilg-action-bg:#1677e8;--ilg-action-hover:#2987f3;--ilg-action-pressed:#1064cd;
+    --ilg-action-shadow:rgba(5,69,155,.28);--ilg-action-border:rgba(255,255,255,.20);
+}
+html.ilg.ilg-light body #form_sheld #send_form #nonQRFormItems {
+    --ilg-action-bg:#17191e;--ilg-action-hover:#2c3037;--ilg-action-pressed:#0d0f12;
+    --ilg-action-shadow:rgba(8,15,27,.18);--ilg-action-border:rgba(255,255,255,.12);
+}
+html.ilg body #form_sheld #send_form #nonQRFormItems :is(#send_but,#mes_stop) {
+    position:relative;flex:0 0 44px;width:44px;height:44px;min-width:44px;
+    margin:0;padding:0;align-items:center;justify-content:center;border-radius:50%;
+    border:1px solid var(--ilg-action-border);background:var(--ilg-action-bg);color:#fff;
+    opacity:1;filter:none;transform:none;text-shadow:none;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 3px 9px -4px var(--ilg-action-shadow);
+    transition:background-color .16s ease,box-shadow .16s ease,transform .16s ease;
+}
+html.ilg body #form_sheld #send_form #nonQRFormItems #send_but::before {
+    content:'' !important;display:block;width:23px;height:23px;margin:auto;background:#fff;
+    -webkit-mask:var(--ilg-ui-arrow) center / contain no-repeat;mask:var(--ilg-ui-arrow) center / contain no-repeat;transform:rotate(-90deg);
+}
+html.ilg body #form_sheld #send_form #nonQRFormItems #mes_stop > i { display:flex;align-items:center;justify-content:center;width:20px;height:20px;margin:0;padding:0;font-size:0;line-height:0;color:#fff; }
+html.ilg body #form_sheld #send_form #nonQRFormItems #mes_stop > i::before {
+    content:'' !important;display:block;width:13px;height:13px;margin:0;border-radius:3px;
+    background:#fff;-webkit-mask:none;mask:none;box-shadow:0 0 0 .5px rgba(255,255,255,.12);
+}
+html.ilg.ilg-merged-tools body #form_sheld #send_form #nonQRFormItems #rightSendForm { padding:5px 5px 5px 0; }
+@media(hover:hover) {
+ html.ilg body #form_sheld #send_form #nonQRFormItems :is(#send_but,#mes_stop):hover { background:var(--ilg-action-hover);box-shadow:inset 0 1px 0 rgba(255,255,255,.20),0 4px 12px -4px var(--ilg-action-shadow); }
+}
+html.ilg body #form_sheld #send_form #nonQRFormItems :is(#send_but,#mes_stop):active { background:var(--ilg-action-pressed);transform:scale(.94); }
+html.ilg body #form_sheld #send_form #nonQRFormItems :is(#send_but,#mes_stop):focus-visible { outline:2px solid var(--ilg-action-bg);outline-offset:3px; }
+html.ilg body #form_sheld #send_form #nonQRFormItems :is(#send_but,#mes_stop)[aria-disabled="true"] { opacity:.42;box-shadow:none; }
+html.ilg body.noShadows #form_sheld #send_form #nonQRFormItems :is(#send_but,#mes_stop) { box-shadow:none; }
+@media(prefers-reduced-motion:reduce) { html.ilg body #form_sheld #send_form #nonQRFormItems :is(#send_but,#mes_stop) { transition:none; } }
+html.ilg body.reduced-motion #form_sheld #send_form #nonQRFormItems :is(#send_but,#mes_stop) { transition:none; }

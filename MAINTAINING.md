@@ -1,3 +1,25 @@
+# 2.0.10-test.9 · TT 滚动修复与输入区发布入口（2026-11-17）
+
+viewport.js 的阅读锚点在触摸／滚轮／阅读按键时取消旧锚点与已排队恢复，350ms 窗口随惯性滚动延续。图片、容器与视口恢复合并为单个 RAF；静止时仍按原锚点偏移校正。destroy 释放监听、观察器与待执行帧。诊断只采集补偿次数、滚动位置和高度等数值。
+
+index.js 沿用 surface-policy.js 的安卓大消息阈值及迟滞。当受保护消息请求折射时，释放 it.filter / it.physical，并阻止进入 physical 与 legacy 两条 SVG 分支，保留 CSS 模糊、色调、阅读滤镜及玻璃反光。这个例外只针对大面积安卓 WebView 消息，短消息、非 WebView、顶栏、输入区与菜单保留现有路径。长消息缩短后重新建立正常滤镜。未恢复已撤回的消息窗口、全局 GPU 试验或交互预算路径。
+
+输入框表单 ResizeObserver 只排队 updateFormSpace，在下一帧读取最终高度并一次写入 --ilg-form-h；相同高度直接返回，仍遵循宿主 auto_scroll_chat_to_bottom 设置。回归入口 dev/verify/form-resize-regression.mjs 验证通知期零布局写入、100 次通知合并、最后高度优先和宿主滚动偏好。
+
+可重复检查：dev/verify/reading-anchor-browser.mjs 使用真实 viewport 模块覆盖图片加载、排队视口恢复与新手势竞争；dev/verify/webview-message-guard-regression.mjs 执行真实 paint 分支及三份报告的几何尺寸；dev/verify/tt-scroll-host-browser.mjs 在临时数据根的真实 ST 中使用安卓 WebView UA 验证保护、小消息与输入区材质、连续滑动及尺寸往返。所有手机性能和 TT 显示结论仍需真实设备复测。
+
+interaction-diagnostics.js 将已知 ResizeObserver 循环、资源错误与跨域脚本错误保存为分类枚举；不保留原始错误字符串、堆栈或资源 URL。新报告可以继续区分 2.0.3 的未知错误风暴与后续渲染卡顿。
+
+# 2.0.10-test.8 · 本地输入区候选（2026-11-17，未发布）
+
+composerLayout 使用 classic / unified / split，未设置或非法值回退 split，保持 test.7 的默认分体方向。设置 v9 保留；外观书签白名单加入该枚举。选择器在工作台的界面布局页，使用原生单选框和静态 SVG 示意。
+
+split 不跟踪 #nonQRFormItems 为玻璃表面，而是在原 grid 内挂载两个不接收指针的装饰表面，分别交给已有 bar 材质和尺寸观察器。父容器保持透明且不滤镜，16px 间隙不参与绘制；有草稿时只给输入表面增加可读层。classic / unified 移除两块表面并恢复父表面，原生节点不移动或替换。禁用与切换释放滤镜、观察器及材质图层。没有新增常驻动画循环。
+
+三种布局的发送与停止统一占用 44px；白天 #17191e、黑夜 #1677e8。停止图标为 CSS 圆角方块，不改变宿主的生成或停止事件，不强制显示按钮。只有测试夹具模拟已连接和生成中的可见状态。
+
+实际宿主回归入口 dev/verify/composer-layout-browser.mjs。设置 NVWA_HOST_ROOT 为 ST 源码目录，NVWA_LAYOUT_SETTINGS 为独立设置夹具；脚本复制夹具到新建临时数据根，拦截设置保存和 Horde 状态请求，扩展源码通过本地路由提供，不替换已安装扩展。NVWA_LAYOUT_OUT 指定结果目录，NVWA_BROWSER / NVWA_PLAYWRIGHT_MODULE / NVWA_EDGE_EXECUTABLE / PLAYWRIGHT_BROWSERS_PATH 选择测试引擎。默认端口 8127，可用 NVWA_LAYOUT_PORT 覆盖；占用时拒绝复用。桌面 WebKit 的 iPhone UA 不是物理设备证据。历史发布记录如下。
+
 # 2.0.10-test.7 · 测试发布维护入口（2026-11-17）
 
 输入区用原有节点组成三列 grid：左侧圆形 options_button、弹性 textarea、右侧原生发送区。输入胶囊的两个伪元素覆盖第二到第三列；＋和胶囊通过 --ilg-composer-fill 共用高透底色与柔光。关闭旧的输入后发送键放大规则在合并模式下的作用，避免遮挡文字和挤出边距。发送键显示仍由宿主控制，不在产品中强制显示。

@@ -11,6 +11,7 @@ import { positionFixed } from './fixed-position.js';
 import { createMessageRendering } from './message-rendering.js';
 import { createHostInteractionState } from './host-interaction-state.js';
 import { createComposerTools } from './composer-tools.js';
+import { normalizeComposerLayout, composerLayoutPicker, syncComposerLayout } from './composer-layout.js';
 import { migrateClearOptics, restoreOriginalRefraction } from './optics-settings.js';
 import { WEB_PRESETS, normalizeWebPreset, webPresetOf } from './web-presets.js';
 import { createBallGlass } from './ball-glass.js';
@@ -31,7 +32,7 @@ window.__ilgLoaded = new URL('.', import.meta.url).pathname;
 
 let studioUI = null;
 const MODULE = 'iosLiquidGlass';
-const BUILD_VERSION = '2.0.10-test.7';
+const BUILD_VERSION = '2.0.10-test.9';
 const ENGINE_NAMES = Object.freeze({performance:'御风性能引擎',refraction:'棱光折射引擎'});
 const NS = 'http://www.w3.org/2000/svg';
 const ctx = SillyTavern.getContext();
@@ -610,7 +611,7 @@ const PRESETS_PREVIOUS = {
 };
 const DEFAULTS = {
     chatBackground: 'glass', chatVeil: 45, chatFontSize: 0, firstLineIndent: false, justifyText: false, compatibilityMode: 'auto', androidWebViewRefract: false, iosSvgTrial: false, iosMaterial: true,
-    enabled: true, float: true, islands: true, fold: true, topShortcut1: '', topShortcut2: '', qrFold: true, home: true, toneBtn: true, homeName: 'NVWA 用户', icons: true, refract: true, refractMes: true, font: true, tone: 'time', dayStart: 7, dayEnd: 19, avatar: 'line', orb: true, panelRead: true, dock: false, floatBall: true, ballSnap: true, ballFuse: true, ballSide: 'right', ballY: 0.62, ballFx: 0.92, ballFy: 0.6, ballDock: false,
+    enabled: true, float: true, islands: true, fold: true, topShortcut1: '', topShortcut2: '', qrFold: true, composerLayout: 'split', home: true, toneBtn: true, homeName: 'NVWA 用户', icons: true, refract: true, refractMes: true, font: true, tone: 'time', dayStart: 7, dayEnd: 19, avatar: 'line', orb: true, panelRead: true, dock: false, floatBall: true, ballSnap: true, ballFuse: true, ballSide: 'right', ballY: 0.62, ballFx: 0.92, ballFy: 0.6, ballDock: false,
     webPreset: 'clear', mobileTilt: false, glassStyle: 'original', engine: 'physical', follow: true, pLight: 135, customTextTone: 'auto', customWallpaper: '', readingStyle: 'warm', proseLeading: 0, proseInset: 0,
     // 自然弧度没写的参数（厚度、折射率等，只给物理折射截面用）沿用清透立体的
     ...PRESETS.depth[1], ...PRESETS.natural[1],
@@ -686,6 +687,7 @@ S.chatBackground = S.chatBackground === 'transparent' ? 'transparent' : 'glass';
 S.readingStyle = normalizeReadingStyle(S.readingStyle);
 S.iosMaterial = S.iosMaterial === true;
 S.glassStyle = S.glassStyle === 'liquid-web' ? 'liquid-web' : 'original';
+S.composerLayout = normalizeComposerLayout(S.composerLayout);
 // Folded toolbar is the sole layout; retain legacy fields for saved looks.
 function normalizeTopStyleSettings(settings) {
     const values = [settings.topShortcut1, settings.topShortcut2].map(value =>
@@ -923,10 +925,11 @@ function filterOf(it, w, h, slot = 'filter') {
 // 滤镜只负责折射；两种材质的表面反光统一在 CSS / 融合距离场中绘制，避免重复叠亮。
 const ARC_ONLY = Object.freeze({ specular: 0, sharp: 4, edgeShade: 0, fresnel: 0, caustic: 0 });
 // 统一玻璃表面；折叠顶栏与空输入区保持高透，仅有内容的输入区启用可读层。
-const controlSurface = el => el.matches('.ilg-island, #nonQRFormItems, #ilg-floor');
+const inputGlass = el => el.matches('#nonQRFormItems, #ilg-composer-input-glass');
+const controlSurface = el => el.matches('.ilg-island, #nonQRFormItems, #ilg-floor, .ilg-composer-glass');
 let inputMaterialReadable = false, inputCompositionText = '';
 const foldedMenuSurface = el => S.fold && el.classList.contains('ilg-island') && el.icons?.some(icon => icon.id === 'ilg-fold-button');
-const controlReadable = el => controlSurface(el) && (el.id === 'nonQRFormItems' ? inputMaterialReadable : S.islands && S.dock);
+const controlReadable = el => controlSurface(el) && (inputGlass(el) ? inputMaterialReadable : el.id === 'ilg-composer-plus-glass' ? false : S.islands && S.dock);
 function syncInputMaterial(repaint = true) {
     const value = document.getElementById('send_textarea')?.value || '';
     const next = value.trim().length > 0 || inputCompositionText.trim().length > 0;
@@ -934,7 +937,7 @@ function syncInputMaterial(repaint = true) {
     if (root.classList.contains('ilg-has-draft') !== shown) root.classList.toggle('ilg-has-draft', shown);
     if (next === inputMaterialReadable) return;
     inputMaterialReadable = next;
-    const bar = document.getElementById('nonQRFormItems');
+    const bar = document.getElementById(S.composerLayout === 'split' ? 'ilg-composer-input-glass' : 'nonQRFormItems');
     if (repaint && S.enabled && bar && items.has(bar)) paint(bar);
 }
 // 发送清空、恢复草稿与粘贴都走同一个 input 入口；只在空 / 有文字切换时重建材质。
@@ -966,7 +969,7 @@ function buildPhysical(it, el, w, h, r) {
     const o = {
         profile: S.profile, ior: S.pIor, magnify: foldedMenuSurface(el) ? 1 + (S.pMagnify - 1) * .45 : control ? 1 + (S.pMagnify - 1) * .6 : S.pMagnify, bezel,
         thickness: S.pThickness * kind.thickK * (control ? bezel / baseBezel : 1),
-        controlCore: control, controlRadius: r, controlBlur: el.id === 'nonQRFormItems' ? 3 : 5.5,
+        controlCore: control, controlRadius: r, controlBlur: inputGlass(el) ? 3 : 5.5,
         // 中心遮罩随尺寸变化，不能只复用九宫格边缘的尺寸更新。
         controlGeometry: control ? [w, h, r].join(':') : '',
         strength: S.pStrength * kind.k * (foldedMenuSurface(el) ? .82 : 1), aberration: S.pAberration, blur: surfaceBlur(it, el),
@@ -1116,7 +1119,7 @@ function paint(el, geo) {
         setPhys(el, it, false);
         let lightBlur;
         if (it.kind === 'mes') lightBlur = S.chatBackground === 'transparent' ? 0 : Math.max(1.5, Math.min(6, blur));
-        else if (control) lightBlur = controlReadable(el) ? (el.id === 'nonQRFormItems' ? 3.5 : 4) : Math.max(.75, Math.min(1.5, blur));
+        else if (control) lightBlur = controlReadable(el) ? (inputGlass(el) ? 3.5 : 4) : Math.max(.75, Math.min(1.5, blur));
         else lightBlur = Math.max(1, Math.min(it.kind === 'panel' || it.kind === 'toast' ? 8 : 3, blur));
         const filter = (lightBlur ? `blur(${lightBlur}px) saturate(${Math.max(1, Math.min(1.35, S.saturate))})` : reading ? 'blur(0px)' : 'none') + reading;
         surface.style.backdropFilter = filter;
@@ -1132,16 +1135,20 @@ function paint(el, geo) {
         webGlass.paint(el, it, { width: w, height: h,
             refract: S.refract && (canRefract() || iosWallpaperRequested()),
             sourcePlane: iosWallpaperRequested()?value=>iosWallpaper.paint(el,value):null,
-            filter: () => filterOf(it, w, h, 'webFilter'), radius: r, preset: S.webPreset, refractionScale: foldedMenuSurface(el) ? .82 : 1, controlCore: control && controlReadable(el), controlBlur: el.id === 'nonQRFormItems' ? 3 : 5.5,
+            filter: () => filterOf(it, w, h, 'webFilter'), radius: r, preset: S.webPreset, refractionScale: foldedMenuSurface(el) ? .82 : 1, controlCore: control && controlReadable(el), controlBlur: inputGlass(el) ? 3 : 5.5,
             // 输入胶囊上下两条边的折射圈加厚一点（用户 2026-11-05 要求），岛保持上游原样
-            bendY: el.id === 'nonQRFormItems' ? 1.5 : 1 });
+            bendY: inputGlass(el) ? 1.5 : 1 });
         if(iosWallpaperRequested()&&el.querySelector(':scope > .ilg-ios-wallpaper-plane'))it.renderPath='web-wallpaper';
         return;
     }
     it.largeWebView = largeWebViewMessage({webView:androidWebView,kind:it.kind,width:w,height:h,dpr:devicePixelRatio,previous:it.largeWebView});
-    const guarded = S.engine === 'physical' && it.largeWebView;
+    const guarded = it.largeWebView;
     const phys = refractAllowed(it) && S.engine === 'physical' && !guarded;
-    if(guarded&&refractAllowed(it))it.fallbackReason='large-webview-message';
+    if (guarded && refractAllowed(it)) {
+        it.fallbackReason = 'large-webview-message';
+        // Legacy displacement still allocates a full-size filtered surface. Release it as well.
+        it.filter?.remove(); it.filter = null; it.physical = null;
+    }
     setPhys(el, it, phys);
     if (canRefract() && !isIOS) surface.style.webkitBackdropFilter = '';
     if (phys) {
@@ -1149,7 +1156,7 @@ function paint(el, geo) {
         buildPhysical(it, el, w, h, r);
         surface.style.backdropFilter = `url(#${it.id})` + reading;
         if (isIOS) surface.style.webkitBackdropFilter = `url(#${it.id})` + reading;
-    } else if (refractAllowed(it)) {
+    } else if (!guarded && refractAllowed(it)) {
         it.renderPath = 'legacy';
         buildFilter(it, w, h, r, el);
         surface.style.backdropFilter = `url(#${it.id}) ${tail}`;
@@ -1265,7 +1272,8 @@ function untrack(el) {
 
 function scan() {
     if (!S.enabled) return;
-    document.querySelectorAll(S.islands ? PILL_SEL : BAR_SEL).forEach(el => track(el, 'bar'));
+    const inputSurfaces = S.composerLayout === 'split' ? '#nonQRFormItems > .ilg-composer-glass' : PILL_SEL;
+    document.querySelectorAll(S.islands ? inputSurfaces : '#top-bar, ' + inputSurfaces).forEach(el => track(el, 'bar'));
     document.querySelectorAll(PANEL_SEL).forEach(el => track(el, 'panel'));
     const bubble = document.body.classList.contains('bubblechat');
     document.querySelectorAll(`#chat ${MES_SEL}`).forEach(el => bubble ? track(el, 'mes') : untrack(el));
@@ -1678,6 +1686,7 @@ appearancePanel.setAttribute('aria-label', '外观与阅读');
 appearancePanel.innerHTML = `<div class="ilg-appearance-heading"><div><strong>外观与阅读</strong><p>明暗、壁纸与文字风格</p></div><button type="button" class="ilg-appearance-close" aria-label="关闭外观面板"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 7 10 10M17 7 7 17"/></svg></button></div>
   <fieldset class="ilg-appearance-modes"><legend class="ilg-sr-only">界面外观</legend>${[['light','白天'],['dark','黑夜'],['custom','自定义']].map(([value,label]) => `<label><input type="radio" name="ilg-appearance-mode" value="${value}"><span>${appearanceSvg(value)}<span>${label}</span></span></label>`).join('')}</fieldset>
   <fieldset class="ilg-glass-choice"><legend>玻璃材质</legend><label><input type="radio" name="ilg-glass-style" value="original"><span><strong>映卿</strong><small>清透弧面 · 安静轻盈</small></span></label><label><input type="radio" name="ilg-glass-style" value="liquid-web"><span><strong>漾卿</strong><small>柔润折射 · 轻弹流动</small></span></label></fieldset><p class="ilg-web-style-hint"></p><fieldset class="ilg-glass-choice ilg-web-presets"><legend>漾卿 · 质感</legend>${Object.entries(WEB_PRESETS).map(([value,p]) => `<label><input type="radio" name="ilg-web-preset" value="${value}"><span><strong>${p.label}</strong><small>${p.detail}</small></span></label>`).join('')}</fieldset>
+  ${composerLayoutPicker()}
   <div class="ilg-reading-section"><fieldset class="ilg-reading-choice"><legend>文字风格</legend>${[['warm','青瓷','青绿对白 · 留白排版'],['classic','栖暖','柔琥珀色 · 安静叙事'],['moon','笺月','宋体优先 · 疏朗书卷'],['sunny','晴笺','清爽黑体 · 蓝调对白']].map(([value,label,detail]) => `<label data-reading-style="${value}"><input type="radio" name="ilg-reading-style" value="${value}"><span><span class="ilg-style-name">${label}</span><span class="ilg-style-sample" aria-hidden="true"><span>微光落在纸上</span><q>故事慢慢说</q></span><span class="ilg-style-detail">${detail}</span></span></label>`).join('')}</fieldset>
   <p class="ilg-reading-font-note">字体优先使用设备已有字库；缺少时由系统回退。样式只调整普通正文。</p>
   <div class="ilg-preview-heading"><span>阅读预览</span><span class="ilg-preview-tone"></span></div>
@@ -1704,6 +1713,7 @@ function rememberCustomWallpaper(url) {
 }
 function syncAppearancePanel() {
     appearancePanel.querySelectorAll('[name="ilg-glass-style"]').forEach(el => { el.checked = el.value === S.glassStyle; });
+    document.querySelectorAll('[name="ilg-composer-layout"]').forEach(el => { el.checked = el.value === S.composerLayout; });
     const hint = appearancePanel.querySelector('.ilg-web-style-hint');
     if (hint) hint.textContent = cssGlassActive() ? '通用仿液态玻璃正在使用 CSS 材质；映卿与漾卿的参数会保留。' : S.glassStyle === 'liquid-web'
         ? (!webStyleEnabled() ? '当前环境暂不支持漾卿，已使用兼容材质。' : iosWallpaperRequested() ? 'iOS 壁纸折射：仅折射壁纸，不包含聊天正文；关闭边缘折射可恢复兼容模糊。' : isIOS ? 'iOS 当前使用兼容模糊；开启边缘折射可尝试壁纸折射。' : !S.refract || !canRefract() ? '当前只用模糊与调色；开启可用的边缘折射后可见弯曲效果。' : '漾卿用于顶栏、输入区与悬浮小球。')
@@ -2174,6 +2184,11 @@ appearancePanel.querySelectorAll('[name="ilg-reading-style"]').forEach(el => el.
     applyReadingStyle();
     syncAppearancePanel();
     ctx.saveSettingsDebounced();
+}));
+appearancePanel.querySelectorAll('[name="ilg-composer-layout"]').forEach(el => el.addEventListener('change', () => {
+    if (!el.checked) return;
+    S.composerLayout = normalizeComposerLayout(el.value);
+    clearAll(); applyRoot(); syncAppearancePanel(); ctx.saveSettingsDebounced();
 }));
 appearancePanel.querySelectorAll('[name="ilg-glass-style"]').forEach(el => el.addEventListener('change', () => {
     if (!el.checked || !['original', 'liquid-web'].includes(el.value)) return;
@@ -2693,7 +2708,9 @@ function applyRoot() {
     applyChatFontSize();
     applyProseSpacing();
     root.classList.toggle('ilg', S.enabled);
-    composerTools.setEnabled(S.enabled);
+    S.composerLayout = normalizeComposerLayout(S.composerLayout);
+    composerTools.setEnabled(S.enabled && S.composerLayout !== 'classic');
+    syncComposerLayout({root, enabled:S.enabled, layout:S.composerLayout, release:untrack});
     root.classList.toggle('ilg-clear-optics', S.enabled);
     root.classList.toggle('ilg-css-glass', cssGlassActive());
     root.classList.toggle('ilg-liquid-web', webStyleEnabled());
@@ -2747,10 +2764,18 @@ const form = document.getElementById('form_sheld');
 const chatEl = document.getElementById('chat');
 const messageRendering = createMessageRendering(chatEl, { onReset(el) { if (items.has(el)) { ro.unobserve(el); ro.observe(el); } } });
 const cardClarity = createCardTextClarity(chatEl);
-new ResizeObserver(() => {
+let formResizeRaf = 0;
+function updateFormSpace() {
+    formResizeRaf = 0;
+    const height = `${form.offsetHeight}px`;
+    if (root.style.getPropertyValue('--ilg-form-h') === height) return;
     const atBottom = chatEl.scrollHeight - chatEl.scrollTop - chatEl.clientHeight < 40;
-    root.style.setProperty('--ilg-form-h', `${form.offsetHeight}px`);
+    root.style.setProperty('--ilg-form-h', height);
     if (S.enabled && ctx.powerUserSettings?.auto_scroll_chat_to_bottom && atBottom) chatEl.scrollTop = chatEl.scrollHeight;
+}
+// Changing chat geometry inside this observer can re-trigger a shallower host observer.
+new ResizeObserver(() => {
+    if (!formResizeRaf) formResizeRaf = requestAnimationFrame(updateFormSpace);
 }).observe(form);
 const keyboard = createKeyboard({ root, enabled: () => S.enabled && S.float, input: () => document.getElementById('send_textarea') });
 const readingAnchor = createReadingAnchor({ chat: chatEl, enabled: () => S.enabled });
@@ -2871,7 +2896,7 @@ function viewportDiagnostic() {
     for(const [el,it] of items){const path=it.renderPath||'pending';paths[path]=(paths[path]||0)+1;if(it.fallbackReason==='large-webview-message')large++;
         if(surfaces.length<3&&it.visible&&el.matches('.mes')){const r=el.getBoundingClientRect();surfaces.push({width:Math.round(r.width),height:Math.round(r.height),path,fallbackReason:it.fallbackReason||''});}}
     return{layout:{width:innerWidth,height:innerHeight,dpr:devicePixelRatio},visual:vv?{width:vv.width,height:vv.height,offsetTop:vv.offsetTop,offsetLeft:vv.offsetLeft,scale:vv.scale}:null,
-        composerFocused:document.activeElement===document.getElementById('send_textarea'),keyboard:keyboard.status(),composer:rect('nonQRFormItems'),form:rect('form_sheld'),ball:{shown:S.enabled&&S.floatBall,keyboardHidden:root.classList.contains('ilg-kb-open'),rect:rect('ilg-ball')},
+        composerFocused:document.activeElement===document.getElementById('send_textarea'),keyboard:keyboard.status(),chat:{scrollTop:chatEl.scrollTop,scrollHeight:chatEl.scrollHeight,clientHeight:chatEl.clientHeight,readingAnchor:readingAnchor.status()},composer:rect('nonQRFormItems'),form:rect('form_sheld'),ball:{shown:S.enabled&&S.floatBall,keyboardHidden:root.classList.contains('ilg-kb-open'),rect:rect('ilg-ball')},
         rendering:{iosCompatible:iosMaterialActive(),engineRequested:S.engine,largeWebViewMessages:large,paths,surfaces},
         appearance:{requested:S.tone,actual:appearanceMode(),lightThumbnail:!!wallThumb('light'),darkThumbnail:!!wallThumb('dark'),customThumbnail:!!customWallThumb(),chatBackgroundLocked:chatBgLocked(),lastAction:lastAppearanceAction},
         wallpapers:bundledWallpapers.status(),wallpaperRefraction:iosWallpaper.status(),workers:{reflections:reflections.status(),ball:((({mode,reason,suspended,pending,failures})=>({mode,reason,suspended,pending,failures}))(ballGlass.status()))},lighting:lighting.status(),captureNote:'Frame intervals describe page callbacks, not display flicker detection'};

@@ -78,7 +78,7 @@ export function createSettingsPanel({host, content, appearance, version, setting
  const topChoice=staging.querySelector('#ilg-opt-topStyle');topChoice?.querySelector('legend')?.classList.add('ilg-sr-only');
  const legacyTop=document.createElement('div');legacyTop.hidden=true;[opt('islands'),opt('fold')].filter(Boolean).forEach(n=>legacyTop.append(n));
  card('layout','顶栏',[topChoice,staging.querySelector('#ilg-opt-topShortcuts'),opt('toneBtn'),legacyTop]);
- card('layout','输入区',[opt('qrFold')]);
+ card('layout','输入框样式',[appearance.querySelector('.ilg-composer-choice'),opt('qrFold')]);
  card('layout','首页与聊天',[opt('home'),opt('homeName'),opt('avatar'),opt('orb')]);
  if(reading){const style=reading.querySelector('.ilg-reading-choice');style?.querySelector('legend')?.classList.add('ilg-sr-only');const g=card('text','文字风格',[reading]);g?.classList.add('ilg-reading-group');}
  const fontRow=opt('chatFontSize');
@@ -104,6 +104,7 @@ const saveMemo=()=>{try{sessionStorage.setItem(MEMO,JSON.stringify({tab:active,s
  // Relative url() inside a custom property resolves against settings-panel.css, so pass an absolute URL.
  function wallThumb(){let path=settings.customWallpaper||'';if(!path){const bg=document.getElementById('bg_custom')||document.getElementById('bg1');const m=bg&&/url(["']?(.*?)["']?)/.exec(bg.style.backgroundImage||getComputedStyle(bg).backgroundImage||'');if(m&&!/liquid(%20| )glass/i.test(m[1]))path=m[1];}if(path)dialog.style.setProperty('--s-wall','url('+JSON.stringify(new URL(path,document.baseURI).href)+')');else dialog.style.removeProperty('--s-wall');}
  function sync(){
+  dialog.querySelectorAll('[name="ilg-composer-layout"]').forEach(input=>{input.checked=input.value===(settings.composerLayout||'split');});
   const automatic=settings.tone==='time'||settings.tone==='system';policy.value=automatic?settings.tone:'manual';modes.hidden=automatic;hoursRow.hidden=settings.tone!=='time';
   policyNote.textContent=automatic?'在配套壁纸间自动切换；自定义壁纸会保留。':'点选即切换；自定义壁纸会自动匹配字色。';
   if(ballDetails)ballDetails.hidden=!settings.floatBall;
