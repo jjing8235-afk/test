@@ -32,7 +32,7 @@ window.__ilgLoaded = new URL('.', import.meta.url).pathname;
 
 let studioUI = null;
 const MODULE = 'iosLiquidGlass';
-const BUILD_VERSION = '2.0.10-test.10';
+const BUILD_VERSION = '2.0.10-test.11';
 const ENGINE_NAMES = Object.freeze({performance:'御风性能引擎',refraction:'棱光折射引擎'});
 const NS = 'http://www.w3.org/2000/svg';
 const ctx = SillyTavern.getContext();
@@ -751,7 +751,8 @@ const isIOS = window.__TAURITAVERN_HOST__?.platform === 'ios'
     || /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 const supportsFilter = value => { try { return CSS.supports('backdrop-filter', value); } catch { return false; } };
 const canFull = !isIOS && !!window.chrome && !/Firefox\//.test(ua) && supportsFilter('blur(1px)');
-const androidWebView = !isIOS && /Android/i.test(ua) && /\bwv\b/.test(ua) && /Chrome\//.test(ua) && !/Firefox\//.test(ua);
+const androidHost = !isIOS && /Android/i.test(ua);
+const androidWebView = androidHost && /\bwv\b/.test(ua) && /Chrome\//.test(ua) && !/Firefox\//.test(ua);
 const androidWebViewEligible = androidWebView && supportsFilter('blur(1px)') && supportsFilter('url(#ilg-capability-probe)');
 const supportsPrefixedFilter = value => { try { return CSS.supports('-webkit-backdrop-filter', value); } catch { return false; } };
 const iosBlurEligible = isIOS && (supportsFilter('blur(1px)') || supportsPrefixedFilter('blur(1px)'));
@@ -954,6 +955,7 @@ for (const type of ['compositionstart', 'compositionupdate', 'compositionend']) 
 }, true);
 document.addEventListener('focusin', e => { if (e.target.id === 'send_textarea') syncInputMaterial(); });
 function surfaceBlur(it, el) {
+    if (el.matches(HOST_MENU_SEL)) return 10;
     if (composerGlassSurface(el)) return 6;
     if (it.kind === 'mes' && S.chatBackground === 'transparent') return 0;
     const blur = KIND[it.kind].blur();
@@ -1107,7 +1109,7 @@ function paint(el, geo) {
     const cssMode = cssGlassActive();
     el.classList.toggle('ilg-css-surface', cssMode);
     // Scrollable Android panels share the compositor with chat; avoid retaining an SVG backdrop across popup transitions.
-    const stablePanel = androidWebView && (it.kind === 'panel' || it.kind === 'clearPanel');
+    const stablePanel = androidHost && (it.kind === 'panel' || it.kind === 'clearPanel');
     const useWeb = !stablePanel && (it.kind === 'bar' || composer) && webStyleEnabled();
     if (!useWeb) webGlass.release(el);
     if (!useWeb||!iosWallpaperRequested()) iosWallpaper.release(el);
@@ -1233,7 +1235,14 @@ const io = new IntersectionObserver(entries => {
 
 function track(el, kind) {
     if (items.has(el) || !trackable(el)) return;
-    const it = { id: `ilg-f${++uid}`, kind, visible: kind !== 'mes' };
+    // Match the observer's 200px prewarm margin before the first material paint.
+    const rect = kind === 'mes' ? el.getBoundingClientRect() : null;
+    const viewport = rect ? document.getElementById('chat')?.getBoundingClientRect() : null;
+    const initiallyVisible = !!(rect && viewport && rect.width > 0 && rect.height > 0
+        && viewport.width > 0 && viewport.height > 0
+        && rect.bottom > viewport.top - 200 && rect.top < viewport.bottom + 200
+        && rect.right > viewport.left && rect.left < viewport.right);
+    const it = { id: `ilg-f${++uid}`, kind, visible: kind !== 'mes' || initiallyVisible };
     items.set(el, it);
     if (it.visible) visibleItems.add(el);
     el.classList.add('ilg-glass');
@@ -2685,6 +2694,7 @@ function applyChatFontSize() {
 
 let glassSettingsRaf = 0;
 function applySurfaceSettings() {
+    root.style.setProperty('--ilg-menu-filter', `blur(10px) saturate(${S.saturate}) brightness(${S.brightness})`);
     root.style.setProperty('--ilg-hl', S.highlight);
     root.style.setProperty('--ilg-radius', `${S.radius}px`);
     root.style.setProperty('--ilg-shadow-k', S.pShadow);
@@ -2804,7 +2814,7 @@ new MutationObserver(muts => {
         if (bubble) m.addedNodes.forEach(n => n.nodeType === 1 && n.matches(MES_SEL) && added.push(n));
     }
     added.forEach(n => track(n, 'mes'));
-    if (added.length > 0 && added.length <= 2 && performance.now() > riseQuietUntil) {
+    if (!androidHost && added.length > 0 && added.length <= 2 && performance.now() > riseQuietUntil) {
         added.forEach(n => {
             n.classList.add('ilg-rise');
             n.addEventListener('animationend', () => n.classList.remove('ilg-rise'), { once: true });
@@ -4147,7 +4157,12 @@ queueEnsureWalls();
 ctx.eventSource.on(ctx.eventTypes.CHAT_CHANGED, () => {
     inputCompositionText = '';
     riseQuietUntil = performance.now() + 1500;
-    requestAnimationFrame(applyRoot);
+    requestAnimationFrame(() => {
+        if (!S.enabled) return;
+        // A chat change does not change the global material or toolbar layout.
+        syncInputMaterial(); syncHome(); scan();
+        applyTone(); queueThink(); scheduleFloor();
+    });
 });
 // 只有宽度变了才整页重画：手机键盘弹出/收起只改高度，靠 ResizeObserver 重画真正变了尺寸的玻璃就够了
 onViewportChange(v => { if (v.widthChanged) repaintAll(); });

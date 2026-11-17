@@ -1,6 +1,6 @@
 {
-  "currentVersion": "2.0.10-test.10",
-  "currentDisplayVersion": "2.0.10-test.10",
+  "currentVersion": "2.0.10-test.11",
+  "currentDisplayVersion": "2.0.10-test.11",
   "date": "2026-11-05",
   "version": "1.4.4-local.9",
   "baseline": "1.4.4-local.8",
@@ -6031,5 +6031,42 @@
     "version": "2.0.10-test.10",
     "baseTestCommit": "91bedb12e1d0647999a3e7ccfb23526d20201897",
     "evidenceSummary": "20 layout cases, 38 TT menu controller checks, first-frame coverage across 3 layouts and 2 tones in Chromium/WebKit, 3 real-host popup cycles, 96 paint state cycles"
+  },
+  "quickStyleFirstOpen20261117": {
+    "version": "2.0.10-test.11",
+    "baseTestCommit": "54dd14b03d41a9564c6a2b0eff76ee3031762368",
+    "status": "tested-release-candidate",
+    "surface": "Quick-pane transparent material shared by chat/tools/quick; dark #fff and light #000",
+    "layoutCases": 20,
+    "ttMenuControllerChecks": 38,
+    "realHostModes": [
+      "Android native browser identity in Chromium",
+      "Android WebView identity in Chromium",
+      "Windows WebKit"
+    ],
+    "firstMenuFramesPerCase": 16,
+    "firstMenuLayouts": 3,
+    "firstMenuTones": 2,
+    "androidMenuFilterStable": true,
+    "historyModes": [
+      "glass",
+      "transparent"
+    ],
+    "historyInitialMaterialStable": true,
+    "chatChangedPreservesGlobalMaterial": true,
+    "androidTransformEntranceSuppressed": true,
+    "offscreenHistoryLazy": true,
+    "regressions": [
+      "first-open-material",
+      "popup-material",
+      "webview-message-guard",
+      "filter-reuse",
+      "form-resize"
+    ],
+    "contrastScope": "Matching black/white backdrops; transparent glass cannot guarantee contrast against arbitrary bright artwork",
+    "limits": [
+      "Physical-phone initial chat/menu flashing remains pending original-device retest",
+      "Android identity in desktop Chromium is not a physical Android GPU test"
+    ]
   }
 }

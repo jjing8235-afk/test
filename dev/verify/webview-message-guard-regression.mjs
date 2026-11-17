@@ -8,7 +8,7 @@ assert(begin>=0&&end>begin);const paintSource=source.slice(begin,end);
 function run({webView=true,engine='physical',width=349,height=3000,dpr=3.25,kind='mes',refract=true,previous=false}={}){
  const styles={},it={kind,visible:true,largeWebView:previous},calls={physical:0,legacy:0,removed:0};
  const el={id:kind==='mes'?'fixture-message':'fixture-bar',classList:{toggle(){}},matches:()=>false,style:styles};
- const context={items:new Map([[el,it]]),document:{body:{classList:{contains:()=>false}}},S:{engine,refract,saturate:1.1,brightness:1.02},devicePixelRatio:dpr,androidWebView:webView,isIOS:false,
+ const context={items:new Map([[el,it]]),document:{body:{classList:{contains:()=>false}}},S:{engine,refract,saturate:1.1,brightness:1.02},devicePixelRatio:dpr,androidWebView:webView,androidHost:webView,isIOS:false,
   HOST_MENU_SEL:'#options',messageSurface:()=>el,controlSurface:()=>false,controlReadable:()=>false,composerGlassSurface:()=>false,cssGlassActive:()=>false,webStyleEnabled:()=>false,iosWallpaperRequested:()=>false,
   webGlass:{release(){}},iosWallpaper:{release(){}},reflections:{release(){},paint(){}},lightScope:{visibility(){}},visibleItems:new Set(),surfaceBlur:()=>.5,canRefract:()=>true,iosMaterialActive:()=>false,
   largeWebViewMessage,refractAllowed:()=>refract,setPhys(){},buildPhysical(){calls.physical++},buildFilter(){calls.legacy++},inputGlass:()=>false,
