@@ -1,3 +1,15 @@
+# 2.0.10-test.12 · 聊天记录首帧与安卓长消息修复 · 2026-11-17
+
+- 聊天记录窗口在最终可见状态下完成首次玻璃绘制，补齐首帧 CSS 模糊；再次打开和从聊天返回也同步准备材质，避免先透出首页图案再变模糊。
+- 安卓超长消息保护扩展到原生浏览器，保护判断提前到反光与 SVG 滤镜分配之前，减少大面积玻璃的瞬时绘制负担；短消息与输入区继续使用原有材质。
+- 保留快捷风格的通透菜单、深浅色黑白文字、多插件滚动和自定义卡片样式。手机 GPU 的实际闪烁仍需原设备更新后复测。
+
+setRecent 先设置最终显示状态，再挂载及同步绘制，避免首次 track 在 display:none 时返回；复开已有面板也同步 paint，不等待 ResizeObserver。--ilg-panel-filter 与当前面板模糊参数一致，body.no-blur 仍禁用模糊。原生列表节点、记录隐藏偏好和宿主操作保持原行为。
+
+largeWebViewMessage 的历史函数名及 webView 参数保留兼容，调用方传入 androidHost；尺寸阈值和迟滞不变。判定提前到 reflections.paint 前，受保护消息不创建全高反光图。诊断回退原因改为 large-android-message。
+
+回归：recent-first-frame-browser.mjs 在 Chromium / WebKit 各覆盖原生安卓、WebView、桌面身份及深浅色的首次、复开、从聊天返回和自定义材质；home-avatar-browser.mjs 将设置面板启动时的 tab memo 写入排除在聊天记录交互计数之外，此旧断言在 test.11 也失败。tt-scroll-host-browser.mjs 新增 NVWA_ANDROID_HOST=native，并按身份分开输出证据。检查仅证明桌面浏览器中的材质与生命周期，不能代替手机 GPU 闪烁验收。
+
 # 2.0.10-test.11 · 统一快捷玻璃与首次打开修复 · 2026-11-17
 
 - 聊天、扩展、快捷三页恢复统一通透玻璃，撤回 test.10 的厚阅读底色和实色页签；深色文字与图标使用纯白，浅色使用纯黑，多插件滚动与长名称换行保留。

@@ -1384,6 +1384,11 @@ html.ilg.ilg-home body #chat > .welcomePanel.ilg-recent {
     animation: none;
 }
 html.ilg.ilg-light.ilg-home body #chat > .welcomePanel.ilg-recent { background-color: rgba(255, 255, 255, 0.7); }
+/* The native list can mount before its resize delivery. Its first frame already has glass. */
+html.ilg.ilg-home body:not(.no-blur) #chat > .welcomePanel.ilg-recent {
+    -webkit-backdrop-filter: var(--ilg-panel-filter, blur(10px) saturate(1.1) brightness(1.02));
+    backdrop-filter: var(--ilg-panel-filter, blur(10px) saturate(1.1) brightness(1.02));
+}
 /* Keep the same native list and glass mounted between opens. */
 html.ilg.ilg-home.ilg-recent-open body #chat > .welcomePanel.ilg-recent {
     display: flex;

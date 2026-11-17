@@ -1,6 +1,6 @@
 {
-  "currentVersion": "2.0.10-test.11",
-  "currentDisplayVersion": "2.0.10-test.11",
+  "currentVersion": "2.0.10-test.12",
+  "currentDisplayVersion": "2.0.10-test.12",
   "date": "2026-11-05",
   "version": "1.4.4-local.9",
   "baseline": "1.4.4-local.8",
@@ -6068,5 +6068,78 @@
       "Physical-phone initial chat/menu flashing remains pending original-device retest",
       "Android identity in desktop Chromium is not a physical Android GPU test"
     ]
+  },
+  "recentColdOpen20261117": {
+    "version": "2.0.10-test.12",
+    "baseTestCommit": "f46984465da5940a41b702f6ce6d8f889e621d05",
+    "status": "tested-release-candidate",
+    "regressionBeforeFix": {
+      "recent": "cold first visible frame had backdrop-filter:none",
+      "nativeLongMessage": "physical instead of protected blur at 349x3000 DPR3.25",
+      "largeReflection": "full-height reflection allocated before the guard"
+    },
+    "recentBrowserEngines": [
+      "chromium",
+      "webkit"
+    ],
+    "recentIdentities": [
+      "android-native",
+      "android-webview",
+      "desktop"
+    ],
+    "recentTones": [
+      "light",
+      "dark"
+    ],
+    "recentPaths": [
+      "cold",
+      "warm",
+      "return-from-chat",
+      "custom-material"
+    ],
+    "hostNoBlurPreserved": true,
+    "homeAndBookshelfChecks": [
+      "chromium",
+      "webkit"
+    ],
+    "realIsolatedHostModes": [
+      "Android native identity in Chromium",
+      "Android WebView identity in Chromium"
+    ],
+    "longMessageEngines": [
+      "physical",
+      "legacy"
+    ],
+    "longMessageGuardBeforeReflection": true,
+    "ordinaryMessageAndComposerRefractionPreserved": true,
+    "customRenderersAndIframesPreserved": true,
+    "regressions": [
+      "recent-first-frame-browser",
+      "home-avatar-browser",
+      "bookshelf-home-browser",
+      "message-rendering-browser",
+      "tt-scroll-host-browser",
+      "menu-first-frame-browser",
+      "webview-message-guard",
+      "first-open-material",
+      "popup-material",
+      "filter-reuse",
+      "form-resize"
+    ],
+    "limits": [
+      "Original phone GPU flicker needs user retest",
+      "Android UA in desktop browsers is not an Android GPU runtime"
+    ],
+    "evidenceDirectory": "work/history-first-open",
+    "recentCoverage": {
+      "chromium": {
+        "cases": 24,
+        "visibleFrames": 300
+      },
+      "webkit": {
+        "cases": 24,
+        "visibleFrames": 300
+      }
+    }
   }
 }

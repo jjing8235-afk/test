@@ -32,7 +32,7 @@ window.__ilgLoaded = new URL('.', import.meta.url).pathname;
 
 let studioUI = null;
 const MODULE = 'iosLiquidGlass';
-const BUILD_VERSION = '2.0.10-test.11';
+const BUILD_VERSION = '2.0.10-test.12';
 const ENGINE_NAMES = Object.freeze({performance:'御风性能引擎',refraction:'棱光折射引擎'});
 const NS = 'http://www.w3.org/2000/svg';
 const ctx = SillyTavern.getContext();
@@ -1140,8 +1140,11 @@ function paint(el, geo) {
         surface.style.webkitBackdropFilter = filter;
         return;
     }
-    // Offscreen messages retain their CSS material; rasterise their contour on entry.
-    if (composer || stablePanel || (it.kind === 'mes' && !it.visible)) reflections.release(el);
+    // Apply the large-surface budget before allocating either reflections or SVG maps.
+    it.largeWebView = largeWebViewMessage({webView:androidHost,kind:it.kind,width:w,height:h,dpr:devicePixelRatio,previous:it.largeWebView});
+    const guarded = it.largeWebView || stablePanel;
+    // Offscreen and guarded Android messages retain their CSS material.
+    if (composer || guarded || (it.kind === 'mes' && !it.visible)) reflections.release(el);
     else reflections.paint(el, w, h, r);
     if (useWeb) {
         it.renderPath = 'web-compatible';
@@ -1155,11 +1158,9 @@ function paint(el, geo) {
         if(iosWallpaperRequested()&&el.querySelector(':scope > .ilg-ios-wallpaper-plane'))it.renderPath='web-wallpaper';
         return;
     }
-    it.largeWebView = largeWebViewMessage({webView:androidWebView,kind:it.kind,width:w,height:h,dpr:devicePixelRatio,previous:it.largeWebView});
-    const guarded = it.largeWebView || stablePanel;
     const phys = refractAllowed(it) && S.engine === 'physical' && !guarded;
     if (guarded && refractAllowed(it)) {
-        it.fallbackReason = stablePanel ? 'webview-panel' : 'large-webview-message';
+        it.fallbackReason = stablePanel ? 'webview-panel' : 'large-android-message';
         // Legacy displacement still allocates a full-size filtered surface. Release it as well.
         it.filter?.remove(); it.filter = null; it.physical = null;
     }
@@ -2492,8 +2493,13 @@ function setRecent(on, refocus) {
     on = on && homeOn && !!panel;
     if (on === recentOn) return;
     recentOn = on;
-    if (on) mountRecent(panel);
+    // Measure with the final display state, before focus or the first visible frame.
     root.classList.toggle('ilg-recent-open', on);
+    if (on) {
+        const mounted = recentPanel === panel && items.has(panel);
+        mountRecent(panel);
+        if (mounted) paint(panel);
+    }
     recentBtn.setAttribute('aria-expanded', String(on));
     if (recentPanel) {
         recentPanel.setAttribute('aria-hidden', String(!on));
@@ -2694,6 +2700,7 @@ function applyChatFontSize() {
 
 let glassSettingsRaf = 0;
 function applySurfaceSettings() {
+    root.style.setProperty('--ilg-panel-filter', `blur(${KIND.panel.blur()}px) saturate(${S.saturate}) brightness(${S.brightness})`);
     root.style.setProperty('--ilg-menu-filter', `blur(10px) saturate(${S.saturate}) brightness(${S.brightness})`);
     root.style.setProperty('--ilg-hl', S.highlight);
     root.style.setProperty('--ilg-radius', `${S.radius}px`);
