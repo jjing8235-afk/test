@@ -32,7 +32,7 @@ window.__ilgLoaded = new URL('.', import.meta.url).pathname;
 
 let studioUI = null;
 const MODULE = 'iosLiquidGlass';
-const BUILD_VERSION = '2.0.10-test.13';
+const BUILD_VERSION = '2.0.10-test.14';
 const ENGINE_NAMES = Object.freeze({performance:'御风性能引擎',refraction:'棱光折射引擎'});
 const NS = 'http://www.w3.org/2000/svg';
 const ctx = SillyTavern.getContext();
@@ -1036,20 +1036,31 @@ function refractAllowed(it) {
 // Cards keep their fixed-position descendants outside the filter's containing block.
 // The independent layer uses the same filter builder as ordinary message and input glass.
 function messageSurface(el, it) {
-    const separate = el.classList.contains('ilg-content-overlay') || el.classList.contains('ilg-card-renderer');
+    // Prepare the owned wrapper before folding. CSS switches at the width breakpoint,
+    // so an expanded frame does not wait for a resize callback to bound its backdrop.
+    const viewportReady = androidHost && it.largeWebView && CSS.supports('overflow', 'clip');
+    const separate = viewportReady || el.classList.contains('ilg-content-overlay') || el.classList.contains('ilg-card-renderer');
     el.classList.toggle('ilg-message-backdrop', separate);
+    el.classList.toggle('ilg-message-viewport', viewportReady);
     if (!separate) {
-        it.backdrop?.remove();
-        it.backdrop = null;
+        it.backdrop?.remove(); it.backdropClip?.remove();
+        it.backdrop = it.backdropClip = null;
         return el;
     }
     if (!it.backdrop) {
-        const layer = document.createElement('div');
-        layer.className = 'ilg-message-glass';
-        layer.setAttribute('aria-hidden', 'true');
-        el.prepend(layer);
-        it.backdrop = layer;
+        it.backdrop = document.createElement('div');
+        it.backdrop.className = 'ilg-message-glass';
+        it.backdrop.setAttribute('aria-hidden', 'true');
     }
+    if (viewportReady && !it.backdropClip) {
+        it.backdropClip = document.createElement('div');
+        it.backdropClip.className = 'ilg-message-clip';
+        it.backdropClip.setAttribute('aria-hidden', 'true');
+        el.prepend(it.backdropClip);
+    }
+    const parent = viewportReady ? it.backdropClip : el;
+    if (it.backdrop.parentElement !== parent) parent.prepend(it.backdrop);
+    if (!viewportReady && it.backdropClip) { it.backdropClip.remove(); it.backdropClip = null; }
     el.style.backdropFilter = 'none';
     el.style.webkitBackdropFilter = 'none';
     return it.backdrop;
@@ -1105,6 +1116,7 @@ function paint(el, geo) {
             return;
         }
     }
+    it.largeWebView = largeWebViewMessage({webView:androidHost,kind:it.kind,width:geo.w,height:geo.h,dpr:devicePixelRatio,previous:it.largeWebView});
     const surface = it.kind === 'mes' ? messageSurface(el, it) : el;
     const control = it.kind === 'bar' && controlSurface(el);
     el.classList.toggle('ilg-control-surface', control);
@@ -1147,7 +1159,6 @@ function paint(el, geo) {
         return;
     }
     // Apply the large-surface budget before allocating either reflections or SVG maps.
-    it.largeWebView = largeWebViewMessage({webView:androidHost,kind:it.kind,width:w,height:h,dpr:devicePixelRatio,previous:it.largeWebView});
     const guarded = it.largeWebView || stablePanel;
     // Offscreen and guarded Android messages retain their CSS material.
     if (composer || guarded || (it.kind === 'mes' && !it.visible)) reflections.release(el);
@@ -1287,9 +1298,10 @@ function untrack(el) {
     it.contentObserver?.disconnect();
     it.filter?.remove();
     it.backdrop?.remove();
+    it.backdropClip?.remove();
     ro.unobserve(el);
     io.unobserve(el);
-    el.classList.remove('ilg-glass', 'ilg-sheen', 'ilg-clear', 'ilg-phys', 'ilg-adapted', 'ilg-message-backdrop', 'ilg-control-surface', 'ilg-control-readable', 'ilg-css-surface', 'ilg-composer-liquid');
+    el.classList.remove('ilg-glass', 'ilg-sheen', 'ilg-clear', 'ilg-phys', 'ilg-adapted', 'ilg-message-backdrop', 'ilg-message-viewport', 'ilg-control-surface', 'ilg-control-readable', 'ilg-css-surface', 'ilg-composer-liquid');
     if (el.id === 'nonQRFormItems') el.querySelectorAll('[data-ilg-input-tone]').forEach(action => delete action.dataset.ilgInputTone);
     el.style.backdropFilter = '';
     el.style.webkitBackdropFilter = '';
@@ -2929,12 +2941,13 @@ function statusText() {
 function viewportDiagnostic() {
     const vv=window.visualViewport;
     const rect=id=>{const el=document.getElementById(id);if(!el)return null;const r=el.getBoundingClientRect();return{x:Math.round(r.x),y:Math.round(r.y),width:Math.round(r.width),height:Math.round(r.height)};};
-    const paths={},surfaces=[];let large=0;
+    const paths={},surfaces=[];let large=0,bounded=0;
     for(const [el,it] of items){const path=it.renderPath||'pending';paths[path]=(paths[path]||0)+1;if(it.fallbackReason==='large-android-message'||it.fallbackReason==='large-webview-message')large++;
-        if(surfaces.length<3&&it.visible&&el.matches('.mes')){const r=el.getBoundingClientRect();surfaces.push({width:Math.round(r.width),height:Math.round(r.height),path,fallbackReason:it.fallbackReason||''});}}
+        if(it.backdropClip&&innerWidth>=600)bounded++;
+        if(surfaces.length<3&&it.visible&&el.matches('.mes')){const r=el.getBoundingClientRect(),b=(it.backdrop||el).getBoundingClientRect();surfaces.push({width:Math.round(r.width),height:Math.round(r.height),backdropWidth:Math.round(b.width),backdropHeight:Math.round(b.height),boundedBackdrop:!!it.backdropClip&&innerWidth>=600,path,fallbackReason:it.fallbackReason||''});}}
     return{layout:{width:innerWidth,height:innerHeight,dpr:devicePixelRatio},visual:vv?{width:vv.width,height:vv.height,offsetTop:vv.offsetTop,offsetLeft:vv.offsetLeft,scale:vv.scale}:null,
         composerFocused:document.activeElement===document.getElementById('send_textarea'),keyboard:keyboard.status(),chat:{scrollTop:chatEl.scrollTop,scrollHeight:chatEl.scrollHeight,clientHeight:chatEl.clientHeight,readingAnchor:readingAnchor.status()},composer:rect('nonQRFormItems'),form:rect('form_sheld'),ball:{shown:S.enabled&&S.floatBall,keyboardHidden:root.classList.contains('ilg-kb-open'),rect:rect('ilg-ball')},
-        rendering:{iosCompatible:iosMaterialActive(),engineRequested:S.engine,largeWebViewMessages:large,largeAndroidMessages:large,paths,surfaces},
+        rendering:{iosCompatible:iosMaterialActive(),engineRequested:S.engine,largeWebViewMessages:large,largeAndroidMessages:large,boundedMessageBackdrops:bounded,paths,surfaces},
         typography:{mode:!S.enabled||!S.font?'host':androidHost?'system':'unified',status:document.fonts?.status||'unavailable',...fontActivity},
         appearance:{requested:S.tone,actual:appearanceMode(),lightThumbnail:!!wallThumb('light'),darkThumbnail:!!wallThumb('dark'),customThumbnail:!!customWallThumb(),chatBackgroundLocked:chatBgLocked(),lastAction:lastAppearanceAction},
         wallpapers:bundledWallpapers.status(),wallpaperRefraction:iosWallpaper.status(),workers:{reflections:reflections.status(),ball:((({mode,reason,suspended,pending,failures})=>({mode,reason,suspended,pending,failures}))(ballGlass.status()))},lighting:lighting.status(),captureNote:'Frame intervals describe page callbacks, not display flicker detection'};
@@ -3902,7 +3915,7 @@ function cardDisplayReport({includeCapture=true}={}) {
             after: style(win.getComputedStyle(el, '::after')),
             solid: el.classList.contains('ilg-solid'),
         };
-        if (el.matches('.mes')) { result.glass = style(win.getComputedStyle(el.querySelector(':scope > .ilg-message-glass') || el)); const it=items.get(el);result.rendering={path:it?.renderPath||'not-tracked',fallbackReason:it?.fallbackReason||'',nearViewport:it?.visible===true}; }
+        if (el.matches('.mes')) { const it=items.get(el); result.glass = style(win.getComputedStyle(it?.backdrop || el.querySelector(':scope > .ilg-message-glass') || el));result.rendering={path:it?.renderPath||'not-tracked',fallbackReason:it?.fallbackReason||'',nearViewport:it?.visible===true}; }
         if (el.tagName === 'IFRAME') {
             try {
                 const doc = el.contentDocument;

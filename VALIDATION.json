@@ -1,6 +1,6 @@
 {
-  "currentVersion": "2.0.10-test.13",
-  "currentDisplayVersion": "2.0.10-test.13",
+  "currentVersion": "2.0.10-test.14",
+  "currentDisplayVersion": "2.0.10-test.14",
   "date": "2026-11-05",
   "version": "1.4.4-local.9",
   "baseline": "1.4.4-local.8",
@@ -6207,5 +6207,92 @@
       "Desktop engine with Android identity does not prove physical phone pixel stability"
     ],
     "evidenceDirectory": "work/font-first-open"
+  },
+  "foldableBackdrop20261118": {
+    "version": "2.0.10-test.14",
+    "baseTestCommit": "e807c26ba7a141fe1ca87e9ece501bf01b6ce154",
+    "status": "tested-release-candidate",
+    "userObservation": "Folded display no longer flashes; expanded display still flashes",
+    "beforeFix": {
+      "viewportHeight": 716,
+      "messageHeight": 3698,
+      "backdropHeight": 3698,
+      "fixtureBackdropWidth": 667,
+      "existingAndroidLargeMessageGuardActive": true
+    },
+    "afterFix": {
+      "minimumWideViewport": 600,
+      "wideBackdropHeightMaximum": 716,
+      "foldedBackdropHeight": 3698,
+      "stickySwitchUsesCSS": true,
+      "originalTintRetained": true,
+      "transparentAndNoBlurRetained": true,
+      "authoredNodesAndFixedControlsRetained": true
+    },
+    "browserEngines": [
+      "chromium",
+      "webkit"
+    ],
+    "identities": [
+      "android-native",
+      "android-webview",
+      "desktop",
+      "ios"
+    ],
+    "widths": [
+      360,
+      600,
+      691,
+      1100
+    ],
+    "scrollPoints": [
+      0,
+      1500,
+      3050
+    ],
+    "initialModes": [
+      "cold-expanded",
+      "cold-folded"
+    ],
+    "realHostWidths": [
+      360,
+      691,
+      900
+    ],
+    "realHostScrollPoints": [
+      0,
+      1200,
+      2400
+    ],
+    "realHostModes": [
+      "Android native identity in Chromium",
+      "Android WebView identity in Chromium"
+    ],
+    "regressions": [
+      "foldable-backdrop-browser",
+      "tt-scroll-host-browser with NVWA_FOLDABLE_HOST=1",
+      "webview-message-guard",
+      "popup-material",
+      "card-solid",
+      "filter-reuse",
+      "first-open-material",
+      "resize-batch",
+      "settings"
+    ],
+    "limits": [
+      "The red/green check detects an unbounded filtering surface, not physical-phone pixel flashing",
+      "Foldable display and GPU are simulated through viewport sizes and Android identities; original phone requires retest"
+    ],
+    "evidenceDirectory": "work/foldable-screen",
+    "coverage": {
+      "chromium": {
+        "geometrySamples": 90,
+        "wideBackdropMaximum": 716
+      },
+      "webkit": {
+        "geometrySamples": 90,
+        "wideBackdropMaximum": 716
+      }
+    }
   }
 }

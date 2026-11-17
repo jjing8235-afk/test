@@ -1,3 +1,19 @@
+# 2.0.10-test.14 · 折叠手机展开后的背景层保护 · 2026-11-18
+
+- 针对折叠手机展开后的宽屏安卓场景，已触发大面积保护的消息在 600px 及以上宽度时，将背景模糊层限制为一屏高度；正文与卡片节点保持原样。
+- 折叠、展开使用 CSS 自动切换，窄屏继续使用原来的整条消息玻璃；玻璃底色、透明模式、自带按钮和悬浮控件保留。
+- 诊断新增实际背景层宽高和宽屏保护数量，便于确认设备是否进入该路径。已验证布局与材质边界，实际折叠手机的闪烁仍需更新后复测。
+
+现有大消息保护此前释放了 SVG 位移与反光，但 CSS backdrop-filter 仍覆盖整条消息。新 messageSurface 在分配自身层之前获知同一个尺寸保护结果；仅 Android、触发现有大消息保护且支持 overflow:clip 时准备 ilg-message-clip。窄屏 wrapper 为 display:contents，不增加布局盒；>=600px 时绝对定位的 clip 包含 sticky 模糊层，height:min(100%,100dvh)。--ilg-chat-top-space 同时提供悬浮聊天顶部留白和 sticky 负偏移，避免顶部出现未覆盖区。
+
+玻璃底色仍在原背景层上绘制，没有重复填充整个消息底色。wrapper 只包含本扩展背景层，作者 DOM、fixed 按钮和 iframe 不迁移。消息缩短、扩展关闭及 untrack 清理 wrapper；透明与 no-blur 选择对嵌套层同样生效。桌面与 iOS 不创建 wrapper，输入区与菜单继续走既有引擎。
+
+viewportDiagnostic.surfaces 新增 backdropWidth、backdropHeight、boundedBackdrop；rendering.boundedMessageBackdrops 统计已准备并处于 >=600px 宽屏条件的背景层。卡片显示诊断读取实际 it.backdrop，避免嵌套后错读消息根节点的 none。
+
+foldable-backdrop-browser.mjs 直接运行完整扩展，初始展开 / 初始折叠两条路径覆盖实时折叠展开、600px 边界和 1100px 宽屏、滚动前中后、原色、透明和 CSS 兼容材质、缩短后恢复、no-blur 与禁用清理。test.13 在 716px 视口中测得 3698px 背景层并失败；修改后宽屏背景层最多 716px，窄屏仍为 3698px。Chrome 的非安卓作者层检查等待既有异步卡片分类完成；安卓背景层检查仍逐帧验证。
+
+tt-scroll-host-browser.mjs 设置 NVWA_FOLDABLE_HOST=1 在真实隔离 ST 中覆盖原生安卓 / WebView 身份的 360 / 691 / 900px 变化和三个滚动点，核对背景覆盖与诊断尺寸。所有检查仍是桌面浏览器中的几何、材质和 DOM 证据，不能检测实际手机 GPU 的文字闪动。
+
 # 2.0.10-test.13 · 安卓首次字体稳定与滑动减负 · 2026-11-18
 
 - 安卓开启“统一字体”时使用设备内置字体，避免首次显示后再被下载的中文字体分块替换；关闭统一字体后继续使用酒馆自选字体，卡片自带字体保留。桌面和 iOS 维持原有字体策略。
