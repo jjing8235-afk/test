@@ -5902,7 +5902,7 @@
   },
   "ttScrollAndComposer20261117": {
     "version": "2.0.10-test.9",
-    "status": "verified-ready-to-publish",
+    "status": "published-to-test",
     "verifiedAt": "2026-11-17T08:26:42.776Z",
     "scope": [
       "classic/unified/split illustrated composer picker",
@@ -5992,8 +5992,13 @@
     "publication": {
       "repository": "jjing8235-afk/test",
       "branch": "main",
-      "pushed": false,
-      "installedExtensionReplaced": false
+      "pushed": true,
+      "installedExtensionReplaced": false,
+      "runtimeCommit": "1de6ec1ab170a10b8cbf56477ef63e71fc016446",
+      "verifiedAt": "2026-11-17T08:28:34.587Z",
+      "remoteHeadVerified": true,
+      "remoteTreeVerified": true,
+      "verifiedFiles": 10
     }
   }
 }
