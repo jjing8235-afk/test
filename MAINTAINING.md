@@ -1,3 +1,13 @@
+# 2.0.10-test.10 · 测试发布候选（2026-11-17）
+
+- 修复扩展菜单条目与页签被宿主整体半透明的问题，提高深浅色文字、图标和选中状态的可读性。
+- 多插件菜单在可见屏幕内滚动，页签置顶；360px 及以下单列，长名称自然换行，超宽自定义控件留在自己的容器内滚动。
+- 补齐原生菜单首帧模糊，避免打开时透明、第二次交互才恢复。
+- 关闭设置面板和弹窗时释放 SVG 滤镜、Web 玻璃与反光资源；Android WebView 面板改用稳定模糊路径，聊天、输入区和桌面原有折射策略保留。
+- Chromium / WebKit 的 20 组布局检查、两引擎各 19 项 TT 控制器交互、96 次 paint 状态开关及独立宿主的原生抽屉 / Popup 回归通过。原手机 GPU 闪烁仍需按“打开设置或弹窗 → 关闭返回 → 滚动聊天”复测。
+
+本轮 runtime 与已验证 formal-release 源码一致，仅 BUILD_VERSION/manifest 沿用递增测试版本。回归入口：dev/verify/menu-readability-browser.mjs、popup-material-regression.mjs、menu-first-frame-browser.mjs；后者设置 NVWA_WEBVIEW_HOST=1 覆盖独立宿主原生抽屉与 Popup 关闭清理。检验范围见 VALIDATION.json.menuPopup20261117。
+
 # 2.0.10-test.9 · TT 滚动修复与输入区发布入口（2026-11-17）
 
 viewport.js 的阅读锚点在触摸／滚轮／阅读按键时取消旧锚点与已排队恢复，350ms 窗口随惯性滚动延续。图片、容器与视口恢复合并为单个 RAF；静止时仍按原锚点偏移校正。destroy 释放监听、观察器与待执行帧。诊断只采集补偿次数、滚动位置和高度等数值。

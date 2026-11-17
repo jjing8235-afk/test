@@ -1,6 +1,6 @@
 {
-  "currentVersion": "2.0.10-test.9",
-  "currentDisplayVersion": "2.0.10-test.9",
+  "currentVersion": "2.0.10-test.10",
+  "currentDisplayVersion": "2.0.10-test.10",
   "date": "2026-11-05",
   "version": "1.4.4-local.9",
   "baseline": "1.4.4-local.8",
@@ -6000,5 +6000,36 @@
       "remoteTreeVerified": true,
       "verifiedFiles": 10
     }
+  },
+  "menuPopup20261117": {
+    "status": "tested-release-candidate",
+    "base": "e936802b28acae4785d96723af4c6a60912c6693",
+    "readability": {
+      "engines": [
+        "chromium",
+        "webkit"
+      ],
+      "casesPerEngine": 10,
+      "pluginEntries": 40,
+      "minimumCalculatedContrast": 7.713156046994099
+    },
+    "nativeTtMenuChecksPerEngine": 19,
+    "firstFrameLayouts": 3,
+    "firstFrameTones": 2,
+    "hostEngines": [
+      "chromium",
+      "webkit"
+    ],
+    "androidIdentityHostPopupCycles": 3,
+    "paintModeCombinations": 8,
+    "paintCloseOpenCycles": 96,
+    "existingLargeMessageGuard": "passed",
+    "limits": [
+      "Physical Android GPU flicker remains unverified; Android identity in desktop Chromium is not a physical device"
+    ],
+    "evidenceDirectory": "work/menu-readability/evidence",
+    "version": "2.0.10-test.10",
+    "baseTestCommit": "91bedb12e1d0647999a3e7ccfb23526d20201897",
+    "evidenceSummary": "20 layout cases, 38 TT menu controller checks, first-frame coverage across 3 layouts and 2 tones in Chromium/WebKit, 3 real-host popup cycles, 96 paint state cycles"
   }
 }

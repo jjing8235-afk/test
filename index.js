@@ -32,7 +32,7 @@ window.__ilgLoaded = new URL('.', import.meta.url).pathname;
 
 let studioUI = null;
 const MODULE = 'iosLiquidGlass';
-const BUILD_VERSION = '2.0.10-test.9';
+const BUILD_VERSION = '2.0.10-test.10';
 const ENGINE_NAMES = Object.freeze({performance:'御风性能引擎',refraction:'棱光折射引擎'});
 const NS = 'http://www.w3.org/2000/svg';
 const ctx = SillyTavern.getContext();
@@ -1085,7 +1085,17 @@ function paint(el, geo) {
     if (it.kind !== 'mes') {
         it.visible = !!geo.w && !!geo.h;
         lightScope.visibility(el, it.visible);
-        if (it.visible) visibleItems.add(el); else { visibleItems.delete(el); iosWallpaper.release(el); return; }
+        if (it.visible) visibleItems.add(el);
+        else {
+            visibleItems.delete(el); iosWallpaper.release(el);
+            if (it.kind === 'panel' || it.kind === 'clearPanel') {
+                reflections.release(el); webGlass.release(el);
+                it.filter?.remove(); it.filter = null; it.physical = null;
+                el.style.backdropFilter = ''; el.style.webkitBackdropFilter = '';
+                setPhys(el, it, false); it.renderPath = 'hidden';
+            }
+            return;
+        }
     }
     const surface = it.kind === 'mes' ? messageSurface(el, it) : el;
     const control = it.kind === 'bar' && controlSurface(el);
@@ -1096,7 +1106,9 @@ function paint(el, geo) {
     el.classList.toggle('ilg-composer-liquid', composer);
     const cssMode = cssGlassActive();
     el.classList.toggle('ilg-css-surface', cssMode);
-    const useWeb = (it.kind === 'bar' || composer) && webStyleEnabled();
+    // Scrollable Android panels share the compositor with chat; avoid retaining an SVG backdrop across popup transitions.
+    const stablePanel = androidWebView && (it.kind === 'panel' || it.kind === 'clearPanel');
+    const useWeb = !stablePanel && (it.kind === 'bar' || composer) && webStyleEnabled();
     if (!useWeb) webGlass.release(el);
     if (!useWeb||!iosWallpaperRequested()) iosWallpaper.release(el);
     if (document.body.classList.contains('no-blur')) {
@@ -1127,7 +1139,7 @@ function paint(el, geo) {
         return;
     }
     // Offscreen messages retain their CSS material; rasterise their contour on entry.
-    if (composer || (it.kind === 'mes' && !it.visible)) reflections.release(el);
+    if (composer || stablePanel || (it.kind === 'mes' && !it.visible)) reflections.release(el);
     else reflections.paint(el, w, h, r);
     if (useWeb) {
         it.renderPath = 'web-compatible';
@@ -1142,10 +1154,10 @@ function paint(el, geo) {
         return;
     }
     it.largeWebView = largeWebViewMessage({webView:androidWebView,kind:it.kind,width:w,height:h,dpr:devicePixelRatio,previous:it.largeWebView});
-    const guarded = it.largeWebView;
+    const guarded = it.largeWebView || stablePanel;
     const phys = refractAllowed(it) && S.engine === 'physical' && !guarded;
     if (guarded && refractAllowed(it)) {
-        it.fallbackReason = 'large-webview-message';
+        it.fallbackReason = stablePanel ? 'webview-panel' : 'large-webview-message';
         // Legacy displacement still allocates a full-size filtered surface. Release it as well.
         it.filter?.remove(); it.filter = null; it.physical = null;
     }
