@@ -1,6 +1,6 @@
 {
-  "currentVersion": "2.0.10-test.12",
-  "currentDisplayVersion": "2.0.10-test.12",
+  "currentVersion": "2.0.10-test.13",
+  "currentDisplayVersion": "2.0.10-test.13",
   "date": "2026-11-05",
   "version": "1.4.4-local.9",
   "baseline": "1.4.4-local.8",
@@ -6141,5 +6141,71 @@
         "visibleFrames": 300
       }
     }
+  },
+  "androidTypography20261118": {
+    "version": "2.0.10-test.13",
+    "baseTestCommit": "8625517eaa74523f18ac0ced285522fb3d8710cb",
+    "status": "tested-release-candidate",
+    "reportObservation": {
+      "test12GuardAlreadyActive": true,
+      "fontActivityNotRecorded": true,
+      "viewport": [
+        691,
+        716,
+        3.25
+      ],
+      "activeGestureViewportForcedLayoutMs": 499.2,
+      "measurementScope": "15s user capture; callback timing does not detect glyph flicker"
+    },
+    "beforeFix": {
+      "bundledFontRequestsInColdFixture": 9,
+      "glyphRasterChangedAfterLoad": true,
+      "glyphMetricsUnchanged": true,
+      "readingAnchorGeometryReadsIn100GestureFrames": 700
+    },
+    "afterFix": {
+      "androidUnifiedFont": "system-ui, sans-serif",
+      "bundledFontRequestsInColdFixture": 0,
+      "glyphRasterStable": true,
+      "readingAnchorGeometryReadsIn100GestureFrames": 0,
+      "idleCaptureDelayMs": 350,
+      "stationaryImageGrowthPreserved": true
+    },
+    "browserEngines": [
+      "chromium",
+      "webkit"
+    ],
+    "fontIdentities": [
+      "android-native",
+      "android-webview",
+      "desktop",
+      "ios"
+    ],
+    "hostAndAuthorFontsPreserved": true,
+    "fontFaceSetCountersScope": "Whole page, no family names or URLs stored",
+    "realHostModes": [
+      "Android native identity in Chromium",
+      "Android WebView identity in Chromium"
+    ],
+    "diagnosticAndroidGuardCountCorrected": true,
+    "regressions": [
+      "android-font-first-frame-browser",
+      "reading-anchor-scroll-budget-regression",
+      "reading-anchor-browser",
+      "font-loading-lifecycle-browser",
+      "recent-first-frame-browser",
+      "tt-scroll-host-browser",
+      "chat-font",
+      "font-subset",
+      "first-open-material",
+      "webview-message-guard",
+      "form-resize",
+      "resize-batch"
+    ],
+    "limits": [
+      "Font substitution reproduced locally; user phone font activity was absent from test.12 report",
+      "Desktop engine with Android identity does not prove physical phone pixel stability"
+    ],
+    "evidenceDirectory": "work/font-first-open"
   }
 }

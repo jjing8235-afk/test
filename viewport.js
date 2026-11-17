@@ -72,7 +72,7 @@ export function createKeyboard({ root, enabled, input }) {
 export function createReadingAnchor({ chat, enabled }) {
     let anchor = null, restoring = false, destroyed = false;
     let lastH = chat.clientHeight, lastSH = chat.scrollHeight;
-    let captureFrame = 0, restoreFrame = 0, releaseFrame = 0, settleUntil = 0, inputUntil = 0;
+    let captureFrame = 0, captureTimer = 0, restoreFrame = 0, releaseFrame = 0, settleUntil = 0, inputUntil = 0;
     let restores = 0, yielded = 0, lastRestoreDelta = 0;
     const atBottom = () => chat.scrollHeight - chat.scrollTop - chat.clientHeight < 8;
     const cancelRestore = () => { if (restoreFrame) cancelAnimationFrame(restoreFrame); restoreFrame = 0; };
@@ -118,12 +118,19 @@ export function createReadingAnchor({ chat, enabled }) {
         cancelRestore();
         if (releaseFrame) cancelAnimationFrame(releaseFrame); releaseFrame = 0;
         if (captureFrame) cancelAnimationFrame(captureFrame); captureFrame = 0;
+        if (captureTimer) clearTimeout(captureTimer); captureTimer = 0;
     };
     const onScroll = () => {
         if (destroyed || restoring || captureFrame) return;
         if (performance.now() < settleUntil && performance.now() >= inputUntil) return;
-        // Keep yielding while touch/wheel momentum continues; the capture below records the new position.
-        if (performance.now() < inputUntil) inputUntil = performance.now() + 350;
+        // Geometry reads during momentum can force the whole chat to lay out.
+        // Record one reading point after the final gesture frame instead.
+        if (performance.now() < inputUntil) {
+            inputUntil = performance.now() + 350;
+            if (captureTimer) clearTimeout(captureTimer);
+            captureTimer = setTimeout(() => { captureTimer = 0; capture(); }, 350);
+            return;
+        }
         captureFrame = requestAnimationFrame(() => { captureFrame = 0; capture(); });
     };
     const onResize = () => {
@@ -140,12 +147,13 @@ export function createReadingAnchor({ chat, enabled }) {
     const unsubscribe = onViewportChange(queueRestore);
     return {
         capture, restore, get anchor() { return anchor; },
-        status: () => ({ pendingRestore: !!restoreFrame, userScrolling: performance.now() < inputUntil, restores, yielded, lastRestoreDelta }),
+        status: () => ({ pendingRestore: !!restoreFrame, pendingCapture: !!(captureFrame || captureTimer), userScrolling: performance.now() < inputUntil, restores, yielded, lastRestoreDelta }),
         destroy() {
             destroyed = true; anchor = null; cancelRestore();
             if (captureFrame) cancelAnimationFrame(captureFrame);
             if (releaseFrame) cancelAnimationFrame(releaseFrame);
-            captureFrame = releaseFrame = 0; ro.disconnect(); unsubscribe();
+            if (captureTimer) clearTimeout(captureTimer);
+            captureFrame = captureTimer = releaseFrame = 0; ro.disconnect(); unsubscribe();
             for (const type of intentEvents) chat.removeEventListener(type, onIntent, true);
             chat.removeEventListener('scroll', onScroll); chat.removeEventListener('load', onLoad, true);
         },

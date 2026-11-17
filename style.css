@@ -282,12 +282,12 @@ html.ilg.ilg-icons:not(.ilg-light) #rightSendForm > div:not(.mes_stop):not(#send
 }
 
 /* ---------- 细节 ---------- */
-/* 字体：开“统一字体”时全站用思源黑体（苹果设备优先苹方）；关掉时界面用系统字体、正文用酒馆里选的字体 */
+/* Unified Android typography uses resident system glyphs; other platforms keep Noto/PingFang. Host font choices remain available when disabled. */
 html.ilg body :where(#top-bar, #top-settings-holder, #form_sheld, #chat, #ilg-home, #options, #extensionsMenu, #toast-container, #ilg-fold-menu, dialog.popup.ilg-glass) {
     --ilg-ui-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Segoe UI Variable Text", "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", var(--mainFontFamily), sans-serif;
 }
 html.ilg.ilg-font body :where(#top-bar, #top-settings-holder, #form_sheld, #chat, #ilg-home, #options, #extensionsMenu, #toast-container, #ilg-fold-menu, dialog.popup.ilg-glass) {
-    --mainFontFamily: -apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans SC Variable", "Microsoft YaHei", sans-serif;
+    --mainFontFamily: var(--ilg-unified-font, -apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans SC Variable", "Microsoft YaHei", sans-serif);
     --ilg-ui-font: var(--mainFontFamily);
     font-family: var(--mainFontFamily);
 }

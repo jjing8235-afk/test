@@ -1,3 +1,20 @@
+# 2.0.10-test.13 · 安卓首次字体稳定与滑动减负 · 2026-11-18
+
+- 安卓开启“统一字体”时使用设备内置字体，避免首次显示后再被下载的中文字体分块替换；关闭统一字体后继续使用酒馆自选字体，卡片自带字体保留。桌面和 iOS 维持原有字体策略。
+- 连续手势滑动时不再逐帧测量阅读锚点，停下约 350ms 后记录当前位置；图片加载时的静止阅读位置保护保留。
+- 兼容诊断新增字体模式、FontFaceSet 加载状态及计数；补齐安卓长消息保护计数，保留旧字段兼容。
+- 本版针对已复现的字体替换和滑动排版读取问题，不代表手机字体闪动已经通过实机验收。
+
+安卓统一字体使用 --ilg-unified-font: system-ui, sans-serif；仅在既有 ilg-font 开关生效时参与 --mainFontFamily，未改写宿主配置或作者节点字体声明。其他平台的原有思源黑体 / 苹方栈保留，bundled font CSS 和文件继续提供给显式选择这些字体的页面。
+
+readingAnchor 在手势及惯性期只延长等待并安排一次结束后的 capture，不在滚动帧读取 scrollHeight 或消息矩形。新手势及 destroy 清理排队的读取，图片增长后的静止补偿保留；status.pendingCapture 包含 RAF 与定时任务。
+
+诊断 typography.mode 为 system / unified / host；loadingCycles、loadedFaces、failedFaces 为整个页面 FontFaceSet 的累计数量，不包含字体名、正文或资源 URL，不将第三方字体事件误称为 NVWA 字体事件。largeAndroidMessages 为新计数，largeWebViewMessages 保留为相同值的旧字段。
+
+android-font-first-frame-browser.mjs 用真实启动代码和延迟到达的 bundled font bytes 对比同一字体栈的 canvas 字形；test.12 中首尾字形哈希不同、行高不变，修复后原生安卓 / WebView 两条身份均无中文字体分块请求且字形一致。Chromium / WebKit 各检查 Android native / WebView / desktop / iOS 四种身份，并验证关闭统一字体和作者字体的所有权。reading-anchor-scroll-budget-regression.mjs 的 100 个确定性手势帧，改动前 700 次几何读取，改动后 0 次；停下后捕获、图片增长和销毁清理检查保留。
+
+两引擎的字体加载生命周期、阅读锚点、聊天记录首帧以及真实隔离 ST 的原生安卓 / WebView 身份检查均通过。已提交的诊断证实 test.12 长消息保护生效，但没有字体加载记录；这轮字体替换是本地可复现路径，仍需用户原设备复测字体闪动。
+
 # 2.0.10-test.12 · 聊天记录首帧与安卓长消息修复 · 2026-11-17
 
 - 聊天记录窗口在最终可见状态下完成首次玻璃绘制，补齐首帧 CSS 模糊；再次打开和从聊天返回也同步准备材质，避免先透出首页图案再变模糊。

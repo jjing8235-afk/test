@@ -32,7 +32,7 @@ window.__ilgLoaded = new URL('.', import.meta.url).pathname;
 
 let studioUI = null;
 const MODULE = 'iosLiquidGlass';
-const BUILD_VERSION = '2.0.10-test.12';
+const BUILD_VERSION = '2.0.10-test.13';
 const ENGINE_NAMES = Object.freeze({performance:'御风性能引擎',refraction:'棱光折射引擎'});
 const NS = 'http://www.w3.org/2000/svg';
 const ctx = SillyTavern.getContext();
@@ -657,7 +657,7 @@ const TOGGLES = [
     ['iosMaterial', 'iOS 兼容玻璃（推荐）'],
     ['refractMes', '消息卡片也折射（长聊天卡顿时关掉）'],
     ['mobileTilt', '手机姿态高光'],
-    ['font', '统一字体：思源黑体（苹果设备用苹方）'],
+    ['font', '统一字体：安卓用系统字体，其他设备用思源黑体或苹方'],
     ['firstLineIndent', '普通正文首行缩进两个汉字（不影响列表、代码和自带样式面板）'],
     ['justifyText', '正文两端对齐（右边不参差；关掉是左对齐，右边缘会自然留白）'],
     ['islands', '顶栏拆成三个分组的悬浮岛'],
@@ -752,6 +752,12 @@ const isIOS = window.__TAURITAVERN_HOST__?.platform === 'ios'
 const supportsFilter = value => { try { return CSS.supports('backdrop-filter', value); } catch { return false; } };
 const canFull = !isIOS && !!window.chrome && !/Firefox\//.test(ua) && supportsFilter('blur(1px)');
 const androidHost = !isIOS && /Android/i.test(ua);
+const fontActivity = { loadingCycles: 0, loadedFaces: 0, failedFaces: 0 };
+for (const type of ['loading', 'loadingdone', 'loadingerror']) document.fonts?.addEventListener(type, event => {
+    if (type === 'loading') fontActivity.loadingCycles++;
+    else if (type === 'loadingdone') fontActivity.loadedFaces += event.fontfaces?.length || 0;
+    else fontActivity.failedFaces += event.fontfaces?.length || 0;
+});
 const androidWebView = androidHost && /\bwv\b/.test(ua) && /Chrome\//.test(ua) && !/Firefox\//.test(ua);
 const androidWebViewEligible = androidWebView && supportsFilter('blur(1px)') && supportsFilter('url(#ilg-capability-probe)');
 const supportsPrefixedFilter = value => { try { return CSS.supports('-webkit-backdrop-filter', value); } catch { return false; } };
@@ -2700,6 +2706,8 @@ function applyChatFontSize() {
 
 let glassSettingsRaf = 0;
 function applySurfaceSettings() {
+    // Keep the first Android glyphs: downloading CJK subsets must not replace visible text.
+    root.style.setProperty('--ilg-unified-font', androidHost ? 'system-ui, sans-serif' : '-apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans SC Variable", "Microsoft YaHei", sans-serif');
     root.style.setProperty('--ilg-panel-filter', `blur(${KIND.panel.blur()}px) saturate(${S.saturate}) brightness(${S.brightness})`);
     root.style.setProperty('--ilg-menu-filter', `blur(10px) saturate(${S.saturate}) brightness(${S.brightness})`);
     root.style.setProperty('--ilg-hl', S.highlight);
@@ -2922,11 +2930,12 @@ function viewportDiagnostic() {
     const vv=window.visualViewport;
     const rect=id=>{const el=document.getElementById(id);if(!el)return null;const r=el.getBoundingClientRect();return{x:Math.round(r.x),y:Math.round(r.y),width:Math.round(r.width),height:Math.round(r.height)};};
     const paths={},surfaces=[];let large=0;
-    for(const [el,it] of items){const path=it.renderPath||'pending';paths[path]=(paths[path]||0)+1;if(it.fallbackReason==='large-webview-message')large++;
+    for(const [el,it] of items){const path=it.renderPath||'pending';paths[path]=(paths[path]||0)+1;if(it.fallbackReason==='large-android-message'||it.fallbackReason==='large-webview-message')large++;
         if(surfaces.length<3&&it.visible&&el.matches('.mes')){const r=el.getBoundingClientRect();surfaces.push({width:Math.round(r.width),height:Math.round(r.height),path,fallbackReason:it.fallbackReason||''});}}
     return{layout:{width:innerWidth,height:innerHeight,dpr:devicePixelRatio},visual:vv?{width:vv.width,height:vv.height,offsetTop:vv.offsetTop,offsetLeft:vv.offsetLeft,scale:vv.scale}:null,
         composerFocused:document.activeElement===document.getElementById('send_textarea'),keyboard:keyboard.status(),chat:{scrollTop:chatEl.scrollTop,scrollHeight:chatEl.scrollHeight,clientHeight:chatEl.clientHeight,readingAnchor:readingAnchor.status()},composer:rect('nonQRFormItems'),form:rect('form_sheld'),ball:{shown:S.enabled&&S.floatBall,keyboardHidden:root.classList.contains('ilg-kb-open'),rect:rect('ilg-ball')},
-        rendering:{iosCompatible:iosMaterialActive(),engineRequested:S.engine,largeWebViewMessages:large,paths,surfaces},
+        rendering:{iosCompatible:iosMaterialActive(),engineRequested:S.engine,largeWebViewMessages:large,largeAndroidMessages:large,paths,surfaces},
+        typography:{mode:!S.enabled||!S.font?'host':androidHost?'system':'unified',status:document.fonts?.status||'unavailable',...fontActivity},
         appearance:{requested:S.tone,actual:appearanceMode(),lightThumbnail:!!wallThumb('light'),darkThumbnail:!!wallThumb('dark'),customThumbnail:!!customWallThumb(),chatBackgroundLocked:chatBgLocked(),lastAction:lastAppearanceAction},
         wallpapers:bundledWallpapers.status(),wallpaperRefraction:iosWallpaper.status(),workers:{reflections:reflections.status(),ball:((({mode,reason,suspended,pending,failures})=>({mode,reason,suspended,pending,failures}))(ballGlass.status()))},lighting:lighting.status(),captureNote:'Frame intervals describe page callbacks, not display flicker detection'};
 }
