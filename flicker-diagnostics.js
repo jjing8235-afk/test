@@ -4,6 +4,7 @@ const WINDOW_MS = 200;
 const LIMIT_MS = 60000;
 const MAX_STATES = 100;
 const MAX_MARKS = 8;
+const MAX_ATTRIBUTE_TARGETS = 120;
 const rounded = n => Math.round(n * 10) / 10;
 
 export function armFlickerCapture(win) {
@@ -77,11 +78,40 @@ export function createFlickerCapture({win=window, doc=document, chat, form, desc
         if (dirty) { dirty = false; snapshot(); }
         raf = win.requestAnimationFrame(frame);
     }
+    // Old values can be large in preset HTML (e.g. inline media URLs). Request
+    // them only for class/style on message roots, not the entire subtree.
+    const attributeTargets = new WeakSet();
+    let attributeTargetCount = 0, attributeTargetsCapped = false;
+    function compareAttributes(records) {
+        if (!records.length) return;
+        const bucket = windowAt(phase, relative(now()));
+        const summary = bucket.messageAttributeValues ||= {};
+        const next = new WeakMap();
+        // Walk backwards so A -> B -> A counts as two real changes even
+        // when both mutations arrive in one observer delivery.
+        for (let i = records.length - 1; i >= 0; i--) {
+            const {target, attributeName:name, oldValue} = records[i];
+            let values = next.get(target);
+            if (!values) next.set(target, values = new Map());
+            const after = values.has(name) ? values.get(name) : target.getAttribute(name);
+            values.set(name, oldValue);
+            const totals = summary[name] ||= {same:0, changed:0};
+            totals[after === oldValue ? 'same' : 'changed']++;
+        }
+    }
+    const floorAttributes = new win.MutationObserver(compareAttributes);
+    function observeFloorAttributes(el) {
+        if (attributeTargets.has(el)) return;
+        if (attributeTargetCount >= MAX_ATTRIBUTE_TARGETS) { attributeTargetsCapped = true; return; }
+        attributeTargets.add(el); attributeTargetCount++;
+        floorAttributes.observe(el, {attributes:true, attributeFilter:['class','style'], attributeOldValue:true});
+    }
+    for (const el of chat.children) if (el.matches('.mes')) observeFloorAttributes(el);
     function mutations(records) {
         let added = 0, removed = 0, content = 0, messageAttrs = 0, shellAttrs = 0;
         for (const m of records) {
             if (m.target === chat && m.type === 'childList') {
-                for (const node of m.addedNodes) if (node.nodeType === 1 && node.matches('.mes')) added++;
+                for (const node of m.addedNodes) if (node.nodeType === 1 && node.matches('.mes')) { added++; observeFloorAttributes(node); }
                 for (const node of m.removedNodes) if (node.nodeType === 1 && node.matches('.mes')) removed++;
             } else if (m.type === 'attributes' && m.target.matches('.mes')) messageAttrs++;
             else if (m.target === chat || m.target === doc.body || m.target === doc.documentElement || m.target.id === 'form_sheld') shellAttrs++;
@@ -168,22 +198,29 @@ export function createFlickerCapture({win=window, doc=document, chat, form, desc
     }
     function finish(reason = 'exported') {
         if (!active) return;
-        mutations(dom.takeRecords()); snapshot(true);
+        mutations(dom.takeRecords()); compareAttributes(floorAttributes.takeRecords()); snapshot(true);
         active = false;
-        win.cancelAnimationFrame(raf); win.clearTimeout(timer); dom.disconnect(); shell.disconnect();
+        win.cancelAnimationFrame(raf); win.clearTimeout(timer); dom.disconnect(); floorAttributes.disconnect(); shell.disconnect();
         for (const [type, observer] of observers) { timings(type, observer.takeRecords()); observer.disconnect(); }
         for (const [target,event,fn] of listeners) target?.removeEventListener(event,fn,true);
         firstId = null;
         const coverage = phases.map(p => ({phase:p.name, mounted:p.firstMountMs !== undefined, presentAtStart:p.name === 'first' && hadMessagesAtStart, scrolled:p.windows.some(w => w?.scrolls > 0), marked:p.marks.length > 0, sameChatEvent:p.hostChanges.some(e => e.match === 'same-as-first')}));
-        onFinish({format:'nvwa-flicker-comparison-1', environment, boot, durationMs:relative(now()), reason, windowMs:WINDOW_MS, supportedTiming, coverage,
+        onFinish({format:'nvwa-flicker-comparison-2', environment, boot, durationMs:relative(now()), reason, windowMs:WINDOW_MS, supportedTiming, coverage,
+            attributeSample:{targets:attributeTargetCount, capped:attributeTargetsCapped},
             phases:phases.map(p => ({...p,windows:p.windows.filter(Boolean)})),
-            limits:['Manual markers indicate when the user pressed the button, not the exact missing frame.','Page timings and DOM state cannot observe compositor output or display pixels.','No chat text, IDs, URLs, resource names, errors or screen images are recorded.']});
+            limits:['Manual markers indicate when the user pressed the button, not the exact missing frame.','Page timings and DOM state cannot observe compositor output or display pixels.','Attribute comparison covers class and style on sampled message roots after attachment; writes from the initial mount can be missed.','No chat text, IDs, URLs, resource names, errors, attribute values or screen images are exported.']});
     }
     snapshot(true);
     raf = win.requestAnimationFrame(frame);
     timer = win.setTimeout(() => finish('timeout'), LIMIT_MS);
     return {
         chatChanged,
+        messagePaints(reason, count) {
+            if (!count) return;
+            const bucket = windowAt(phase, relative(now()));
+            const counts = bucket.messagePaints ||= {};
+            counts[reason] = (counts[reason] || 0) + count;
+        },
         geometry(entries) {
             for (const [el,{w,h}] of entries) geometry.set(el, [w,h]);
             dirty = true;
@@ -205,6 +242,7 @@ export function createFlickerCapture({win=window, doc=document, chat, form, desc
         next() {
             if (phase.name !== 'first') return false;
             const pending = dom.takeRecords(); if (pending.length) mutations(pending);
+            compareAttributes(floorAttributes.takeRecords());
             snapshot(true); phase = makePhase('reentry'); lastState = null;
             snapshot(true);
             return true;

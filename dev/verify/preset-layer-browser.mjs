@@ -14,7 +14,7 @@ const css=fs.readFileSync(process.env.NVWA_PRESET_STYLE||path.join(root,'style.c
 const sentence='Preset rendering sample. Keep the same text, panel colours and controls while scrolling. ';
 const messages=Array.from({length:3},(_,i)=>'<div class="mes '+(i===2?'last_mes':'')+'" mesid="'+i+'"><div class="mesAvatarWrapper"><div class="avatar">A</div></div><div class="mes_block"><div class="mes_text">'+Array.from({length:32},(_,j)=>'<p>'+sentence.repeat(3)+'</p>'+(j===5?'<section class="preset-panel"><header>Preset status panel</header><article><p>'+sentence+'</p><button class="preset-action">Choice '+i+'</button><span class="preset-negative">Negative decoration</span></article></section>':'')).join('')+'</div></div></div>').join('');
 const authoredStyle='<style>.mes{flex-shrink:0}.preset-panel{border:2px solid #ff7eb6;border-radius:9px;box-shadow:0 0 14px #ff7eb633;margin:14px 0;position:relative}.preset-panel header{background:#ff7eb6;color:#201a23;padding:5px}.preset-panel article{background:#1a1d24;color:#d8dde6;padding:12px;position:relative;isolation:isolate}.preset-action{background:#ff7eb6;color:#201a23;border:0;padding:6px 12px;border-radius:4px}.preset-negative{position:absolute;z-index:-1;left:0;top:0;background:#31435a}.preset-floating{position:fixed;left:100px;top:80px;z-index:2000;background:#135;color:white}</style>';
-const source=fs.readFileSync(process.env.NVWA_PRESET_INDEX||path.join(root,'index.js'),'utf8')+'\nwindow.__presetLayer={configure(options){Object.assign(S,options);clearAll();applyRoot();},snapshot(){const el=document.querySelector(\'.mes\'),it=items.get(el),surface=it.backdrop||el,block=el.querySelector(\'.mes_block\'),panel=el.querySelector(\'.preset-panel\'),fixed=document.querySelector(\'.preset-floating\'),r=fixed.getBoundingClientRect();return{rootIsolation:getComputedStyle(el).isolation,blockPosition:getComputedStyle(block).position,blockZ:getComputedStyle(block).zIndex,contentTransform:getComputedStyle(block).transform,backdropFilter:getComputedStyle(surface).backdropFilter,glassColor:getComputedStyle(surface).backgroundColor,panelColor:getComputedStyle(panel.querySelector(\'article\')).backgroundColor,glassZ:getComputedStyle(it.backdropClip||surface).zIndex,rimZ:getComputedStyle(el,\'::after\').zIndex,rimMask:getComputedStyle(el,\'::after\').maskImage,filterNodes:it.filter?.querySelectorAll(\'feDisplacementMap\').length||0,rootClasses:el.className,rootHeight:el.offsetHeight,glassHeight:surface.offsetHeight,fixed:{x:r.x,y:r.y},tracked:items.has(el)};}};';
+const source=fs.readFileSync(process.env.NVWA_PRESET_INDEX||path.join(root,'index.js'),'utf8')+'\nwindow.__presetLayer={repaint:repaintAll,configure(options){Object.assign(S,options);clearAll();applyRoot();},snapshot(){const el=document.querySelector(\'.mes\'),it=items.get(el),surface=it.backdrop||el,block=el.querySelector(\'.mes_block\'),panel=el.querySelector(\'.preset-panel\'),fixed=document.querySelector(\'.preset-floating\'),r=fixed.getBoundingClientRect();return{rootIsolation:getComputedStyle(el).isolation,blockPosition:getComputedStyle(block).position,blockZ:getComputedStyle(block).zIndex,contentTransform:getComputedStyle(block).transform,backdropFilter:getComputedStyle(surface).backdropFilter,glassColor:getComputedStyle(surface).backgroundColor,panelColor:getComputedStyle(panel.querySelector(\'article\')).backgroundColor,glassZ:getComputedStyle(it.backdropClip||surface).zIndex,rimZ:getComputedStyle(el,\'::after\').zIndex,rimMask:getComputedStyle(el,\'::after\').maskImage,filterNodes:it.filter?.querySelectorAll(\'feDisplacementMap\').length||0,rootClasses:el.className,rootHeight:el.offsetHeight,glassHeight:surface.offsetHeight,fixed:{x:r.x,y:r.y},tracked:items.has(el)};}};';
 const server=http.createServer((req,res)=>{
  const url=new URL(req.url,'http://localhost');
  if(url.pathname==='/'){
@@ -38,6 +38,20 @@ try{
   await p.goto('http://127.0.0.1:'+server.address().port,{waitUntil:'domcontentloaded'});await p.waitForFunction(()=>fixtureReady||fixtureFailure);assert.equal(await p.evaluate(()=>fixtureFailure),null);
   await p.evaluate(()=>__presetLayer.configure({enabled:true,home:false,font:false,islands:true,refract:true,refractMes:true,engine:'physical',compatibilityMode:'auto',float:true}));
   await p.waitForFunction(()=>document.querySelector('.mes').classList.contains('ilg-card-renderer'));
+  if(identity==='native'&&!baseline){
+   const stable=await p.evaluate(async()=>{
+    const frames=async()=>{for(let i=0;i<4;i++)await new Promise(requestAnimationFrame);};
+    await frames();
+    const before=__presetLayer.snapshot(), records=[];
+    const monitor=new MutationObserver(ms=>records.push(...ms));
+    for(const floor of document.querySelectorAll('#chat > .mes'))monitor.observe(floor,{attributes:true,attributeFilter:['class','style']});
+    // Exercise the paint path even if scroll/resize hasn't changed anything.
+    for(let i=0;i<4;i++)__presetLayer.repaint();
+    records.push(...monitor.takeRecords());monitor.disconnect();
+    return {writes:records.length,unchanged:JSON.stringify(before)===JSON.stringify(__presetLayer.snapshot())};
+   });
+   check('native-repaint-stable-message-attributes',stable.writes===0&&stable.unchanged,stable);
+  }
   const fixedAtTop=await p.locator('.preset-floating').evaluate(el=>({x:el.getBoundingClientRect().x,y:el.getBoundingClientRect().y}));
   check(identity+'-fixed-before-scroll',fixedAtTop.x===100&&fixedAtTop.y===80,fixedAtTop);
   for(const width of [691,360,900,691]){

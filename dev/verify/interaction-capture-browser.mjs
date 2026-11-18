@@ -81,6 +81,10 @@ try {
             if(mark){
                 await page.evaluate(()=>{
                     document.querySelector('.mes_text button').hidden=true;
+                    const floor = document.querySelector('#chat > .mes');
+                    floor.setAttribute('class', floor.className); // MutationRecord without a value change.
+                    floor.style.setProperty('--PRIVATE_FIXTURE_KEY', 'PRIVATE_FIXTURE_VALUE');
+                    floor.style.removeProperty('--PRIVATE_FIXTURE_KEY'); // Reversal in the same observer batch.
                     window.dispatchEvent(new ErrorEvent('error',{message:'PRIVATE_ERROR_MESSAGE',filename:'PRIVATE_ERROR_FILE'}));
                     const until=performance.now()+70;while(performance.now()<until){} // Inject main-thread evidence, not visual flicker.
                 });
@@ -95,7 +99,8 @@ try {
         assert(!/PRIVATE_/.test(text),'Do not export chat IDs, CSS selectors, frame URLs, text, or errors');
         assert(text.length<100000);
         const report=JSON.parse(text);
-        assert.equal(report.format,'nvwa-flicker-comparison-1');
+        assert.equal(report.format,'nvwa-flicker-comparison-2');
+        assert(report.attributeSample.targets>=2&&!report.attributeSample.capped);
         assert.equal(report.environment.version,version);
         assert.equal(report.boot.navigation,'reload');
         assert.equal(report.boot.hadMessagesAtStart,false);
@@ -107,6 +112,8 @@ try {
             assert(sample.windows.some(w=>w.frames>0));
         }
         const sum=(p,k)=>p.windows.reduce((n,w)=>n+(w[k]||0),0);
+        assert(report.phases[0].windows.some(w=>w.messageAttributeValues?.class?.same>=1&&w.messageAttributeValues?.style?.changed>=2));
+        assert(report.phases[0].windows.some(w=>w.messagePaints?.mount>0));
         assert(sum(report.phases[0],'runtimeErrors')===1);
         assert(sum(report.phases[0],'descendantMutations')>0);
         assert(sum(report.phases[1],'messageRemovals')>0);

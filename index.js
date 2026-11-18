@@ -35,7 +35,7 @@ window.__ilgLoaded = new URL('.', import.meta.url).pathname;
 let studioUI = null;
 let flickerCapture = null, flickerReport = null;
 const MODULE = 'iosLiquidGlass';
-const BUILD_VERSION = '2.0.10-test.18';
+const BUILD_VERSION = '2.0.10-test.19';
 const ENGINE_NAMES = Object.freeze({performance:'御风性能引擎',refraction:'棱光折射引擎'});
 const NS = 'http://www.w3.org/2000/svg';
 const ctx = SillyTavern.getContext();
@@ -863,7 +863,7 @@ const defs = svg.firstChild;
 const iosWallpaper=createIOSWallpaperRefraction({background:()=>{
     for(const id of ['bg_custom','bg1']){const el=document.getElementById(id);if(el&&/^url\(/.test(getComputedStyle(el).backgroundImage))return el;}
     return null;
-},onReady:()=>requestAnimationFrame(()=>{repaintVisible();const status=document.getElementById('ilg-status');if(status)status.textContent=statusText();})});
+},onReady:()=>requestAnimationFrame(()=>{repaintVisible('wallpaper');const status=document.getElementById('ilg-status');if(status)status.textContent=statusText();})});
 const iosWallpaperRequested=()=>isIOS&&S.refract&&S.compatibilityMode!=='blur'&&webStyleEnabled()&&!document.body.classList.contains('no-blur');
 const items = new Map();
 // Host UI state changes only need surfaces near the viewport; other messages update on intersection.
@@ -1082,7 +1082,7 @@ function measure(el) {
     const w = el.offsetWidth, h = el.offsetHeight;
     return { w, h, r: w && h ? radiusOf(el, w, h) : 0 };
 }
-function paintMany(list, measured = null) {
+function paintMany(list, reason, measured = null) {
     const jobs = [];
     for (const el of list) {
         const it = items.get(el);
@@ -1095,6 +1095,7 @@ function paintMany(list, measured = null) {
         }
         jobs.push(el);
     }
+    if (flickerCapture) flickerCapture.messagePaints(reason, jobs.filter(el => items.get(el).kind === 'mes').length);
     const geo = jobs.map(el => measured?.get(el) || measure(el));
     jobs.forEach((el, i) => paint(el, geo[i]));
 }
@@ -1227,7 +1228,7 @@ function setPhys(el, it, on) {
 const MES_STREAM_GAP = 250;
 const mesLate = new Set();
 let mesLateTimer = 0;
-const flushMesLate = () => { mesLateTimer = 0; const list = [...mesLate]; mesLate.clear(); if (list.length) paintMany(list); };
+const flushMesLate = () => { mesLateTimer = 0; const list = [...mesLate]; mesLate.clear(); if (list.length) paintMany(list, 'stream'); };
 const ro = new ResizeObserver(entries => {
     const now = [], measured = new Map();
     const streaming = document.body.dataset.generating === 'true';
@@ -1246,7 +1247,7 @@ const ro = new ResizeObserver(entries => {
         if (streaming && items.get(e.target)?.kind === 'mes') { mesLate.add(e.target); continue; }
         now.push(e.target);
     }
-    if (now.length) paintMany(now, measured);
+    if (now.length) paintMany(now, 'resize', measured);
     flickerCapture?.geometry(measured);
     if (mesLate.size && !mesLateTimer) mesLateTimer = setTimeout(flushMesLate, MES_STREAM_GAP);
 });
@@ -1263,7 +1264,7 @@ const io = new IntersectionObserver(entries => {
         else visibleItems.delete(e.target);
         changed.push(e.target);
     }
-    if (changed.length) paintMany(changed);
+    if (changed.length) paintMany(changed, 'intersection');
     flickerCapture?.intersections(entries);
 }, { root: document.getElementById('chat'), rootMargin: '200px 0px' });
 
@@ -1297,7 +1298,10 @@ function track(el, kind) {
         }
     }
     ro.observe(el);
-    if (kind === 'mes') { messageRendering.track(el); io.observe(el); }
+    if (kind === 'mes') {
+        messageRendering.track(el); io.observe(el);
+        flickerCapture?.messagePaints('mount', 1);
+    }
     paint(el);
 }
 
@@ -1337,8 +1341,8 @@ function scan() {
 
 // 悬浮小球的融合玻璃不走 items，由它自己的钩子重画（小球那段代码在后面，这里只留个空位）
 let ballRefresh = null;
-function repaintAll() { paintMany([...items.keys()]); ballRefresh?.(); }
-function repaintVisible() { paintMany([...visibleItems]); ballRefresh?.(); }
+function repaintAll() { paintMany([...items.keys()], 'global'); ballRefresh?.(); }
+function repaintVisible(reason) { paintMany([...visibleItems], reason); ballRefresh?.(); }
 function clearAll() { [...items.keys()].forEach(untrack); cache.clear(); clearMaps(); }
 
 // 顶栏分组悬浮岛：图标按功能分三组，每组后面画一块独立的玻璃。图标和抽屉面板都不动，抽屉是按整个图标区定位的
@@ -2758,7 +2762,7 @@ function queueGlassSettings() {
         glassSettingsRaf = 0;
         if (!S.enabled) return;
         applySurfaceSettings();
-        repaintVisible();
+        repaintVisible('settings');
     });
 }
 
@@ -2892,7 +2896,7 @@ new MutationObserver(muts => {
     if (rescan) {
         if (isIOS) { const status = document.getElementById('ilg-status'); if (status) status.textContent = statusText(); }
         if (bubbleChanged) scan();
-        repaintVisible();
+        repaintVisible('bodyClass');
     }
 }).observe(document.body, { childList: true, attributes: true, attributeFilter: ['class'] });
 // 第三方弹窗不参与扫描：这里只监听酒馆核心弹窗和本扩展自己的宿主节点。
@@ -3068,7 +3072,8 @@ function startFlickerCapture() {
             physical:S.engine === 'physical', clearChat:S.chatBackground === 'transparent'},
         onFinish(report) {
             flickerReport = report; flickerCapture = null;
-            label.textContent = report.coverage[1]?.scrolled ? '对照已结束' : '采集已结束 · 未记录到重进滑动';
+            label.textContent = report.coverage[1]?.scrolled ? '对照已结束'
+                : report.coverage[0].scrolled ? '首进采集已结束 · 可导出' : '采集已结束 · 未记录到聊天滑动';
             button('mark').hidden = button('next').hidden = true;
             button('dismiss').hidden = false;
         }});
@@ -3091,7 +3096,7 @@ function startFlickerCapture() {
 function createFlickerControls() {
     const controls = document.createElement('div');
     controls.id = 'ilg-flicker-controls';
-    controls.innerHTML = '<p>用折叠机内屏采集。点击后会刷新本页；不会改玻璃设置。若有未发送的文字，先自行保存。</p><ol id="ilg-flicker-steps"><li>刷新后第一次打开问题聊天并滑动；若自动进入，直接滑动。看到闪就点「刚才闪了」。</li><li>点「② 去重进」，返回并重开同一聊天，照样滑动。</li><li>点「导出」，发送这份 TXT。两轮合计最多 60 秒。若方便，可在开始前打开系统录屏。</li></ol><button type="button" id="ilg-flicker-start" aria-describedby="ilg-flicker-steps ilg-flicker-hint">刷新并采集首进 / 重进</button><p id="ilg-flicker-hint" role="status">只记时间、尺寸与绘制状态，不采集正文、聊天标识、链接或画面。</p>';
+    controls.innerHTML = '<p>用折叠机内屏采集。点击后会刷新本页；不会改玻璃设置。若有未发送的文字，先自行保存。</p><ol id="ilg-flicker-steps"><li>刷新后第一次打开问题聊天并滑动；若自动进入，直接滑动。看到闪就点「刚才闪了」。</li><li>只测首次进入，可以直接导出；若要对照，再点「② 去重进」，返回并重开同一聊天滑动。</li><li>点「导出」，发送这份 TXT。两轮合计最多 60 秒。若方便，可在开始前打开系统录屏。</li></ol><button type="button" id="ilg-flicker-start" aria-describedby="ilg-flicker-steps ilg-flicker-hint">刷新并采集首进 / 重进</button><p id="ilg-flicker-hint" role="status">只记时间、尺寸与绘制状态，不采集正文、聊天标识、链接或画面。</p>';
     controls.querySelector('button').addEventListener('click', () => {
         if (flickerCapture || interactionDiagnostics.status().recording || !S.enabled) {
             controls.querySelector('#ilg-flicker-hint').textContent = S.enabled ? '请先结束正在进行的采集。' : '请先开启液态玻璃，再开始对照。';
@@ -4150,7 +4155,7 @@ function applyCardMarkers(text) {
 }
 function tagCard(text) {
     const changed = applyCardMarkers(text);
-    if (changed) paint(changed);
+    if (changed) { flickerCapture?.messagePaints('card', 1); paint(changed); }
 }
 // 普通正文段落标记：阅读配色（.ilg-prose）和首行缩进（.ilg-indentable）只给“没有自带 class/style、里面没有图片/控件/div 等”的直接段落。
 // 原来 CSS 用 :not(:has(...)) 现场判断，可 :has() 让流式输出每次改字都要重查（每次约 3ms 样式重算）。
