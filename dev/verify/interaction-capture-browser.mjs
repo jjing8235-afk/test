@@ -78,6 +78,19 @@ try {
             await page.evaluate(()=>flickerFixture(true));
             await page.waitForFunction(()=>document.querySelector('#chat .mes')?.classList.contains('ilg-card-renderer'));
             await page.locator('#chat').evaluate(chat=>{chat.scrollTop=200;chat.dispatchEvent(new Event('scroll'));});
+            if(phase==='reentry'){
+                // The tall first message places the second beyond the prewarm margin.
+                await page.evaluate(()=>{
+                    document.head.append(Object.assign(document.createElement('style'), {
+                        textContent:'#chat > .width-feedback { width:90%; min-height:120px } #chat > .width-feedback.ilg-render-away { width:80% }',
+                    }));
+                    document.querySelector('#chat').insertAdjacentHTML('beforeend', '<div class="mes width-feedback" mesid="1"><div class="mes_block"><div class="mes_text"><p>Plain message with offscreen width feedback.</p></div></div></div>');
+                });
+                // Two real widths and a fresh natural measurement pass through
+                // production observers before the report download.
+                await page.evaluate(async()=>{for(let i=0;i<12;i++)await new Promise(requestAnimationFrame);});
+                assert.equal(await page.locator('#chat > .width-feedback.ilg-render-away').count(),0);
+            }
             if(mark){
                 await page.evaluate(()=>{
                     document.querySelector('.mes_text button').hidden=true;
@@ -117,6 +130,12 @@ try {
         assert(sum(report.phases[0],'runtimeErrors')===1);
         assert(sum(report.phases[0],'descendantMutations')>0);
         assert(sum(report.phases[1],'messageRemovals')>0);
+        const widthEvents=report.phases[1].windows.reduce((counts,w)=>{
+            counts.retry+=w.offscreenWidthFeedback?.retry||0;
+            counts.keptRendered+=w.offscreenWidthFeedback?.keptRendered||0;
+            return counts;
+        },{retry:0,keptRendered:0});
+        assert.deepEqual(widthEvents,{retry:1,keptRendered:1});
         assert(report.phases[0].windows.some(w=>w.maxFrameGapMs>50||w.mainThreadTasks?.maxMs>50));
         assert(report.phases[0].states.some(s=>s.viewport[0]===691));
         await badge.locator('[data-action="dismiss"]').click();

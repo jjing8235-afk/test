@@ -35,7 +35,7 @@ window.__ilgLoaded = new URL('.', import.meta.url).pathname;
 let studioUI = null;
 let flickerCapture = null, flickerReport = null;
 const MODULE = 'iosLiquidGlass';
-const BUILD_VERSION = '2.0.10-test.19';
+const BUILD_VERSION = '2.0.10-test.20';
 const ENGINE_NAMES = Object.freeze({performance:'御风性能引擎',refraction:'棱光折射引擎'});
 const NS = 'http://www.w3.org/2000/svg';
 const ctx = SillyTavern.getContext();
@@ -2834,7 +2834,10 @@ function applyRoot() {
 // 输入框高度变化时同步底部留白；仅在扩展启用且宿主允许自动滚动时保持贴底
 const form = document.getElementById('form_sheld');
 const chatEl = document.getElementById('chat');
-const messageRendering = createMessageRendering(chatEl, { onReset(el) { if (items.has(el)) { ro.unobserve(el); ro.observe(el); } } });
+const messageRendering = createMessageRendering(chatEl, {
+    onReset(el) { if (items.has(el)) { ro.unobserve(el); ro.observe(el); } },
+    onWidthFeedback(reason) { flickerCapture?.widthFeedback(reason); },
+});
 const cardClarity = createCardTextClarity(chatEl);
 let formResizeRaf = 0;
 function updateFormSpace() {

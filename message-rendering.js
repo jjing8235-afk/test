@@ -28,9 +28,10 @@ export function fontLoadMayChangeText(faces, texts) {
 
 // Preserve message DOM and exact measured heights while the browser skips distant plain text.
 const MARK = 'ilg-render-away', SIZE = '--ilg-message-height';
+const WIDTH_EPSILON = .25;
 const TAGS = new Set('P BR Q EM I B STRONG S DEL U A UL OL LI BLOCKQUOTE H1 H2 H3 H4 H5 H6 HR CODE PRE SPAN'.split(' '));
 const OWN_CLASSES = new Set(['ilg-prose', 'ilg-indentable']);
-export function createMessageRendering(chat, { onReset = () => {} } = {}) {
+export function createMessageRendering(chat, { onReset = () => {}, onWidthFeedback = () => {} } = {}) {
     const doc = chat.ownerDocument, root = doc.documentElement, win = doc.defaultView;
     const supported = !!win.CSS?.supports?.('content-visibility', 'auto') && !!win.CSS?.supports?.('contain-intrinsic-block-size', 'auto 1px');
     const states = new Map(), pendingResizes = new Map();
@@ -52,6 +53,7 @@ export function createMessageRendering(chat, { onReset = () => {} } = {}) {
     function apply(el, state) {
         if (externalMessageRendering(chat)) { clear(el, state); return; }
         if (state.near !== false || state.height === null || excluded(el) || !el.isConnected) { clear(el, state); return; }
+        if (state.recheckWidth !== null) return;
         if (state.plain === null) state.plain = plain(el);
         if (!state.plain) { clear(el, state); return; }
         if (!state.culled) {
@@ -118,10 +120,21 @@ export function createMessageRendering(chat, { onReset = () => {} } = {}) {
         // The upstream renderer may report an estimated placeholder. Never cache
         // it as our measured height; its release triggers fresh ResizeObservers.
         if (externalMessageRendering(chat)) { clear(el, state); return; }
-        if (state.culled && state.width !== null && Number.isFinite(contentWidth) && Math.abs(contentWidth - state.width) > .25) {
-            state.width = contentWidth; reset(el, state); return;
+        if (state.culled && state.width !== null && Number.isFinite(contentWidth) && Math.abs(contentWidth - state.width) > WIDTH_EPSILON) {
+            // Re-measure without containment. If width returns to its previous
+            // value, reapplying containment at that width would start a loop.
+            state.recheckWidth = state.width;
+            onWidthFeedback('retry');
+            reset(el, state);
+            return;
         }
-        if (Number.isFinite(contentWidth)) state.width = contentWidth;
+        if (Number.isFinite(contentWidth)) {
+            if (state.recheckWidth !== null) {
+                if (Math.abs(contentWidth - state.recheckWidth) > WIDTH_EPSILON) state.recheckWidth = null;
+                else if (state.height === null) onWidthFeedback('keptRendered');
+            }
+            state.width = contentWidth;
+        }
         if (excluded(el)) {
             clear(el, state);
             if (Number.isFinite(contentHeight) && contentHeight > 0) state.height = contentHeight;
@@ -141,7 +154,7 @@ export function createMessageRendering(chat, { onReset = () => {} } = {}) {
         track(el) {
             if (!supported || states.has(el)) return;
             if (!states.size) listen(true);
-            states.set(el, { near: null, height: null, width: null, plain: null, culled: false });
+            states.set(el, { near: null, height: null, width: null, recheckWidth: null, plain: null, culled: false });
         },
         resize(el, contentHeight, contentWidth) {
             if (!states.has(el)) return;

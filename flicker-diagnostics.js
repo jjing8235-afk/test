@@ -215,6 +215,11 @@ export function createFlickerCapture({win=window, doc=document, chat, form, desc
     timer = win.setTimeout(() => finish('timeout'), LIMIT_MS);
     return {
         chatChanged,
+        widthFeedback(reason) {
+            const bucket = windowAt(phase, relative(now()));
+            const counts = bucket.offscreenWidthFeedback ||= {};
+            counts[reason] = (counts[reason] || 0) + 1;
+        },
         messagePaints(reason, count) {
             if (!count) return;
             const bucket = windowAt(phase, relative(now()));

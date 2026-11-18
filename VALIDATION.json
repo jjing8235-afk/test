@@ -1,6 +1,6 @@
 {
-  "currentVersion": "2.0.10-test.19",
-  "currentDisplayVersion": "2.0.10-test.19",
+  "currentVersion": "2.0.10-test.20",
+  "currentDisplayVersion": "2.0.10-test.20",
   "date": "2026-11-05",
   "version": "1.4.4-local.9",
   "baseline": "1.4.4-local.8",
@@ -6484,6 +6484,32 @@
     "limits": [
       "Repeated no-op writes are reproduced under explicit repaint, not a reproduction of physical screen flicker.",
       "The existing report does not prove the source of all on-device mutations. No physical OPPO acceptance yet."
+    ]
+  },
+  "offscreenWidthFeedback20261118": {
+    "version": "2.0.10-test.20",
+    "baseline": "4d0f2cb7295eff26dc01d7bda8ae1ba309345e36",
+    "deviceTrace": {
+      "resizeTriggeredMessagePaintsWithinMarkedWindows": 225,
+      "observedClassAndStyleValueChangesWithinMarkedWindows": 440,
+      "messageDescendantMutationsWithinMarkedWindows": 0,
+      "videoShowsPartialChatContentLoss": true
+    },
+    "desktopEdge": {
+      "baselineFailedIdleWidthFeedback": true,
+      "candidatePassedIdleWidthFeedback": true,
+      "safeCullingResumesAfterWidthChange": true,
+      "originalScrollHeightPreserved": true,
+      "messageRenderingPassed": true,
+      "fontLoadingLifecyclePassed": true,
+      "baibaiInteropPassed": true,
+      "presetLayerChecks": 240,
+      "foldableGeometryPassed": true,
+      "reportWidthFeedbackCountersPassed": true
+    },
+    "limits": [
+      "The deterministic fixture induces a width difference while culling. This verifies the feedback mechanism, not the exact phone layout or missing compositor pixels.",
+      "OPPO N6 inner-screen acceptance is pending."
     ]
   }
 }
