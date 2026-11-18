@@ -1,6 +1,6 @@
 {
-  "currentVersion": "2.0.10-test.20",
-  "currentDisplayVersion": "2.0.10-test.20",
+  "currentVersion": "2.0.10-test.21",
+  "currentDisplayVersion": "2.0.10-test.21",
   "date": "2026-11-05",
   "version": "1.4.4-local.9",
   "baseline": "1.4.4-local.8",
@@ -6510,6 +6510,34 @@
     "limits": [
       "The deterministic fixture induces a width difference while culling. This verifies the feedback mechanism, not the exact phone layout or missing compositor pixels.",
       "OPPO N6 inner-screen acceptance is pending."
+    ]
+  },
+  "presetAuthorForeground20261118": {
+    "version": "2.0.10-test.21",
+    "baseline": "627aa366ed4ef0c9f48ddce065675ece4f489e35",
+    "date": "2026-11-18",
+    "deviceEvidence": "User confirmed test.20 stopped the inner-screen flicker on OPPO N6 Edge; test.21 itself has not been tested on the phone.",
+    "desktopEdge": {
+      "widths": [
+        360,
+        691
+      ],
+      "tones": [
+        "light",
+        "dark"
+      ],
+      "baselineOverrodeInlinePresetForeground": true,
+      "authoredForegroundPreserved": true,
+      "unstyledContrastFallbackPreserved": true,
+      "presetLayerChecks": 246,
+      "foldableGeometryCases": 90,
+      "authoredUiChecks": 40,
+      "offscreenWidthFeedbackRegressionPassed": true,
+      "firstLineIndentRegressionPassed": true
+    },
+    "limits": [
+      "Preset scripts and external assets were not executed or loaded.",
+      "Shared-performance legacy harness has a stale repaintVisible instrumentation hook."
     ]
   }
 }

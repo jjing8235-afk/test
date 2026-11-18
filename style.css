@@ -2211,35 +2211,37 @@ html.ilg #ilg-think-float {
 }
 body.reduced-motion .ilg-think, body.reduced-motion .ilg-think-label { animation: none !important; }
 
-/* ---------- 角色卡自带的状态栏 / 小面板：底色和当前深浅相反时，字色和阴影跟着它的底色走 ----------
-   JS（tagCards）量出 .mes_text 里有自己底色的块，比周围亮很多的标 .ilg-lit、暗很多的标 .ilg-dim。
-   这里只改变量和继承的颜色，卡片自己写死的颜色照常生效；酒馆全局 * 的那圈黑色字影在亮块里换成透明 */
-html.ilg body #chat .mes_text .ilg-lit {
-    --ilg-say: #b84a1c;
-    --ilg-say-bg: rgba(255, 140, 70, 0.14);
-    --ilg-narr: rgba(29, 29, 31, 0.86);
-    --ilg-think: rgba(60, 60, 67, 0.62);
-    --SmartThemeBodyColor: rgb(29, 29, 31);
-    --SmartThemeCheckboxTickColor: #fff;
-    --SmartThemeQuoteColor: rgba(184, 74, 28, 1);
-    --SmartThemeEmColor: rgba(60, 60, 67, 0.62);
-    --SmartThemeShadowColor: transparent;
-    color: var(--ilg-narr);
+/* Contrast defaults for unstyled text on light/dark card backgrounds.
+   Keep these layered so an author stylesheet on the same node can override them.
+   Painting and card classification still use the existing markers. */
+@layer nvwa-card-defaults {
+    html.ilg body #chat .mes_text .ilg-lit {
+        --ilg-say: #b84a1c;
+        --ilg-say-bg: rgba(255, 140, 70, 0.14);
+        --ilg-narr: rgba(29, 29, 31, 0.86);
+        --ilg-think: rgba(60, 60, 67, 0.62);
+        --SmartThemeBodyColor: rgb(29, 29, 31);
+        --SmartThemeCheckboxTickColor: #fff;
+        --SmartThemeQuoteColor: rgba(184, 74, 28, 1);
+        --SmartThemeEmColor: rgba(60, 60, 67, 0.62);
+        --SmartThemeShadowColor: transparent;
+        color: var(--ilg-narr);
+    }
+    html.ilg body #chat .mes_text .ilg-dim {
+        --ilg-say: #ffc48c;
+        --ilg-say-bg: rgba(255, 170, 100, 0.14);
+        --ilg-narr: rgba(242, 242, 247, 0.9);
+        --ilg-think: rgba(235, 235, 245, 0.62);
+        --SmartThemeBodyColor: rgb(245, 247, 251);
+        --SmartThemeCheckboxTickColor: #1d1d1f;
+        --SmartThemeQuoteColor: rgba(255, 196, 140, 1);
+        --SmartThemeEmColor: rgba(235, 235, 245, 0.62);
+        --SmartThemeShadowColor: rgba(0, 0, 0, 0.5);
+        color: var(--ilg-narr);
+    }
+    /* 亮块里的台词荧光笔太淡，加深一点 */
+    html.ilg body #chat .mes_text .ilg-lit q { --ilg-say-bg: rgba(255, 140, 70, 0.2); }
 }
-html.ilg body #chat .mes_text .ilg-dim {
-    --ilg-say: #ffc48c;
-    --ilg-say-bg: rgba(255, 170, 100, 0.14);
-    --ilg-narr: rgba(242, 242, 247, 0.9);
-    --ilg-think: rgba(235, 235, 245, 0.62);
-    --SmartThemeBodyColor: rgb(245, 247, 251);
-    --SmartThemeCheckboxTickColor: #1d1d1f;
-    --SmartThemeQuoteColor: rgba(255, 196, 140, 1);
-    --SmartThemeEmColor: rgba(235, 235, 245, 0.62);
-    --SmartThemeShadowColor: rgba(0, 0, 0, 0.5);
-    color: var(--ilg-narr);
-}
-/* 亮块里的台词荧光笔太淡，加深一点 */
-html.ilg body #chat .mes_text .ilg-lit q { --ilg-say-bg: rgba(255, 140, 70, 0.2); }
 
 /* ---------- 手机：聊天正文右边不再空出 30px ----------
    酒馆给 .mes_text 右边预留了翻页箭头的位置，但箭头在气泡最底下那一行，不在正文旁边。

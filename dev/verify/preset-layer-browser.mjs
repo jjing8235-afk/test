@@ -52,6 +52,10 @@ try{
    });
    check('native-repaint-stable-message-attributes',stable.writes===0&&stable.unchanged,stable);
   }
+  // An inline author panel may declare its foreground in a stylesheet, not on style="".
+  await p.waitForFunction(()=>document.querySelector('.preset-panel article').classList.contains('ilg-dim'));
+  const foreground=await p.locator('.preset-panel article').first().evaluate(el=>getComputedStyle(el).color);
+  check(identity+'-authored-foreground-wins-over-contrast-fallback',foreground==='rgb(216, 221, 230)',foreground);
   const fixedAtTop=await p.locator('.preset-floating').evaluate(el=>({x:el.getBoundingClientRect().x,y:el.getBoundingClientRect().y}));
   check(identity+'-fixed-before-scroll',fixedAtTop.x===100&&fixedAtTop.y===80,fixedAtTop);
   for(const width of [691,360,900,691]){
@@ -105,6 +109,10 @@ try{
   await p.evaluate(()=>{const el=document.querySelector('.mes');el.querySelector('.mes_text').innerHTML='<div style="background:#1a1d24;height:120px">Short preset panel</div>';});
   await p.waitForFunction(()=>!document.querySelector('.mes').classList.contains('ilg-message-viewport'));
   check(identity+'-shrink-restores-original-stacking',await p.locator('.mes').first().evaluate(el=>getComputedStyle(el).isolation)==='isolate');
+  const unstyledPanel=p.locator('.mes').first().locator('.mes_text > div');
+  await p.waitForFunction(()=>document.querySelector('.mes .mes_text > div').classList.contains('ilg-dim'));
+  const fallback=await unstyledPanel.evaluate(el=>getComputedStyle(el).color);
+  check(identity+'-unstyled-panel-retains-contrast-fallback',fallback==='rgba(242, 242, 247, 0.9)',fallback);
   await p.evaluate(()=>__presetLayer.configure({enabled:false}));
   check(identity+'-disable-cleanup',await p.locator('.ilg-message-glass,.ilg-message-clip').count()===0);
   await p.close();
