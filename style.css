@@ -3806,6 +3806,22 @@ html.ilg body.bubblechat #chat .mes > .ilg-message-clip {
         z-index: auto;
         border-radius: 0;
     }
+    /* Preset content keeps its normal paint path. Only the empty glass and rim
+       share the decoration level; do not isolate the entire tall message or
+       transform/contain ancestors of authored fixed-position windows. */
+    html.ilg body.bubblechat #chat .mes.ilg-message-viewport.ilg-card-renderer.ilg-message-backdrop {
+        isolation: auto;
+    }
+    html.ilg body.bubblechat #chat .mes.ilg-message-viewport.ilg-card-renderer > :is(.ilg-message-glass, .ilg-message-clip) {
+        z-index: 0;
+    }
+    html.ilg body.bubblechat #chat .mes.ilg-message-viewport.ilg-card-renderer > :is(.mes_block, .mesAvatarWrapper) {
+        position: relative;
+        z-index: 1;
+    }
+    html.ilg body.bubblechat #chat .mes.ilg-message-viewport.ilg-card-renderer.ilg-glass::after {
+        z-index: 0;
+    }
 }
 /* Transparent means clear glass: keep the contour, refraction, sheen and elevation. */
 html.ilg.ilg-chat-transparent body.bubblechat #chat .mes.ilg-glass {

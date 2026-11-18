@@ -1,6 +1,6 @@
 {
-  "currentVersion": "2.0.10-test.15",
-  "currentDisplayVersion": "2.0.10-test.15",
+  "currentVersion": "2.0.10-test.16",
+  "currentDisplayVersion": "2.0.10-test.16",
   "date": "2026-11-05",
   "version": "1.4.4-local.9",
   "baseline": "1.4.4-local.8",
@@ -6382,6 +6382,45 @@
       "BaiBai fixture demonstrates duplicate height ownership and a stale anchor restoring over an upstream scroll, not every cause of the reported generation jump.",
       "font-display optional keeps the first visible fallback glyphs on a slow load; it does not guarantee the downloaded font on the first visit.",
       "Screenshots compare original and changed composer rendering in a synthetic striped backdrop on an isolated real ST host; no claim of identical pixels on every GPU."
+    ]
+  },
+  "presetLayering20261118": {
+    "version": "2.0.10-test.16",
+    "date": "2026-11-18",
+    "baseline": "0a93f23b7d03757d1bd1b92ca2605e2a0b477a95",
+    "deviceEvidence": {
+      "onVideo": "User-provided recording, November 18 2026 at 17:15",
+      "onDecodedFrames": 260,
+      "observedBlankEpisodes": 3,
+      "offControlVideo": "User-provided recording, November 18 2026 at 17:35",
+      "offDecodedFrames": 656,
+      "offObservedBlankEpisodes": 0,
+      "switchClickVisible": false,
+      "versionVisibleInVideos": false,
+      "interpretation": "Control requested by the assistant; native toolbar visible and preset UI retained. Supports a combined rendering trigger, not a proven GPU root cause."
+    },
+    "change": {
+      "scope": "Android large authored messages at width >= 600px",
+      "messageIsolation": "auto",
+      "decorationZ": 0,
+      "hostContentZ": 1,
+      "contentTransformAdded": false,
+      "contentContainAdded": false,
+      "refractionAndBlurParametersChanged": false,
+      "presetNodesReplaced": false
+    },
+    "automated": {
+      "presetLayerChecks": 235,
+      "realIsolatedHostChecks": 51,
+      "foldableGeometryPassed": true,
+      "messageRenderingPassed": true,
+      "baselineStackingTestFailed": true,
+      "regressionScope": "Real extension and host contracts in Windows Edge with Android identities; structural regression, not phone pixel disappearance."
+    },
+    "limits": [
+      "The OPPO blanking is not reproduced on desktop; this version requires phone acceptance.",
+      "Compositor records show two large message-owned layers absent after separation in the synthetic fixture, but the largest chat layer remains. No GPU-memory or monolithic-texture reduction is claimed.",
+      "Wide, large authored-message stacking changes only; desktop and folded layouts keep the existing structure."
     ]
   }
 }

@@ -59,6 +59,21 @@ try{
    }
   }
  }
+ await page.evaluate(()=>{
+  const panel=document.createElement('section');panel.id='preset-host-panel';panel.style.cssText='background:rgb(26,29,36);color:rgb(210,215,225);padding:12px;border:2px solid #ff7eb6';
+  panel.innerHTML='<p>Preset-owned status panel</p><button id="preset-host-choice" style="background:#ff7eb6;color:#201a23">Choice</button><button id="preset-host-fixed" style="position:fixed;left:100px;top:80px;z-index:3000">Fixed preset window</button>';
+  document.querySelector('#large-message .mes_text').append(panel);window.__presetHostClicks=0;
+  document.getElementById('preset-host-choice').addEventListener('click',()=>__presetHostClicks++);
+ });
+ await page.waitForFunction(()=>document.getElementById('large-message').classList.contains('ilg-card-renderer'));
+ for(const width of [360,691,900]){
+  await page.setViewportSize({width,height:716});await page.waitForTimeout(100);
+  const preset=await page.evaluate(()=>{const message=document.getElementById('large-message'),block=message.querySelector('.mes_block'),panel=document.getElementById('preset-host-panel'),fixed=document.getElementById('preset-host-fixed').getBoundingClientRect();return{isolation:getComputedStyle(message).isolation,contentZ:getComputedStyle(block).zIndex,contentTransform:getComputedStyle(block).transform,panelBackground:getComputedStyle(panel).backgroundColor,panelColour:getComputedStyle(panel).color,fixed:{x:fixed.x,y:fixed.y}};});
+  check('preset-content-layer-'+width,preset.isolation===(width>=600?'auto':'isolate')&&preset.contentTransform==='none',preset);
+  check('preset-style-and-fixed-position-'+width,preset.panelBackground==='rgb(26, 29, 36)'&&preset.panelColour==='rgb(210, 215, 225)'&&preset.fixed.x===100&&preset.fixed.y===80,preset);
+ }
+ await page.locator('#preset-host-choice').click();check('preset-native-action-click',await page.evaluate(()=>__presetHostClicks===1));
+ await page.locator('#preset-host-fixed').evaluate(el=>el.remove());
  await page.evaluate(()=>{document.getElementById('large-message').querySelector('.mes_text').style.cssText='height:100%;background:repeating-linear-gradient(90deg,#344b73 0 20px,#f4cd8e 20px 40px)';});
  await page.evaluate(()=>{
   const pattern=document.createElement('div');pattern.id='compositor-test-pattern';
