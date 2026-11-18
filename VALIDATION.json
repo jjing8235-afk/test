@@ -1,6 +1,6 @@
 {
-  "currentVersion": "2.0.10-test.17",
-  "currentDisplayVersion": "2.0.10-test.17",
+  "currentVersion": "2.0.10-test.18",
+  "currentDisplayVersion": "2.0.10-test.18",
   "date": "2026-11-05",
   "version": "1.4.4-local.9",
   "baseline": "1.4.4-local.8",
@@ -6442,6 +6442,26 @@
       "The reproduced issue is a first-paint stacking transition, not pixel disappearance on the physical phone.",
       "The first-paint fix covers authored content already present in a guarded Android message at width >= 600px. Later DOM changes retain the existing debounce.",
       "Acceptance requires the first entry on the OPPO inner display after upgrading and refreshing, with the same preset and NVWA enabled."
+    ]
+  },
+  "flickerComparison20261118": {
+    "version": "2.0.10-test.18",
+    "date": "2026-11-18",
+    "baseline": "39e783d325b679ae61b9f6811e8e4ce1ea86fefe",
+    "deviceReport": "OPPO N6 Edge inner-screen flicker remains after test.17.",
+    "scope": "Opt-in first-entry/re-entry trace. Rendering and material settings unchanged.",
+    "automated": {
+      "coldReloadAndReentryCapture": true,
+      "manualFlashMarker": true,
+      "privacySentinelsRemoved": true,
+      "interruptedCaptureStops": true,
+      "oneShotArm": true,
+      "originalCapturePassed": true,
+      "presetLayerChecks": 239
+    },
+    "limits": [
+      "No GPU paint, pixel or screen recording is captured by the extension.",
+      "Requires a marked first-entry reproduction and a same-chat re-entry on the actual device for useful correlation."
     ]
   }
 }

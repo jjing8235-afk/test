@@ -7,6 +7,8 @@ import { createIOSWallpaperRefraction } from './ios-wallpaper-refraction.js';
 import { createBundledWallpapers } from './bundled-wallpapers.js';
 import { largeWebViewMessage } from './surface-policy.js';
 import { createInteractionDiagnostics } from './interaction-diagnostics.js';
+import { armFlickerCapture, takeFlickerArm, createFlickerCapture, filterFamily } from './flicker-diagnostics.js';
+import { externalMessageRendering, externalScrollControl } from './chat-compat.js';
 import { positionFixed } from './fixed-position.js';
 import { createMessageRendering } from './message-rendering.js';
 import { createHostInteractionState } from './host-interaction-state.js';
@@ -31,8 +33,9 @@ if (window.__ilgLoaded) throw new Error('[NVWA 液态玻璃] 已经有一份在�
 window.__ilgLoaded = new URL('.', import.meta.url).pathname;
 
 let studioUI = null;
+let flickerCapture = null, flickerReport = null;
 const MODULE = 'iosLiquidGlass';
-const BUILD_VERSION = '2.0.10-test.17';
+const BUILD_VERSION = '2.0.10-test.18';
 const ENGINE_NAMES = Object.freeze({performance:'御风性能引擎',refraction:'棱光折射引擎'});
 const NS = 'http://www.w3.org/2000/svg';
 const ctx = SillyTavern.getContext();
@@ -1244,6 +1247,7 @@ const ro = new ResizeObserver(entries => {
         now.push(e.target);
     }
     if (now.length) paintMany(now, measured);
+    flickerCapture?.geometry(measured);
     if (mesLate.size && !mesLateTimer) mesLateTimer = setTimeout(flushMesLate, MES_STREAM_GAP);
 });
 new MutationObserver(() => { if (document.body.dataset.generating !== 'true' && mesLate.size) { clearTimeout(mesLateTimer); flushMesLate(); } })
@@ -1260,6 +1264,7 @@ const io = new IntersectionObserver(entries => {
         changed.push(e.target);
     }
     if (changed.length) paintMany(changed);
+    flickerCapture?.intersections(entries);
 }, { root: document.getElementById('chat'), rootMargin: '200px 0px' });
 
 function track(el, kind) {
@@ -2759,7 +2764,10 @@ function queueGlassSettings() {
 
 function applyRoot() {
     if (!S.enabled) hideRangeValue();
-    if (!S.enabled) interactionDiagnostics.stop('disabled');
+    if (!S.enabled) {
+        interactionDiagnostics.stop('disabled');
+        flickerCapture?.finish('disabled');
+    }
     hostInteractionState.setEnabled(S.enabled);
     normalizeTopStyleSettings(S);
     syncInputMaterial(false);
@@ -3002,6 +3010,98 @@ const interactionDiagnostics=createInteractionDiagnostics({snapshot:viewportDiag
     const badge=captureBadge();badge.querySelector('span').textContent=missing?'采集结束 · 有未测操作':'采集结束';badge.querySelector('[data-action="main"]').textContent='导出诊断';badge.querySelector('[data-action="close"]').hidden=false;
 }});
 
+function describeFlickerState(nodeNumber, sizeOf, intersectionOf) {
+    function surface(el, it) {
+        const plane = it?.backdrop || el;
+        return {node:nodeNumber(el), path:it?.renderPath || 'untracked', filter:filterFamily(plane.style),
+            size:sizeOf(el) || null, layer:it?.backdropClip ? 'clipped-plane' : it?.backdrop ? 'separate-plane' : 'root'};
+    }
+    const messages = [], poses = [];
+    for (const el of visibleItems) {
+        const it = items.get(el);
+        if (!el.isConnected || it.kind !== 'mes') continue;
+        const card = el.classList.contains('ilg-card-renderer'), view = intersectionOf(el) || 'unmeasured';
+        poses.push({el,it,card,view});
+        if (poses.length === 24) break;
+    }
+    // Prefer messages actually intersecting the chat and authored / large surfaces.
+    const priority = row => (row.view === 'visible' ? 4 : 0) + (row.card ? 2 : 0) + (row.it.largeWebView ? 1 : 0);
+    poses.sort((a,b) => priority(b) - priority(a));
+    for (const {el,it,card,view} of poses.slice(0,6)) {
+        messages.push({...surface(el,it), lastIntersection:view, guarded:!!it.largeWebView, card,
+            presetSplit:innerWidth >= 600 && card && el.classList.contains('ilg-message-viewport'),
+            fixedChild:el.classList.contains('ilg-content-overlay'), culled:el.classList.contains('ilg-render-away'),
+            iframe:!!el.querySelector('.mes_text iframe'), hidden:el.hidden || el.style.display === 'none'});
+    }
+    const controls = {};
+    for (const [key,id] of [['composer','nonQRFormItems'],['input','ilg-composer-input-glass'],['plus','ilg-composer-plus-glass'],['bar','top-bar']]) {
+        const el = document.getElementById(id);
+        if (el) controls[key] = surface(el,items.get(el));
+    }
+    return {chat:{children:chatEl.childElementCount, size:sizeOf(chatEl) || null, bubble:document.body.classList.contains('bubblechat'),
+            noBlur:document.body.classList.contains('no-blur'), home:homeOn, owner:externalMessageRendering(chatEl) ? 'baibai' : 'nvwa',
+            externalScroll:externalScrollControl(chatEl), readingAnchor:readingAnchor.status()},
+        formSize:sizeOf(form) || null, fontsLoading:document.fonts?.status === 'loading', messages, controls};
+}
+function startFlickerCapture() {
+    const badge = document.createElement('aside');
+    badge.id = 'ilg-flicker-badge'; badge.setAttribute('aria-label', '内屏闪烁对照');
+    badge.innerHTML = '<span role="status" aria-live="polite">① 首次进入并滑动</span><div><button type="button" data-action="mark">刚才闪了</button><button type="button" data-action="next">② 去重进</button><button type="button" data-action="export">导出</button><button type="button" data-action="dismiss" aria-label="关闭诊断提示" hidden>×</button></div>';
+    const label = badge.querySelector('span');
+    const button = name => badge.querySelector('[data-action="'+name+'"]');
+    flickerReport = null;
+    const ownPath = new URL('.',import.meta.url).pathname;
+    flickerCapture = createFlickerCapture({chat:chatEl, form, describe:describeFlickerState, currentChat:() => ctx.getCurrentChatId(),
+        scriptOwner(source) {
+            if (!source) return 'unknown';
+            let url;
+            try { url = new URL(source,location.href); } catch { return 'unknown'; }
+            if (url.origin !== location.origin) return 'external';
+            if (url.pathname.startsWith(ownPath)) return 'nvwa';
+            const extension = /^\/scripts\/extensions\/third-party\/([^/]+)\//.exec(url.pathname);
+            if (extension) return /^st-baibai-tools$/i.test(extension[1]) ? 'baibai' : 'other-extension';
+            return /^\/(?:script\.js$|scripts\/|lib\/)/.test(url.pathname) ? 'host' : 'unknown';
+        },
+        environment:{version:BUILD_VERSION, android:androidHost, webview:androidWebView,
+            edgeAndroid:/\bEdgA\//.test(ua), browserMajor:Number(ua.match(/\b(?:EdgA|Chrome)\/(\d+)/)?.[1]) || null,
+            floating:!!S.float, refraction:!!S.refract, messageRefraction:!!S.refractMes, cssGlass:cssGlassActive(),
+            physical:S.engine === 'physical', clearChat:S.chatBackground === 'transparent'},
+        onFinish(report) {
+            flickerReport = report; flickerCapture = null;
+            label.textContent = report.coverage[1]?.scrolled ? '对照已结束' : '采集已结束 · 未记录到重进滑动';
+            button('mark').hidden = button('next').hidden = true;
+            button('dismiss').hidden = false;
+        }});
+    button('mark').addEventListener('click', () => {
+        if (!flickerCapture) return;
+        flickerCapture.mark(); button('mark').textContent = '已标记 · 再闪可点';
+    });
+    button('next').addEventListener('click', () => {
+        if (!flickerCapture?.next()) return;
+        label.textContent = '② 返回后重进同一聊天';
+        button('next').hidden = true; button('mark').textContent = '刚才闪了';
+    });
+    button('export').addEventListener('click', () => {
+        flickerCapture?.finish();
+        if (flickerReport) downloadDiagnostic(JSON.stringify(flickerReport,null,2), '内屏闪烁对照');
+    });
+    button('dismiss').addEventListener('click', () => { badge.remove(); flickerReport = null; });
+    document.body.append(badge);
+}
+function createFlickerControls() {
+    const controls = document.createElement('div');
+    controls.id = 'ilg-flicker-controls';
+    controls.innerHTML = '<p>用折叠机内屏采集。点击后会刷新本页；不会改玻璃设置。若有未发送的文字，先自行保存。</p><ol id="ilg-flicker-steps"><li>刷新后第一次打开问题聊天并滑动；若自动进入，直接滑动。看到闪就点「刚才闪了」。</li><li>点「② 去重进」，返回并重开同一聊天，照样滑动。</li><li>点「导出」，发送这份 TXT。两轮合计最多 60 秒。若方便，可在开始前打开系统录屏。</li></ol><button type="button" id="ilg-flicker-start" aria-describedby="ilg-flicker-steps ilg-flicker-hint">刷新并采集首进 / 重进</button><p id="ilg-flicker-hint" role="status">只记时间、尺寸与绘制状态，不采集正文、聊天标识、链接或画面。</p>';
+    controls.querySelector('button').addEventListener('click', () => {
+        if (flickerCapture || interactionDiagnostics.status().recording || !S.enabled) {
+            controls.querySelector('#ilg-flicker-hint').textContent = S.enabled ? '请先结束正在进行的采集。' : '请先开启液态玻璃，再开始对照。';
+            return;
+        }
+        if (!armFlickerCapture(window)) controls.querySelector('#ilg-flicker-hint').textContent = '浏览器禁止页面暂存，无法跨刷新开始采集。';
+    });
+    return controls;
+}
+
 function iosTrialReport() {
     const rows = [
         'NVWA 液态玻璃 ' + BUILD_VERSION + ' · 兼容诊断',
@@ -3201,7 +3301,7 @@ function buildPanel() {
     captureControls.querySelector('select').addEventListener('change',updateCaptureInstructions);
     captureControls.querySelector('button').addEventListener('click',()=>{
         if(interactionDiagnostics.status().recording){interactionDiagnostics.stop('manual');return;}
-        if(!S.enabled)return;
+        if(!S.enabled || flickerCapture)return;
         if(interactionDiagnostics.start({scenario:captureControls.querySelector('select').value})){
             captureControls.querySelector('select').disabled=true;
             captureControls.querySelector('button').textContent='提前结束采集';
@@ -3209,7 +3309,7 @@ function buildPanel() {
             studioUI?.close(false);
         }
     });
-    wrap.querySelector('.inline-drawer-content').append(captureControls);
+    wrap.querySelector('.inline-drawer-content').append(createFlickerControls(), captureControls);
     studioUI = createSettingsPanel({ host, content: wrap, appearance: appearancePanel, version: BUILD_VERSION, settings: S, engines: ENGINE_NAMES });
     updateCaptureInstructions();
 
@@ -4179,9 +4279,11 @@ function watchCharList() {
 watchCharList();
 ctx.eventSource.on(ctx.eventTypes.APP_READY, watchCharList);
 
+if (takeFlickerArm(window) && S.enabled) startFlickerCapture();
 applyRoot();
 paintRanges();
 ctx.eventSource.on(ctx.eventTypes.APP_READY, applyRoot);
+ctx.eventSource.on(ctx.eventTypes.CHAT_CHANGED, () => flickerCapture?.chatChanged());
 
 // Check the real library on startup and when an explicit appearance selection needs repair.
 // The old wallsReady flag survives reinstalling the extension, so it is not proof of file presence.

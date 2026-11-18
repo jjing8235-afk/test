@@ -88,6 +88,7 @@ export function createSettingsPanel({host, content, appearance, version, setting
  card('diagnostics','当前状态',status);
  card('diagnostics','环境适配',[staging.querySelector('#ilg-ios-material-setting'),opt('iosSvgTrial')]);
  const reportWrap=staging.querySelector('#ilg-opt-iosReportWrap'),cardReport=block('ilg-card-report-copy');
+ card('diagnostics','内屏首进闪烁',[staging.querySelector('#ilg-flicker-controls')]);
  card('diagnostics','导出诊断',[staging.querySelector('#ilg-interaction-diagnostics'),reportWrap,cardReport]);
  const reset=staging.querySelector('#ilg-reset');if(reset){reset.textContent='恢复扩展默认参数';card('diagnostics','',[reset])?.classList.add('ilg-reset-group');}
  main.append(meta);
