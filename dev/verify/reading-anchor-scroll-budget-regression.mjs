@@ -2,12 +2,13 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
+import {externalScrollControl} from '../../chat-compat.js';
 const source=fs.readFileSync(new URL('../../viewport.js',import.meta.url),'utf8');
 let now=1000,uid=0,reads=0;const frames=new Map(),timers=new Map(),listeners=new Map();
 const heights=Array(16).fill(300);
-const chat={scrollTop:900,clientHeight:400,get scrollHeight(){reads++;return heights.reduce((a,b)=>a+b,0)},getBoundingClientRect(){reads++;return {top:0}},addEventListener(type,fn){listeners.set(type,fn)},removeEventListener(type){listeners.delete(type)}};
+const chat={classList:{contains:()=>false},scrollTop:900,clientHeight:400,get scrollHeight(){reads++;return heights.reduce((a,b)=>a+b,0)},getBoundingClientRect(){reads++;return {top:0}},addEventListener(type,fn){listeners.set(type,fn)},removeEventListener(type){listeners.delete(type)}};
 chat.children=heights.map((_,i)=>({isConnected:true,classList:{contains:c=>c==='mes'},getBoundingClientRect(){reads++;const top=heights.slice(0,i).reduce((a,b)=>a+b,0)-chat.scrollTop;return {top,bottom:top+heights[i]}}}));
-const context={chat,performance:{now:()=>now},getComputedStyle:()=>({paddingTop:'0'}),requestAnimationFrame:fn=>{const id=++uid;frames.set(id,fn);return id},cancelAnimationFrame:id=>frames.delete(id),setTimeout:(fn,delay)=>{const id=++uid;timers.set(id,{fn,at:now+delay});return id},clearTimeout:id=>timers.delete(id),ResizeObserver:class{observe(){}disconnect(){}},onViewportChange:()=>()=>{}};
+const context={chat,externalScrollControl,MutationObserver:class{observe(){}disconnect(){}},performance:{now:()=>now},getComputedStyle:()=>({paddingTop:'0'}),requestAnimationFrame:fn=>{const id=++uid;frames.set(id,fn);return id},cancelAnimationFrame:id=>frames.delete(id),setTimeout:(fn,delay)=>{const id=++uid;timers.set(id,{fn,at:now+delay});return id},clearTimeout:id=>timers.delete(id),ResizeObserver:class{observe(){}disconnect(){}},onViewportChange:()=>()=>{}};
 vm.runInNewContext(source.slice(source.indexOf('export function createReadingAnchor')).replace('export function','function')+';globalThis.controller=createReadingAnchor({chat,enabled:()=>true});',context);
 function frame(ms=16){now+=ms;for(const [id,t]of [...timers])if(t.at<=now){timers.delete(id);t.fn()}const pending=[...frames];frames.clear();for(const [,fn]of pending)fn();}
 listeners.get('touchstart')({type:'touchstart'});reads=0;

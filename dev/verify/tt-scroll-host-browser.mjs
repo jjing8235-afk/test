@@ -59,6 +59,39 @@ try{
    }
   }
  }
+ await page.evaluate(()=>{document.getElementById('large-message').querySelector('.mes_text').style.cssText='height:100%;background:repeating-linear-gradient(90deg,#344b73 0 20px,#f4cd8e 20px 40px)';});
+ await page.evaluate(()=>{
+  const pattern=document.createElement('div');pattern.id='compositor-test-pattern';
+  pattern.style.cssText='position:absolute;inset:0;z-index:39;pointer-events:none;background:repeating-linear-gradient(90deg,#344b73 0 20px,#f4cd8e 20px 40px)';
+  document.getElementById('form_sheld').before(pattern);
+ });
+ const composerTrials=[];
+ for(const width of [394,691]) for(const mode of ['physical','css']) for(const floating of [true,false]){
+  await page.setViewportSize({width,height:716});
+  await page.evaluate(({mode,floating})=>__nvwaMapProbe.configure({engine:'physical',font:false,compatibilityMode:mode==='css'?'blur':'auto',float:floating}),{mode,floating});
+  await page.waitForTimeout(250);
+  const trial=await page.evaluate(async()=>{
+   const chat=document.getElementById('chat'),plane=document.getElementById('ilg-composer-input-glass'),input=document.getElementById('send_textarea'),samples=[];
+   window.__inputPaints=0;chat.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerType:'touch',isPrimary:true}));
+   for(let i=0;i<100;i++){
+    chat.scrollTop=700+i*8;await new Promise(requestAnimationFrame);
+    const r=plane.getBoundingClientRect(),c=chat.getBoundingClientRect(),t=input.getBoundingClientRect(),css=getComputedStyle(plane);
+    samples.push({x:r.x,y:r.y,w:r.width,h:r.height,chatBottom:c.bottom,inputY:t.y,filter:css.backdropFilter,paints:window.__inputPaints,requested:700+i*8,scrollTop:chat.scrollTop});
+   }
+   return{samples,readingAnchor:__ttReadingProbe.status(),form:document.getElementById('form_sheld').getBoundingClientRect().toJSON()};
+  });
+  const distinct=key=>[...new Set(trial.samples.map(s=>s[key]))];
+  await page.screenshot({path:out+'/composer-'+width+'-'+mode+'-'+floating+'.png'});
+  const material=await page.locator('#ilg-composer-input-glass').evaluate(el=>{const cs=getComputedStyle(el),id=cs.backdropFilter.match(/#(ilg-f[0-9]+)/)?.[1],filter=id?document.getElementById(id):null;return {transform:cs.transform,filter:cs.backdropFilter,regionHeight:filter?.getAttribute('height'),h:el.offsetHeight,displacement:!!filter?.querySelector('feDisplacementMap')};});
+  check('composer-preserved-'+width+'-'+mode+'-'+floating,mode==='css'?material.filter.includes('blur('):material.displacement,material);
+  if(!process.env.NVWA_BASELINE_INDEX)check('composer-bounded-'+width+'-'+mode+'-'+floating,material.transform!=='none'&&(mode==='css'||Number(material.regionHeight)===material.h),material);
+  composerTrials.push({width,mode,floating,material,summary:{x:distinct('x'),y:distinct('y'),w:distinct('w'),h:distinct('h'),filter:distinct('filter'),chatBottom:distinct('chatBottom'),paints:trial.samples.at(-1).paints,scrollDrift:Math.max(...trial.samples.map(s=>Math.abs(s.requested-s.scrollTop)))},...trial});
+ }
+ await fs.writeFile(out+'/composer-scroll.json',JSON.stringify({engine,version:JSON.parse(await fs.readFile(path.join(root,'manifest.json'),'utf8')).version,composerTrials,scope:'Desktop Edge with native Android identity, real isolated SillyTavern, no physical-phone compositor claim.'},null,2));
+ console.log(JSON.stringify({composerTrials:composerTrials.map(t=>({floating:t.floating,...t.summary}))}));
+ await page.evaluate(()=>__nvwaMapProbe.configure({float:true,font:true,compatibilityMode:'auto'}));await page.waitForTimeout(250);
+
+ await page.setViewportSize({width:691,height:716});await page.waitForTimeout(300);
  const diagnostic=await page.evaluate(()=>__ttReadingProbe.diagnostic());check('diagnostic-snapshot-still-works',!!diagnostic);if(process.env.NVWA_FOLDABLE_HOST==='1')check('foldable-backdrop-diagnostic',diagnostic.rendering.boundedMessageBackdrops>=1&&diagnostic.rendering.surfaces.some(s=>s.boundedBackdrop&&s.backdropHeight<=716),diagnostic.rendering);check('native-typography-and-guard-diagnostics',diagnostic.typography?.mode==='system'&&typeof diagnostic.typography.loadingCycles==='number'&&diagnostic.rendering.largeAndroidMessages>=1&&diagnostic.rendering.largeWebViewMessages===diagnostic.rendering.largeAndroidMessages,{typography:diagnostic.typography,largeAndroidMessages:diagnostic.rendering.largeAndroidMessages});
  check('no-runtime-errors',errors.length===0&&await page.evaluate(()=>__poseResizeErrors.length===0),errors);
  const identity=(process.env.NVWA_ANDROID_HOST==='native'?'android-native':'android-webview')+(process.env.NVWA_FOLDABLE_HOST==='1'?'-foldable':'');const result={engine,identity,checks,scope:'Real local SillyTavern with '+identity+' UA and recorded geometry; desktop browser, not physical TT'};await fs.writeFile(out+'/'+engine+'-'+identity+'-tt-fix-host.json',JSON.stringify(result,null,2));console.log(JSON.stringify({engine,passed:checks.length,scope:result.scope}));

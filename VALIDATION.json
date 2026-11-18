@@ -1,6 +1,6 @@
 {
-  "currentVersion": "2.0.10-test.14",
-  "currentDisplayVersion": "2.0.10-test.14",
+  "currentVersion": "2.0.10-test.15",
+  "currentDisplayVersion": "2.0.10-test.15",
   "date": "2026-11-05",
   "version": "1.4.4-local.9",
   "baseline": "1.4.4-local.8",
@@ -6294,5 +6294,94 @@
         "wideBackdropMaximum": 716
       }
     }
+  },
+  "renderingCompatibility20261118": {
+    "version": "2.0.10-test.15",
+    "date": "2026-11-18",
+    "baseline": "96947ea0729689ef06518ae410b4c4555673be58",
+    "upstream": {
+      "repository": "baibai-git/ST-BaiBai-Tools",
+      "commit": "d828d6812994414cef24be9e5f995a264e9fe370",
+      "manifestVersion": "1.2.0",
+      "scope": "Actual upstream longChatRender/constants/state modules; stub host events and synthetic chat, not complete plugin acceptance"
+    },
+    "regression": {
+      "baibai": {
+        "passed": true,
+        "overlappingOwnedMessagesBefore": 44,
+        "after": 0,
+        "oldScroll": {
+          "before": 5000,
+          "upstream": 40541,
+          "nvwaRestore": 5000
+        },
+        "fixedScroll": {
+          "before": 5000,
+          "upstream": 129080,
+          "nvwaRestore": 129080
+        },
+        "enableDisableAndColdStart": true,
+        "streamUpdates": 12
+      },
+      "delayedFont": {
+        "passed": true,
+        "engine": "Windows Edge Chromium",
+        "identities": [
+          "native Android",
+          "Android WebView",
+          "desktop",
+          "iOS UA"
+        ],
+        "screenshotUnchanged": true,
+        "oldDesktopSwapFailed": true,
+        "physicalIOS": false
+      },
+      "compositor": {
+        "passed": true,
+        "engine": "Windows Edge with Android UA",
+        "widths": [
+          394,
+          691
+        ],
+        "dpr": 3.25,
+        "modes": [
+          "physical",
+          "css"
+        ],
+        "floating": [
+          true,
+          false
+        ],
+        "framesPerCase": 100,
+        "scrollDrift": 0,
+        "composerPaintCallsDuringScroll": 0,
+        "oldControlSVGHeight": 254,
+        "newControlSVGHeight": 54,
+        "displacementPreserved": true,
+        "originalOpacityBlurAndRefractionParameters": true
+      },
+      "hostChecks": 44,
+      "composerLayoutChecks": 238,
+      "foldableGeometrySamples": 90,
+      "additionalPassed": [
+        "message-rendering-browser",
+        "reading-anchor-scroll-budget-regression",
+        "reading-anchor-browser",
+        "font-loading-lifecycle-browser",
+        "settings-regression",
+        "surface-policy-regression",
+        "font-subset-regression",
+        "filter-reuse-regression",
+        "resize-batch-regression",
+        "popup-material-regression",
+        "first-open-material-regression"
+      ]
+    },
+    "limits": [
+      "OPPO N6 Edge GPU flicker has not been reproduced or accepted on the actual phone; compositor changes are a test candidate.",
+      "BaiBai fixture demonstrates duplicate height ownership and a stale anchor restoring over an upstream scroll, not every cause of the reported generation jump.",
+      "font-display optional keeps the first visible fallback glyphs on a slow load; it does not guarantee the downloaded font on the first visit.",
+      "Screenshots compare original and changed composer rendering in a synthetic striped backdrop on an isolated real ST host; no claim of identical pixels on every GPU."
+    ]
   }
 }

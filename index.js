@@ -32,7 +32,7 @@ window.__ilgLoaded = new URL('.', import.meta.url).pathname;
 
 let studioUI = null;
 const MODULE = 'iosLiquidGlass';
-const BUILD_VERSION = '2.0.10-test.14';
+const BUILD_VERSION = '2.0.10-test.15';
 const ENGINE_NAMES = Object.freeze({performance:'御风性能引擎',refraction:'棱光折射引擎'});
 const NS = 'http://www.w3.org/2000/svg';
 const ctx = SillyTavern.getContext();
@@ -924,8 +924,9 @@ function filterOf(it, w, h, slot = 'filter') {
     f.setAttribute('primitiveUnits', 'userSpaceOnUse');
     f.setAttribute('color-interpolation-filters', 'sRGB');
     f.setAttribute('x', '0'); f.setAttribute('y', '0');
-    // 滤镜区域比元素多留 200px：流式输出时卡片变高，下一帧重建前不会露出空洞
-    f.setAttribute('width', w); f.setAttribute('height', h + 200);
+    // Only streaming messages need growth headroom. A 54px input must not
+    // allocate a 254px SVG surface over the scrolling chat behind it.
+    f.setAttribute('width', w); f.setAttribute('height', h + (it.kind === 'mes' ? 200 : 0));
     return f;
 }
 
@@ -1118,6 +1119,9 @@ function paint(el, geo) {
     }
     it.largeWebView = largeWebViewMessage({webView:androidHost,kind:it.kind,width:geo.w,height:geo.h,dpr:devicePixelRatio,previous:it.largeWebView});
     const surface = it.kind === 'mes' ? messageSurface(el, it) : el;
+    // Keep only the empty composer glass planes on stable compositor layers.
+    // Never transform the message/form ancestors of authored fixed-position UI.
+    el.classList.toggle('ilg-stable-composer', androidHost && el.classList.contains('ilg-composer-glass'));
     const control = it.kind === 'bar' && controlSurface(el);
     el.classList.toggle('ilg-control-surface', control);
     el.classList.toggle('ilg-control-readable', control && controlReadable(el));
@@ -1301,7 +1305,7 @@ function untrack(el) {
     it.backdropClip?.remove();
     ro.unobserve(el);
     io.unobserve(el);
-    el.classList.remove('ilg-glass', 'ilg-sheen', 'ilg-clear', 'ilg-phys', 'ilg-adapted', 'ilg-message-backdrop', 'ilg-message-viewport', 'ilg-control-surface', 'ilg-control-readable', 'ilg-css-surface', 'ilg-composer-liquid');
+    el.classList.remove('ilg-glass', 'ilg-sheen', 'ilg-clear', 'ilg-phys', 'ilg-adapted', 'ilg-message-backdrop', 'ilg-message-viewport', 'ilg-control-surface', 'ilg-control-readable', 'ilg-css-surface', 'ilg-composer-liquid', 'ilg-stable-composer');
     if (el.id === 'nonQRFormItems') el.querySelectorAll('[data-ilg-input-tone]').forEach(action => delete action.dataset.ilgInputTone);
     el.style.backdropFilter = '';
     el.style.webkitBackdropFilter = '';

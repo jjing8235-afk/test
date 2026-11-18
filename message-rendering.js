@@ -1,3 +1,5 @@
+import { externalMessageRendering } from './chat-compat.js';
+
 // Conservative unicode-range check; no font metric changes are skipped on unknown metadata.
 export function fontLoadMayChangeText(faces, texts) {
     const list = Array.from(faces || []);
@@ -48,6 +50,7 @@ export function createMessageRendering(chat, { onReset = () => {} } = {}) {
         state.culled = false; el.classList.remove(MARK); el.style.removeProperty(SIZE);
     }
     function apply(el, state) {
+        if (externalMessageRendering(chat)) { clear(el, state); return; }
         if (state.near !== false || state.height === null || excluded(el) || !el.isConnected) { clear(el, state); return; }
         if (state.plain === null) state.plain = plain(el);
         if (!state.plain) { clear(el, state); return; }
@@ -66,7 +69,7 @@ export function createMessageRendering(chat, { onReset = () => {} } = {}) {
     function invalidateAll() { for (const [el, state] of states) reset(el, state); }
     function environmentKey() {
         const vars = ['--mainFontSize', '--mainFontFamily', '--fontScale', '--ilg-prose-leading-user', '--ilg-prose-inset'];
-        return [root.dataset.ilgReadingStyle, ...['ilg-avline', 'ilg-indent', 'ilg-justify', 'ilg-font', 'ilg-prose-inset-on'].map(c => root.classList.contains(c)),
+        return [externalMessageRendering(chat), root.dataset.ilgReadingStyle, ...['ilg-avline', 'ilg-indent', 'ilg-justify', 'ilg-font', 'ilg-prose-inset-on'].map(c => root.classList.contains(c)),
             ...vars.map(k => root.style.getPropertyValue(k)), chat.style.getPropertyValue('--ilg-chat-font-size'),
             doc.body.style.fontFamily, doc.body.style.fontSize, doc.body.style.lineHeight, doc.body.style.letterSpacing, doc.body.style.wordSpacing, doc.body.classList.contains('documentstyle'), doc.body.classList.contains('waifuMode')].join('|');
     }
@@ -112,6 +115,9 @@ export function createMessageRendering(chat, { onReset = () => {} } = {}) {
     }
     function applyResize(el, contentHeight, contentWidth) {
         const state = states.get(el); if (!state) return;
+        // The upstream renderer may report an estimated placeholder. Never cache
+        // it as our measured height; its release triggers fresh ResizeObservers.
+        if (externalMessageRendering(chat)) { clear(el, state); return; }
         if (state.culled && state.width !== null && Number.isFinite(contentWidth) && Math.abs(contentWidth - state.width) > .25) {
             state.width = contentWidth; reset(el, state); return;
         }
@@ -150,6 +156,6 @@ export function createMessageRendering(chat, { onReset = () => {} } = {}) {
         },
         release(el) { const state = states.get(el); if (!state) return; forgetResize(el); clear(el, state); states.delete(el); if (!states.size) listen(false); },
         invalidateAll,
-        status: () => ({ supported, tracked: states.size, culled: [...states.values()].filter(s => s.culled).length }),
+        status: () => ({ supported, owner: externalMessageRendering(chat) ? 'baibai' : 'nvwa', tracked: states.size, culled: [...states.values()].filter(s => s.culled).length }),
     };
 }

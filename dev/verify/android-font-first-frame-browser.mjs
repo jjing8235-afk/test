@@ -27,7 +27,7 @@ const server=http.createServer((req,res)=>{
   const file=path.resolve(root,decodeURIComponent(url.pathname.slice(11)));
   if(!file.startsWith(root+path.sep)||!fs.existsSync(file)||!fs.statSync(file).isFile()){res.writeHead(404);res.end();return;}
   res.setHeader('content-type',({'.js':'text/javascript','.css':'text/css','.woff2':'font/woff2','.svg':'image/svg+xml'})[path.extname(file)]||'application/octet-stream');
-  const send=()=>res.end(file===path.join(root,'index.js')?fs.readFileSync(file,'utf8')+'\nwindow.__fontProbe=()=>viewportDiagnostic();':fs.readFileSync(file));
+  const send=()=>res.end(file===path.join(root,'index.js')?fs.readFileSync(file,'utf8')+'\nwindow.__fontProbe=()=>viewportDiagnostic();':fs.readFileSync(file===path.join(root,'fonts/fonts.css')&&process.env.NVWA_FONT_CSS_SOURCE?process.env.NVWA_FONT_CSS_SOURCE:file));
   if(/\/fonts\/noto-sans-sc-.*\.woff2$/.test(url.pathname)){
    fontRequests.push(path.basename(file));if(!released){pending.push(send);return;}
   }
@@ -60,10 +60,26 @@ try{
    ctx.fillStyle='#111';ctx.fillText(el.textContent.slice(0,30)+' ABCxyz0123',0,32);
    return {glyphRaster:canvas.toDataURL(),font:cs.fontFamily,lineHeight:cs.lineHeight,width:r.width,height:el.getBoundingClientRect().height,fontStatus:document.fonts.status};
   });
-  const first=await measure();releaseFonts();
+  const first=await measure();
+  // CDP captures the visible frame without Playwright waiting for held font requests.
+  await p.evaluate(()=>{
+   const source=document.querySelector('.mes_text p'),cs=getComputedStyle(source),probe=document.createElement('div');
+   probe.textContent=source.textContent.slice(0,30)+' ABCxyz0123';
+   probe.style.cssText='position:fixed;left:0;top:0;width:650px;height:100px;z-index:2147483647;background:white;color:black;line-height:32px;overflow:hidden';
+   probe.style.fontFamily=cs.fontFamily;probe.style.fontSize=cs.fontSize;probe.style.fontWeight=cs.fontWeight;
+   document.body.append(probe);
+  });
+  await p.waitForTimeout(180);
+  const clip={x:0,y:0,width:650,height:100};
+  const cdp=engine==='chromium'?await p.context().newCDPSession(p):null;
+  const pixels=async()=>cdp?(await cdp.send('Page.captureScreenshot',{format:'png',clip:{...clip,scale:1}})).data:null;
+  const firstPixels=await pixels();releaseFonts();
   await p.evaluate(()=>document.fonts.ready);await p.evaluate(()=>settle(120));
   const settled=await measure(),sameGlyphs=first.glyphRaster===settled.glyphRaster;
   for(const x of [first,settled]){x.glyphHash=createHash('sha256').update(x.glyphRaster).digest('hex');delete x.glyphRaster;}
+  const settledPixels=await pixels();
+  const sameRenderedText=cdp?firstPixels===settledPixels:null;
+  if(cdp)assert(sameRenderedText,config.name+': already-visible text changed after delayed font subsets arrived');
   const diagnostic=await p.evaluate(()=>__fontProbe());
   if(config.android){
    assert(Math.abs(first.width-settled.width)<.1&&Math.abs(first.height-settled.height)<.1,'Android text metrics change after first display');
@@ -87,7 +103,7 @@ try{
    document.querySelector('.mes_text p').style.fontFamily='serif';
   });
   assert.equal(await p.locator('.mes_text p').first().evaluate(el=>getComputedStyle(el).fontFamily),'serif','Authored card typography must remain owned by the card');
-  results.push({identity:config.name,first,settled,sameGlyphs,bundledRequests:fontRequests.length,events,typography:diagnostic.typography,hostFontRestored:true,authoredFontPreserved:true});
+  results.push({identity:config.name,first,settled,sameGlyphs,sameRenderedText,bundledRequests:fontRequests.length,events,typography:diagnostic.typography,hostFontRestored:true,authoredFontPreserved:true});
   await p.close();
  }
  assert.deepEqual(errors,[]);
