@@ -14,7 +14,7 @@ const css=fs.readFileSync(process.env.NVWA_PRESET_STYLE||path.join(root,'style.c
 const sentence='Preset rendering sample. Keep the same text, panel colours and controls while scrolling. ';
 const messages=Array.from({length:3},(_,i)=>'<div class="mes '+(i===2?'last_mes':'')+'" mesid="'+i+'"><div class="mesAvatarWrapper"><div class="avatar">A</div></div><div class="mes_block"><div class="mes_text">'+Array.from({length:32},(_,j)=>'<p>'+sentence.repeat(3)+'</p>'+(j===5?'<section class="preset-panel"><header>Preset status panel</header><article><p>'+sentence+'</p><button class="preset-action">Choice '+i+'</button><span class="preset-negative">Negative decoration</span></article></section>':'')).join('')+'</div></div></div>').join('');
 const authoredStyle='<style>.mes{flex-shrink:0}.preset-panel{border:2px solid #ff7eb6;border-radius:9px;box-shadow:0 0 14px #ff7eb633;margin:14px 0;position:relative}.preset-panel header{background:#ff7eb6;color:#201a23;padding:5px}.preset-panel article{background:#1a1d24;color:#d8dde6;padding:12px;position:relative;isolation:isolate}.preset-action{background:#ff7eb6;color:#201a23;border:0;padding:6px 12px;border-radius:4px}.preset-negative{position:absolute;z-index:-1;left:0;top:0;background:#31435a}.preset-floating{position:fixed;left:100px;top:80px;z-index:2000;background:#135;color:white}</style>';
-const source=fs.readFileSync(path.join(root,'index.js'),'utf8')+'\nwindow.__presetLayer={configure(options){Object.assign(S,options);clearAll();applyRoot();},snapshot(){const el=document.querySelector(\'.mes\'),it=items.get(el),surface=it.backdrop||el,block=el.querySelector(\'.mes_block\'),panel=el.querySelector(\'.preset-panel\'),fixed=document.querySelector(\'.preset-floating\'),r=fixed.getBoundingClientRect();return{rootIsolation:getComputedStyle(el).isolation,blockPosition:getComputedStyle(block).position,blockZ:getComputedStyle(block).zIndex,contentTransform:getComputedStyle(block).transform,backdropFilter:getComputedStyle(surface).backdropFilter,glassColor:getComputedStyle(surface).backgroundColor,panelColor:getComputedStyle(panel.querySelector(\'article\')).backgroundColor,glassZ:getComputedStyle(it.backdropClip||surface).zIndex,rimZ:getComputedStyle(el,\'::after\').zIndex,rimMask:getComputedStyle(el,\'::after\').maskImage,filterNodes:it.filter?.querySelectorAll(\'feDisplacementMap\').length||0,rootClasses:el.className,rootHeight:el.offsetHeight,glassHeight:surface.offsetHeight,fixed:{x:r.x,y:r.y},tracked:items.has(el)};}};';
+const source=fs.readFileSync(process.env.NVWA_PRESET_INDEX||path.join(root,'index.js'),'utf8')+'\nwindow.__presetLayer={configure(options){Object.assign(S,options);clearAll();applyRoot();},snapshot(){const el=document.querySelector(\'.mes\'),it=items.get(el),surface=it.backdrop||el,block=el.querySelector(\'.mes_block\'),panel=el.querySelector(\'.preset-panel\'),fixed=document.querySelector(\'.preset-floating\'),r=fixed.getBoundingClientRect();return{rootIsolation:getComputedStyle(el).isolation,blockPosition:getComputedStyle(block).position,blockZ:getComputedStyle(block).zIndex,contentTransform:getComputedStyle(block).transform,backdropFilter:getComputedStyle(surface).backdropFilter,glassColor:getComputedStyle(surface).backgroundColor,panelColor:getComputedStyle(panel.querySelector(\'article\')).backgroundColor,glassZ:getComputedStyle(it.backdropClip||surface).zIndex,rimZ:getComputedStyle(el,\'::after\').zIndex,rimMask:getComputedStyle(el,\'::after\').maskImage,filterNodes:it.filter?.querySelectorAll(\'feDisplacementMap\').length||0,rootClasses:el.className,rootHeight:el.offsetHeight,glassHeight:surface.offsetHeight,fixed:{x:r.x,y:r.y},tracked:items.has(el)};}};';
 const server=http.createServer((req,res)=>{
  const url=new URL(req.url,'http://localhost');
  if(url.pathname==='/'){
@@ -62,6 +62,32 @@ try{
   check(identity+'-scroll-stability',scroll.every(x=>Math.abs(x.desired-x.actual)<1),scroll.slice(-2));
   if(process.env.NVWA_PRESET_CAPTURE_DIR){fs.mkdirSync(process.env.NVWA_PRESET_CAPTURE_DIR,{recursive:true});await p.screenshot({path:path.join(process.env.NVWA_PRESET_CAPTURE_DIR,identity+'.png')});captures.push(identity);}
   check(identity+'-nodes-preserved',await p.evaluate(()=>originalMessage===document.querySelector('.mes')&&originalPanel===document.querySelector('.preset-panel')&&originalTextarea===document.getElementById('send_textarea')));
+  if(identity!=='desktop'&&!baseline){
+   await p.evaluate(()=>__presetLayer.configure({enabled:true,tone:'light',chatBackground:'glass'}));
+   const first=await p.evaluate(async messages=>{
+    const chat=document.getElementById('chat');
+    chat.replaceChildren();
+    await new Promise(requestAnimationFrame);
+    const start=performance.now();
+    // Recreate the same chat with no markers from an earlier visit.
+    chat.innerHTML=messages;
+    chat.querySelector('.preset-panel article').insertAdjacentHTML('beforeend','<button class="preset-floating">Fixed popup</button>');
+    chat.scrollTop=400;
+    const sample=()=>{
+     const state=__presetLayer.snapshot();
+     return {ms:Math.round(performance.now()-start),isolation:state.rootIsolation,classes:state.rootClasses,filter:state.backdropFilter,glassHeight:state.glassHeight,fixed:state.fixed};
+    };
+    const frames=[];
+    for(let i=0;i<3;i++){
+     await new Promise(requestAnimationFrame);
+     frames.push(sample());
+    }
+    await new Promise(r=>setTimeout(r,260));
+    return {frames,settled:sample()};
+   },messages);
+   check(identity+'-cold-entry-first-frames-use-final-preset-stacking',first.frames.every(x=>x.isolation==='auto'&&x.classes.includes('ilg-card-renderer')&&x.classes.includes('ilg-message-viewport')&&x.filter!=='none'&&x.glassHeight<=716&&x.fixed.x===100&&x.fixed.y===80),first);
+   check(identity+'-late-color-pass-does-not-change-stacking-or-glass',first.frames.every(x=>x.isolation===first.settled.isolation&&x.filter===first.settled.filter&&x.glassHeight===first.settled.glassHeight),first);
+  }
   await p.evaluate(()=>{const el=document.querySelector('.mes');el.querySelector('.mes_text').innerHTML='<div style="background:#1a1d24;height:120px">Short preset panel</div>';});
   await p.waitForFunction(()=>!document.querySelector('.mes').classList.contains('ilg-message-viewport'));
   check(identity+'-shrink-restores-original-stacking',await p.locator('.mes').first().evaluate(el=>getComputedStyle(el).isolation)==='isolate');

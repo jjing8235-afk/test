@@ -32,7 +32,7 @@ window.__ilgLoaded = new URL('.', import.meta.url).pathname;
 
 let studioUI = null;
 const MODULE = 'iosLiquidGlass';
-const BUILD_VERSION = '2.0.10-test.16';
+const BUILD_VERSION = '2.0.10-test.17';
 const ENGINE_NAMES = Object.freeze({performance:'御风性能引擎',refraction:'棱光折射引擎'});
 const NS = 'http://www.w3.org/2000/svg';
 const ctx = SillyTavern.getContext();
@@ -1040,6 +1040,13 @@ function messageSurface(el, it) {
     // Prepare the owned wrapper before folding. CSS switches at the width breakpoint,
     // so an expanded frame does not wait for a resize callback to bound its backdrop.
     const viewportReady = androidHost && it.largeWebView && CSS.supports('overflow', 'clip');
+    // The wide Android split needs the preset marker on its very first paint,
+    // not after the debounced color pass changes the message's stacking context.
+    if (viewportReady && !it.widePresetPrepared && innerWidth >= 600) {
+        it.widePresetPrepared = true;
+        const text = el.querySelector('.mes_text');
+        if (!el.classList.contains('ilg-card-renderer') && text?.querySelector(CARD_RENDERER_CANDIDATES)) applyCardMarkers(text);
+    }
     const separate = viewportReady || el.classList.contains('ilg-content-overlay') || el.classList.contains('ilg-card-renderer');
     el.classList.toggle('ilg-message-backdrop', separate);
     el.classList.toggle('ilg-message-viewport', viewportReady);
@@ -3991,7 +3998,10 @@ const cardColors = el => {
     }
     return { best };
 };
-function tagCard(text) {
+const CARD_PANELS = 'div, section, article, aside, details, summary, dialog, button, [role="dialog"], [role="button"], [role="menu"], [role="listbox"], [role="option"]';
+const CARD_CHOICES = 'button, select, option, input[type="button"], input[type="submit"], [role="button"], [role="option"]';
+const CARD_RENDERER_CANDIDATES = 'iframe, ' + CARD_PANELS + ', ' + CARD_CHOICES;
+function applyCardMarkers(text) {
     // 以 <html> 上的 class 为准：CSS 也是按它配色的
     const light = root.classList.contains('ilg-light');
     let fixedOverlay = false, cardRenderer = false;
@@ -4006,8 +4016,8 @@ function tagCard(text) {
             if (k.matches('img, video, svg, canvas, q, em, i, b, strong, br')) continue;
             const c = blockBg(k, cs);
             const frame = k.matches('iframe');
-            const panel = frame || k.matches('div, section, article, aside, details, summary, dialog, button, [role="dialog"], [role="button"], [role="menu"], [role="listbox"], [role="option"]');
-            const choice = k.matches('button, select, option, input[type="button"], input[type="submit"], [role="button"], [role="option"]');
+            const panel = frame || k.matches(CARD_PANELS);
+            const choice = k.matches(CARD_CHOICES);
             // 底色也可能画在 ::before / ::after 上（模板常用这招），这种情况元素自身读不到背景，得一起算进来
             const card = panel ? cardColors(k) : { best: null };
             // 自绘卡片走独立的模糊底层，避开整条消息的 SVG 合成（见 paint()）。
@@ -4035,8 +4045,12 @@ function tagCard(text) {
     if (message && (message.classList.contains('ilg-content-overlay') !== fixedOverlay || message.classList.contains('ilg-card-renderer') !== cardRenderer)) {
         message.classList.toggle('ilg-content-overlay', fixedOverlay);
         message.classList.toggle('ilg-card-renderer', cardRenderer);
-        paint(message);
+        return message;
     }
+}
+function tagCard(text) {
+    const changed = applyCardMarkers(text);
+    if (changed) paint(changed);
 }
 // 普通正文段落标记：阅读配色（.ilg-prose）和首行缩进（.ilg-indentable）只给“没有自带 class/style、里面没有图片/控件/div 等”的直接段落。
 // 原来 CSS 用 :not(:has(...)) 现场判断，可 :has() 让流式输出每次改字都要重查（每次约 3ms 样式重算）。
