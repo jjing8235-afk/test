@@ -1,6 +1,6 @@
 {
-  "currentVersion": "2.0.10-test.22",
-  "currentDisplayVersion": "2.0.10-test.22",
+  "currentVersion": "2.0.10-test.23",
+  "currentDisplayVersion": "2.0.10-test.23",
   "date": "2026-11-05",
   "version": "1.4.4-local.9",
   "baseline": "1.4.4-local.8",
@@ -6560,5 +6560,13 @@
       "ttWebView": {"mountMsBefore": [591.5, 598.2], "mountMsAfter": [236.9, 237.3], "frameP95MsBefore": [20.9, 20.9], "frameP95MsAfter": [16.7, 16.7]}
     },
     "limits": ["Desktop browser simulation, not measurements on a physical phone or the TT application.", "Synthetic cards and programmatic scrolling; no private data or model calls.", "Physical keyboard inset, sustained thermals and actual foldable screen flicker remain device checks."]
+  },
+  "mobileInsetTest23": {
+    "version": "2.0.10-test.23",
+    "date": "2026-11-20",
+    "reproducedBefore": "At 360 CSS pixels, a 14px inset produced 14px left and 0px right.",
+    "isolatedSillyTavern": "Paired insets, capped paragraph centering, author card and first-line indent preserved.",
+    "mobileViewportSimulation": "Android WebView on desktop Edge and iPhone on desktop WebKit both produced 24px on each side.",
+    "physicalDevice": false
   }
 }

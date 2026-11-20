@@ -108,8 +108,7 @@ html.ilg-indent #chat, .ilg-type-page[data-ilg-type-indent] { --ilg-type-base-in
     border-radius: var(--ilg-type-body-mark-radius);
     box-shadow: var(--ilg-type-body-mark-shadow);
     padding-block: var(--ilg-type-body-mark-block);
-    padding-inline-start: calc(var(--ilg-type-inset, 0px) + var(--ilg-type-body-mark-inset));
-    padding-inline-end: var(--ilg-type-inset, 0px);
+    padding-inline: calc(var(--ilg-type-inset, 0px) + var(--ilg-type-body-mark-inset));
 }
 /* Proof paper and tool controls share the workbench chrome, not chat type. */
 .ilg-type-studio { color:var(--s-fg,#23313a); padding-block: 0 12px; }

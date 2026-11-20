@@ -49,12 +49,12 @@ try {
     async function seed() {
         await page.evaluate(()=>{
             const chat=document.querySelector('#chat');
-            chat.innerHTML=`<div class="mes last_mes" is_user="false" mesid="0"><div class="mes_block"><div class="mes_text">
+            chat.innerHTML=`<div class="mes last_mes" is_user="false" mesid="0" style="width:100%;max-width:none"><div class="mes_block"><div class="mes_text">
               <p data-check="plain">月光亮在旧书店里。<q>“留下来。”</q> <em>她没有说话。</em> <strong>不急。</strong> <a href="#">书签</a></p>
               <blockquote data-check="block">Handwritten note · 页角批注</blockquote>
               <p data-check="code">Use <code>printf()</code> for code.</p>
               <p class="author-owned" style="color:rgb(17,82,33);font:19px serif" data-check="owned">Card-specified paragraph</p>
-              <div class="card-own"><p style="color:rgb(66,77,88)">Author panel</p></div>
+              <div class="card-own"><p style="color:rgb(66,77,88);padding-inline:7px 19px">Author panel</p></div>
               <iframe title="Authored frame" srcdoc="<p style='color:rgb(77, 88, 99)'>Own frame</p>"></iframe>
             </div></div></div><div class="mes" mesid="1" is_system="true"><div class="mes_text"><p data-check="system">System message</p></div></div>`;
         });
@@ -89,6 +89,21 @@ try {
     for (const key of ['leading','inset']) assert(await common.locator('#ilg-type-'+key).isVisible());
     assert.equal(await controlValue('leading'),'2.45'); assert.equal(await controlValue('inset'),'14');
     assert.equal(await css(body,'paddingInlineEnd'),'14px');
+    const gutters = selector => page.locator(selector).evaluate(el => {
+        const style = getComputedStyle(el), outer = getComputedStyle(el.parentElement);
+        const parent = el.parentElement.getBoundingClientRect(), box = el.getBoundingClientRect();
+        return {
+            start: parseFloat(style.paddingInlineStart), end: parseFloat(style.paddingInlineEnd), width: box.width, parentWidth: parent.width, max: style.maxInlineSize,
+            left: box.left - parent.left - parseFloat(outer.paddingLeft) - parseFloat(outer.borderLeftWidth),
+            right: parent.right - box.right - parseFloat(outer.paddingRight) - parseFloat(outer.borderRightWidth),
+        };
+    });
+    for (const width of [360, 691, 1000]) {
+        await page.setViewportSize({width,height:840});
+        const {start,end} = await gutters(body);
+        assert.deepEqual([start,end],[14,14],`Migrated mobile inset is symmetric at ${width}px`);
+    }
+    await page.setViewportSize({width:1280,height:860});
     const beforeLine=await css(body,'lineHeight');
     await select('body-face','serif');
     await preset('classic').click();
@@ -113,7 +128,7 @@ try {
         assert(await page.locator('#'+id).isVisible());
     }
     await fill('tracking','.045'); await fill('gap','.7');
-    await fill('inset','6'); await fill('indent','1'); await fill('measure','30'); await select('align','start');
+    await fill('inset','6'); await fill('indent','1'); await fill('measure','16'); await select('align','start');
     await select('body-face','serif'); await fill('body-weight','450'); await fill('body-day','#203841'); await fill('body-night','#dfeae4');
     const pick = (role, key) => page.locator('[data-type-marks="'+role+'"] .ilg-type-mark-tile').filter({has:page.locator('[data-type-mark][value="'+key+'"]')}).click();
     const markRole = role => page.locator('.ilg-type-mark-tabs label').filter({has:page.locator('[name="ilg-type-mark-role"][value="'+role+'"]')}).click();
@@ -171,6 +186,20 @@ try {
     assert.deepEqual(await textShape(body+' q'),['italic','700','25.3px']);
     assert.deepEqual(await textShape(body),['normal','450','22px']);
     assert.notEqual(await css(body,'boxShadow'),'none');
+
+    for (const width of [360, 691, 1000, 1280]) {
+        await page.setViewportSize({width,height:860});
+        const metrics = await gutters(body);
+        const {start,end,left,right} = metrics;
+        assert(start > 6 && start === end, `Marked prose keeps even inner padding at ${width}px: ${start}/${end}`);
+        assert(Math.abs(left - right) < 1, `Capped prose stays centered at ${width}px: ${left}/${right}`);
+        if (width === 1000) assert(left > 10, JSON.stringify(metrics));
+        assert.equal(await css(body,'textIndent'),'22px','Paragraph inset does not remove first-line indent');
+        const author = await gutters('.card-own > p');
+        assert.deepEqual([author.start,author.end],[7,19],'Card-owned padding stays untouched');
+    }
+    const proofGutters = await gutters(proofFirst);
+    assert.equal(proofGutters.start,proofGutters.end,'The proof sheet uses the same symmetric mark padding');
     assert.equal(await css('[data-check="code"]','boxShadow'),'none');
     assert.equal(await css('[data-check="owned"]','boxShadow'),'none');
     assert.equal(await css(body+' q','color'),'rgb(183, 202, 239)');
@@ -261,7 +290,7 @@ try {
         await page.screenshot({path:path.join(out,'字体工坊-细调说明-窄屏.png')});
     }
     assert.deepEqual(errors,[]);
-    console.log('Isolated SillyTavern + desktop Edge passed: four keyboard-accessible presets, automatic spacing inheritance, legacy spacing migration, field hints, draft/day/night, independent quick styles and marks, protected renderers, file validation/IndexedDB reload/removal, profile JSON/save/reload, 360/600/1100/1280 CSS widths.');
+    console.log('Isolated SillyTavern + desktop Edge passed: four keyboard-accessible presets, automatic spacing inheritance, legacy spacing migration, field hints, draft/day/night, independent quick styles and marks, protected renderers, file validation/IndexedDB reload/removal, profile JSON/save/reload, paired mobile insets and capped paragraph centering, responsive layouts.');
 } catch (error) {
     console.error('Isolated host log:', serverLog,'\nBrowser errors:',errors);
     throw error;

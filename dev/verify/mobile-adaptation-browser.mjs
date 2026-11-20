@@ -16,5 +16,12 @@ assert.equal(await page.locator('#ilg-type-leading').inputValue(), '');
 assert.equal(await page.locator('[data-type-range="leading"]').getAttribute('aria-valuetext'), '跟随风格');
 await page.locator('[data-type-action="apply"]').tap();
 assert.equal(await page.locator('html').getAttribute('data-ilg-reading-style'), 'moon');
+await page.locator('#ilg-type-inset').fill('24');
+await page.locator('[data-type-action="apply"]').tap();
+const plainPadding = await page.locator('#chat .mes_text > p.ilg-type-prose').evaluate(el => {
+    const style = getComputedStyle(el);
+    return [style.paddingInlineStart, style.paddingInlineEnd];
+});
+assert.deepEqual(plainPadding, ['24px','24px'], 'Custom prose inset is symmetric on the phone viewport');
 assert.deepEqual(errors, []);
-const out=path.join(root,'dev/verify/out/mobile-adaptation');fs.mkdirSync(out,{recursive:true});await page.screenshot({path:path.join(out,engine+'-'+config.platform+'.png'),scale:'css'});results.push({platform:config.platform,viewport:[config.width,config.height,config.dpr],actualVersion:true,renderPolicy:true,localFallbackOnly:config.platform==='android',capture:true,privacy:true,typographyTouch:true,errors,physicalDevice:false});await context.close();}console.log(JSON.stringify({engine,passed:true,results},null,2));}finally{await browser?.close();await new Promise(r=>server.close(r))}
+const out=path.join(root,'dev/verify/out/mobile-adaptation');fs.mkdirSync(out,{recursive:true});await page.screenshot({path:path.join(out,engine+'-'+config.platform+'.png'),scale:'css'});results.push({platform:config.platform,viewport:[config.width,config.height,config.dpr],actualVersion:true,renderPolicy:true,localFallbackOnly:config.platform==='android',capture:true,privacy:true,typographyTouch:true,insetSymmetry:true,errors,physicalDevice:false});await context.close();}console.log(JSON.stringify({engine,passed:true,results},null,2));}finally{await browser?.close();await new Promise(r=>server.close(r))}
