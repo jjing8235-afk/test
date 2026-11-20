@@ -1,3 +1,11 @@
+# 2.0.10-test.22 · 手机御风同步 · 2026-11-20
+
+以通用测试版 `632e4a0` 为基线移植正式 2.0.5 御风试用改动，保留测试安装身份、`iosLiquidGlass` 和设置版本 9。不替换 `install/` 中配套正式安装脚本。两类手机路径用同一测试仓库，无需拆包。
+
+- `mobile-adaptation-browser.mjs`：窄窗口的 iPhone 与 TT WebView 路径、诊断隐私、触屏预设。使用已安装的 Chromium / WebKit。
+- `tt-scroll-host-browser.mjs`：让本地独立 ST 走 Android 浏览器或 TT WebView 路径，覆盖普通与超长楼层、晚到图片、折叠宽度、固定浮窗及输入区玻璃；使用空白的独立设置夹具，不使用运行中的数据。
+- `mobile-engine-browser.mjs`：`NVWA_MOBILE_BASELINE` 指向旧测试检出，桌面 Chromium，4 倍 CPU 降速，240 个人工卡片；两轮交错对比同步挂装耗时和脚本滚动期间的帧间隔。用来对照变更，不能换算为真机帧率。
+
 # 2.0.10-test.21 · 自带样式优先于对比度兜底 · 2026-11-18
 
 `style.css` 将 `.ilg-lit` / `.ilg-dim` 的对比度规则放进现有 `nvwa-card-defaults` 层，预设样式表的显式字色优先。保留标记、玻璃分层、屏外尺寸优化和普通正文样式。用 v0.82 样式做隔离开关对照；用户预设未收录，外链素材以本地样式替代，脚本未执行。

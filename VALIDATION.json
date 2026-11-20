@@ -1,6 +1,6 @@
 {
-  "currentVersion": "2.0.10-test.21",
-  "currentDisplayVersion": "2.0.10-test.21",
+  "currentVersion": "2.0.10-test.22",
+  "currentDisplayVersion": "2.0.10-test.22",
   "date": "2026-11-05",
   "version": "1.4.4-local.9",
   "baseline": "1.4.4-local.8",
@@ -6539,5 +6539,26 @@
       "Preset scripts and external assets were not executed or loaded.",
       "Shared-performance legacy harness has a stale repaintVisible instrumentation hook."
     ]
+  },
+  "mobileYufengTest22": {
+    "version": "2.0.10-test.22",
+    "date": "2026-11-20",
+    "baseline": "632e4a049ec4261dfe2f1225ac9555d05ca99aec",
+    "host": "SillyTavern 1.18.0 with a disposable profile",
+    "browserChecks": {
+      "androidNativeHost": 51,
+      "ttAndroidWebViewHost": 51,
+      "compatibilityMatrix": 26,
+      "iphoneTouchTypography": "Windows WebKit, 402 CSS pixels",
+      "ttAndroidTouchTypography": "Windows Edge, 360 CSS pixels"
+    },
+    "syntheticMobileBenchmark": {
+      "cardCount": 240,
+      "cpuThrottle": 4,
+      "repetitionsPerVariantAndIdentity": 2,
+      "androidBrowser": {"mountMsBefore": [582.1, 584.9], "mountMsAfter": [234.3, 241.0], "frameP95MsBefore": [20.8, 20.8], "frameP95MsAfter": [20.7, 20.8]},
+      "ttWebView": {"mountMsBefore": [591.5, 598.2], "mountMsAfter": [236.9, 237.3], "frameP95MsBefore": [20.9, 20.9], "frameP95MsAfter": [16.7, 16.7]}
+    },
+    "limits": ["Desktop browser simulation, not measurements on a physical phone or the TT application.", "Synthetic cards and programmatic scrolling; no private data or model calls.", "Physical keyboard inset, sustained thermals and actual foldable screen flicker remain device checks."]
   }
 }
