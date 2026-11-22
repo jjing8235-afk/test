@@ -36,6 +36,29 @@ assert.equal(defaults.chatVeil,45);assert.equal(Object.hasOwn(defaults,'cardSoli
 for (const [input,expected] of [[undefined,45],[null,45],['60',45],[NaN,45],[Infinity,45],[-10,0],[0,0],[44.6,45],[100,100],[130,100]]) assert.equal(normalizeVeil(input),expected);
 const {createAppearanceBookmark}=await import('../../appearance-bookmark.js');
 const bookmark=createAppearanceBookmark(defaults);
+assert.equal(defaults.bubbleBlur, 3.5);
+const blurContext = { DEFAULTS: defaults, MAX_INNER_GLASS_BLUR: 16 };
+const normalizeBlur = vm.runInNewContext(bodyOf('normalizeBubbleBlur') + ';normalizeBubbleBlur', blurContext);
+for (const [input, expected] of [[undefined, 3.5], ['8', 3.5], [null, 3.5], [NaN, 3.5], [Infinity, 3.5], [-1, 0], [0, 0], [8.3, 8.5], [30, 16]]) {
+    assert.equal(normalizeBlur(input), expected);
+}
+const blurBookmark = bookmark.capture({ ...defaults, bubbleStyle: 'double', bubbleBlur: 0, chatVeil: 26 });
+assert.equal(bookmark.read(blurBookmark).bubbleBlur, 0);
+assert.equal(bookmark.read(blurBookmark).chatVeil, 26);
+assert.equal(bookmark.read({ ...blurBookmark, values: { ...blurBookmark.values, bubbleBlur: 17 } }), null);
+for (const enabled of [true, false]) for (const bubbleStyle of ['classic', 'double']) for (const bubbleBlur of [0, 8.5]) {
+    const S = { enabled, bubbleStyle, bubbleBlur, chatVeil: 26, chatBackground: 'transparent', tint: .08, barBlur: .25 };
+    const filterKey = '--ilg-bubble-inner-filter';
+    const properties = new Map([[filterKey, 'blur(3.5px)'], ['--ilg-tint', 'transparent']]);
+    const root = { style: { setProperty: (key, value) => properties.set(key, value), removeProperty: key => properties.delete(key) } };
+    vm.runInNewContext(bodyOf('applyBubbleBlur') + ';applyBubbleBlur()', { S, root, normalizeBubbleBlur: normalizeBlur });
+    assert.equal(properties.get(filterKey), enabled && bubbleStyle === 'double' && bubbleBlur ? 'blur(8.5px)' : undefined);
+    assert.equal(properties.get('--ilg-tint'), 'transparent');
+    assert.equal(S.chatVeil, 26);
+    assert.equal(S.chatBackground, 'transparent');
+    assert.equal(S.barBlur, .25);
+    assert.equal(S.tint, .08);
+}
 const captured=bookmark.capture({...defaults,chatVeil:38,cardSolid:true});assert.equal(captured.values.chatVeil,38);assert(!Object.hasOwn(captured.values,'cardSolid'));
 assert.equal(bookmark.read(captured).chatVeil,38);assert.equal(bookmark.read({...captured,values:{...captured.values,chatVeil:101}}),null);
 const legacy=bookmark.read({...captured,values:{chatBackground:'glass',cardSolid:true}});assert.equal(legacy.chatBackground,'glass');assert(!Object.hasOwn(legacy,'cardSolid'));assert(!Object.hasOwn(legacy,'chatVeil'));

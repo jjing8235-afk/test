@@ -18,7 +18,7 @@ export function createSettingsPanel({host, content, appearance, typography, vers
  const dialog=document.createElement('dialog');dialog.id='ilg-studio';dialog.className='ilg-studio';dialog.setAttribute('aria-labelledby','ilg-studio-title');
  dialog.innerHTML='<div class="ilg-studio-layout"><aside class="ilg-studio-rail"><div class="ilg-studio-brand"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M4 14Q16 1 28 14Q16 27 4 14Zm0 5Q16 6 28 19Q16 32 4 19Z"/></svg><div><h1 id="ilg-studio-title">液态玻璃</h1><p>NVWA 外观工作台</p></div></div><nav class="ilg-studio-nav" role="tablist" aria-label="设置分类"></nav><div class="ilg-studio-power"><span class="ilg-studio-state" role="status"></span><div class="ilg-studio-master"></div></div></aside><main class="ilg-studio-body"></main></div><button type="button" class="ilg-appearance-close ilg-studio-close" aria-label="关闭玻璃设置"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 7 10 10M17 7 7 17"/></svg></button>';
  dialog.querySelector('.ilg-studio-brand p').textContent='NVWA · '+(engines.performance||'外观工作台');
- const groups=[['glass','外观与材质','选一种玻璃，留一份自己的外观。'],['layout','界面布局','安排顶栏、输入区与首页。'],['text','阅读文字','为长时间阅读留出舒服的节奏。'],['diagnostics','高级与兼容','基础效果、性能与环境适配。']];
+ const groups=[['glass','外观与材质','选一种玻璃，留一份自己的外观。'],['layout','界面布局','调整聊天气泡、顶栏、输入区与首页。'],['text','阅读文字','为长时间阅读留出舒服的节奏。'],['diagnostics','高级与兼容','基础效果、性能与环境适配。']];
  const pages=new Map(), nav=dialog.querySelector('nav'), main=dialog.querySelector('main');
  content.querySelector('.inline-drawer-header')?.remove();const old=content.querySelector('.inline-drawer-content');const oldNodes=[...old.childNodes];old.replaceChildren();content.replaceChildren();content.classList.add('ilg-studio-settings');main.append(content);
  for(const[key,title,description]of groups){const tab=document.createElement('button');tab.type='button';tab.id='ilg-studio-tab-'+key;tab.dataset.studioTab=key;tab.setAttribute('role','tab');tab.setAttribute('aria-controls','ilg-studio-page-'+key);tab.innerHTML=svg(key)+'<span>'+title+'</span>';nav.append(tab);const section=document.createElement('section');section.id='ilg-studio-page-'+key;section.dataset.studioPage=key;section.setAttribute('role','tabpanel');section.setAttribute('aria-labelledby',tab.id);section.innerHTML='<div class="ilg-studio-section-heading"><h2>'+title+'</h2><p>'+description+'</p></div>';pages.set(key,section);content.append(section);}
@@ -64,13 +64,15 @@ export function createSettingsPanel({host, content, appearance, typography, vers
  material.after(toneGroup);
  policy.addEventListener('change',()=>{const value=policy.value==='manual'?(modes.querySelector('input:checked')?.value||'custom'):policy.value;const legacy=document.getElementById('ilg-opt-tone');legacy.value=value==='custom'?'auto':value;legacy.dispatchEvent(new Event('change',{bubbles:true}));sync();});
  const bgRow=opt('chatBackground');
- card('text','背景与可读性',[bgRow,opt('chatVeil'),opt('panelRead')],pickHint(bgRow,'ilg-chat-background-hint'));
+ card('text','背景与可读性',[bgRow,opt('chatVeil'),opt('bubbleBlur'),opt('panelRead')],pickHint(bgRow,'ilg-chat-background-hint'));
  const webGroup=card('glass','漾卿 · 弧度',[webPresets]);webGroup?.classList.add('ilg-studio-web-presets');if(webGroup)appearance.append(webGroup);
  const tuning=staging.querySelector('#ilg-fine-tuning');
  if(tuning){const presets=tuning.querySelector('.ilg-presets');if(presets){const g=card('glass','映卿 · 弧度',[presets],'弧度与清透度可以分别调整。');g?.classList.add('ilg-studio-original-presets');presets.previousElementSibling?.classList.contains('ilg-sub')&&presets.previousElementSibling.remove();}tuning.querySelector('.ilg-sub')?.remove();const g=card('glass','',[tuning]);g?.classList.add('ilg-tuning-group');}
  card('glass','光感',[opt('mobileTilt'),staging.querySelector('#ilg-tilt-controls')]);
  const saved=staging.querySelector('#ilg-opt-savedAppearance');saved?.querySelector('.ilg-saved-summary')?.remove();
  card('glass','我的外观',[saved]);
+ const bubbleRow=opt('bubbleStyle');
+ card('layout','聊天消息',[bubbleRow,opt('avatar'),opt('orb')],pickHint(bubbleRow,'ilg-bubble-style-hint'));
  card('layout','悬浮小球',[opt('floatBall')]);
  const ballDetails=disclosure('layout','拖动与融合',[opt('ballSnap'),opt('ballFuse')]);
  // Folded layout with two optional shortcuts; legacy controls retain saved-look bindings.
@@ -78,7 +80,7 @@ export function createSettingsPanel({host, content, appearance, typography, vers
  const legacyTop=document.createElement('div');legacyTop.hidden=true;[opt('islands'),opt('fold')].filter(Boolean).forEach(n=>legacyTop.append(n));
  card('layout','顶栏',[topChoice,staging.querySelector('#ilg-opt-topShortcuts'),opt('toneBtn'),legacyTop]);
  card('layout','输入框样式',[appearance.querySelector('.ilg-composer-choice'),opt('qrFold')]);
- card('layout','首页与聊天',[opt('home'),opt('homeName'),opt('avatar'),opt('orb')]);
+ card('layout','首页',[opt('home'),opt('homeName')]);
  const fontRow=opt('chatFontSize'), nativeText=[opt('firstLineIndent'),opt('justifyText'),fontRow], nativeHint=pickHint(fontRow,'ilg-chat-font-hint');
  pages.get('text').append(typography);
  disclosure('text','酒馆原有排版',nativeText,nativeHint);

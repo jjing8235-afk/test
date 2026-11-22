@@ -4,14 +4,14 @@ import { migrateProseSpacing, normalizeTypography } from './typography.js';
 
 const OMIT = new Set(['enabled','customWallpaper','cssCleaned','cssBackup','cssBackupAt','lookBackup','themeBackup']);
 const ENUMS = {
-    chatBackground:['glass','transparent'], compatibilityMode:['auto','blur'],
+    bubbleStyle:['classic','double'], chatBackground:['glass','transparent'], compatibilityMode:['auto','blur'],
     tone:['time','system','auto','light','dark'], avatar:['line','side'],
     ballSide:['left','right'], webPreset:['clear','thin','soft','crystal'],
     composerLayout:['classic','unified','split'], glassStyle:['original','liquid-web'], engine:['physical','legacy'],
     customTextTone:['auto','dark','light'], readingStyle:['warm','classic','moon','sunny'],
     profile:['lens','squircle','circle','soft'],
 };
-const BOUNDS = {chatVeil:[0,100],dayStart:[0,23],dayEnd:[1,24],chatFontSize:[0,32],proseLeading:[0,2.6],proseInset:[0,48],ballY:[0,1],ballFx:[0,1],ballFy:[0,1],pLight:[0,360]};
+const BOUNDS = {bubbleBlur:[0,16],chatVeil:[0,100],dayStart:[0,23],dayEnd:[1,24],chatFontSize:[0,32],proseLeading:[0,2.6],proseInset:[0,48],ballY:[0,1],ballFx:[0,1],ballFy:[0,1],pLight:[0,360]};
 const plain = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 export function createAppearanceBookmark(defaults, sliders = []) {
     const keys = Object.keys(defaults).filter(key => !OMIT.has(key));

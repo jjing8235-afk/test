@@ -11,6 +11,11 @@ export { sampleWebDisplacement, sampleWebMap } from './web-map-raster.js';
  */
 const NS = 'http://www.w3.org/2000/svg';
 export const FILTER_TAIL = 'contrast(1.2) brightness(1.05) saturate(1.1)';
+const CONTROL_TAIL = 'contrast(1.04) brightness(1.02) saturate(1.12)';
+export function webCompatibleFilter(recipe, control = false) {
+    const blur = control ? Math.max(3.5, recipe.blur) : recipe.blur;
+    return `blur(${blur}px) ${control ? CONTROL_TAIL : FILTER_TAIL}`;
+}
 const PRESS_STRENGTH = 1.3;
 // 悬浮小球融合形状要和单独那颗球用同一个归一化系数，才不会一融合就变强 / 变弱（ball-glass.js）
 export function webMapHalf(width, height, preset, strength = 1, bendY = 1) { return displacement(width, height, preset, strength, bendY).scale; }
@@ -41,6 +46,7 @@ export function createLiquidGlassWeb({ workerFactory } = {}) {
     }
     function release(el) {
         if (!known.has(el)) return;
+        preparation.cancel(el);
         if (active?.el === el) active = null;
         stopAnimation(el); el.classList.remove('ilg-web-pressed', 'ilg-web-glass');
         el.style.removeProperty('--ilg-web-tint');
@@ -64,7 +70,7 @@ export function createLiquidGlassWeb({ workerFactory } = {}) {
         const preset = normalizeWebPreset(options.preset), recipe = webPresetOf(preset);
         const strength = item.webStrength || 1, bendY = options.bendY || 1, refractionScale = options.refractionScale ?? 1;
         const control = options.controlCore === true;
-        const tone = control ? 'contrast(1.04) brightness(1.02) saturate(1.12)' : FILTER_TAIL;
+        const tone = control ? CONTROL_TAIL : FILTER_TAIL;
         if (refract && !failed) {
             try {
                 const key = Math.round(width) + 'x' + Math.round(height) + ':' + preset + ':' + strength + ':' + bendY + ':' + control + ':' + options.radius + ':' + options.controlBlur + ':' + refractionScale;
@@ -80,7 +86,7 @@ export function createLiquidGlassWeb({ workerFactory } = {}) {
                         // Retain the complete displayed material while its replacement is prepared.
                         el.style.setProperty('--ilg-web-tint', item.web.tint);
                         if (!present(el, options, item.web.value)) {
-                            const fallback = 'blur(' + (control ? Math.max(3.5, recipe.blur) : recipe.blur) + 'px) ' + tone;
+                            const fallback = webCompatibleFilter(recipe, control);
                             el.style.backdropFilter = fallback; el.style.webkitBackdropFilter = fallback;
                         }
                         return;
@@ -112,7 +118,7 @@ export function createLiquidGlassWeb({ workerFactory } = {}) {
             }
         } else { preparation.cancel(el); item.webWanted = null; }
         el.style.setProperty('--ilg-web-tint', recipe.tint);
-        const value = 'blur(' + (control ? Math.max(3.5, recipe.blur) : recipe.blur) + 'px) ' + tone;
+        const value = webCompatibleFilter(recipe, control);
         el.style.backdropFilter = value; el.style.webkitBackdropFilter = value;
     }
     function resolve(target) {

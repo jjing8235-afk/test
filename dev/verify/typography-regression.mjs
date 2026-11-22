@@ -15,7 +15,7 @@ const rejected=[null,[],{size:'20'},{size:Infinity},{leading:4},{tracking:-.19},
     {'body-day':'rgb(1,2,3)'},{'body-day':'#abcdefgh'},{'font-feature-settings':'anything'},JSON.parse('{"__proto__":{}}')];
 for (const value of rejected) assert.equal(normalizeTypography(value),null,JSON.stringify(value));
 for (const [file,expected] of [['字型.TTF',true],['a.woff',true],['fake\\folder.otf',false],['fake;data.png',false],['\u0000name.otf',false]]) assert.equal(validFontFile(file),expected);
-const bookmark=createAppearanceBookmark({readingStyle:'warm',typography:null});
+const bookmark=createAppearanceBookmark({readingStyle:'warm',bubbleStyle:'classic',typography:null});
 const oldSettings={readingStyle:'moon',proseLeading:2.4,proseInset:16,typography:{leading:2.2,size:20}};
 const migrated={...oldSettings};
 migrateProseSpacing(migrated); migrateProseSpacing(migrated);
@@ -25,8 +25,11 @@ assert.deepEqual(spacingBookmark.read(spacingBookmark.capture(oldSettings)),migr
 const combined=spacingBookmark.read({version:1,savedAt:'2026-11-19T00:00:00Z',values:{proseLeading:2.3,proseInset:9}});
 assert.deepEqual(combined,{proseLeading:0,proseInset:0,typography:{leading:2.3,inset:9}});
 const snapshot=bookmark.capture(settings);
+assert.equal(bookmark.read(snapshot).bubbleStyle,'classic');
+assert.equal(bookmark.read(bookmark.capture({...settings,bubbleStyle:'double'})).bubbleStyle,'double');
+assert.equal(bookmark.read({...snapshot,values:{bubbleStyle:'unexpected'}}),null);
 assert.deepEqual(bookmark.read(snapshot).typography,normalizeTypography(settings.typography));
-assert(bookmark.same({...settings,typography:normalizeTypography(settings.typography)},bookmark.read(snapshot)));
+assert(bookmark.same({...settings,bubbleStyle:'classic',typography:normalizeTypography(settings.typography)},bookmark.read(snapshot)));
 assert.deepEqual(bookmark.read({...snapshot,values:{readingStyle:'classic'}}),{readingStyle:'classic',typography:null});
 assert.equal(bookmark.read({...snapshot,values:{readingStyle:'classic',typography:{size:999}}}),null);
 console.log(`Typography: strict settings and profile boundary (${rejected.length} rejected inputs), local filename checks, legacy spacing migration, legacy and custom appearance bookmarks passed.`);

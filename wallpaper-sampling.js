@@ -24,7 +24,7 @@ export function wallpaperPoint(layout,x,y) {
 }
 const linear=v=>(v/=255)<=.04045?v/12.92:((v+.055)/1.055)**2.4;
 const luminance=c=>.2126*linear(c[0])+.7152*linear(c[1])+.0722*linear(c[2]);
-const inks={dark:luminance([39,49,61]),light:luminance([241,244,248])};
+const inks={dark:0,light:1};
 export function topTone(average,previous,colors=[]) {
     if(!Number.isFinite(average))return null;
     const samples=(colors.length?colors:[[average*255,average*255,average*255]]).map(luminance);

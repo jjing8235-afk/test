@@ -37,7 +37,7 @@
     letter-spacing: var(--ilg-type-tracking, var(--ilg-type-default-tracking, var(--ilg-prose-tracking)));
     word-spacing: var(--ilg-type-word, normal);
     max-inline-size: var(--ilg-type-measure, none);
-    color: var(--ilg-type-ink-body, var(--ilg-prose-text)) !important;
+    color: var(--ilg-render-body, var(--ilg-type-ink-body, var(--ilg-prose-text))) !important;
     text-align: var(--ilg-type-align, var(--ilg-type-base-align, inherit));
     text-align-last: var(--ilg-type-align-last, var(--ilg-type-base-align-last, auto));
 }
@@ -62,10 +62,10 @@ html.ilg-indent #chat, .ilg-type-page[data-ilg-type-indent] { --ilg-type-base-in
     font-family: var(--ilg-type-block-face, var(--ilg-type-body-face, var(--ilg-prose-font, inherit)));
     font-style: var(--ilg-type-block-style, normal);
     font-weight: var(--ilg-type-block-weight, var(--ilg-type-body-weight, 400));
-    color: var(--ilg-type-ink-block, var(--ilg-prose-muted)) !important;
+    color: var(--ilg-render-block, var(--ilg-type-ink-block, var(--ilg-prose-muted))) !important;
 }
 :is(html.ilg[data-ilg-typography] body #chat .mes:not(.smallSysMes):not([is_system="true"]) .mes_text:not([style]) > .ilg-type-prose, .ilg-type-page .ilg-type-line) q {
-    color: var(--ilg-type-ink-quote, var(--ilg-prose-quote)) !important;
+    color: var(--ilg-render-quote, var(--ilg-type-ink-quote, var(--ilg-prose-quote))) !important;
     font-family: var(--ilg-type-quote-face, inherit);
     font-style: var(--ilg-type-quote-style, normal);
     font-size: calc(var(--ilg-type-base-size) * var(--ilg-type-quote-scale, 1));
@@ -83,19 +83,19 @@ html.ilg-indent #chat, .ilg-type-page[data-ilg-type-indent] { --ilg-type-base-in
     box-decoration-break: clone;
 }
 :is(html.ilg[data-ilg-typography] body #chat .mes:not(.smallSysMes):not([is_system="true"]) .mes_text:not([style]) > .ilg-type-prose, .ilg-type-page .ilg-type-line) :is(em,i):not(q *) {
-    color: var(--ilg-type-ink-em, var(--ilg-prose-muted)) !important;
+    color: var(--ilg-render-em, var(--ilg-type-ink-em, var(--ilg-prose-muted))) !important;
     font-family: var(--ilg-type-em-face, var(--ilg-type-body-face, var(--ilg-prose-em-font, inherit)));
     font-style: var(--ilg-type-em-style, var(--ilg-prose-em-style));
     font-weight: var(--ilg-type-em-weight, inherit);
 }
 :is(html.ilg[data-ilg-typography] body #chat .mes:not(.smallSysMes):not([is_system="true"]) .mes_text:not([style]) > .ilg-type-prose, .ilg-type-page .ilg-type-line) :is(strong,b):not(q *) {
-    color: var(--ilg-type-ink-strong, var(--ilg-prose-strong));
+    color: var(--ilg-render-strong, var(--ilg-type-ink-strong, var(--ilg-prose-strong)));
     font-family: var(--ilg-type-strong-face, inherit);
     font-style: var(--ilg-type-strong-style, inherit);
     font-weight: var(--ilg-type-strong-weight, var(--ilg-prose-strong-weight, 600));
 }
 :is(html.ilg[data-ilg-typography] body #chat .mes:not(.smallSysMes):not([is_system="true"]) .mes_text:not([style]) > .ilg-type-prose, .ilg-type-page .ilg-type-line) a {
-    color: var(--ilg-type-ink-link, var(--ilg-prose-link)) !important;
+    color: var(--ilg-render-link, var(--ilg-type-ink-link, var(--ilg-prose-link))) !important;
     font-family: var(--ilg-type-link-face, inherit);
     font-style: var(--ilg-type-link-style, inherit);
     font-weight: var(--ilg-type-link-weight, inherit);

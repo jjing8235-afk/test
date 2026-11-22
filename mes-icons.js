@@ -30,16 +30,15 @@ const ICONS = {
     mes_edit: `<path d="M15 4.5a2.1 2.1 0 0 1 3 0l1.5 1.5a2.1 2.1 0 0 1 0 3L9 19.5l-4.5 1 1-4.5z"/><path d="m13.5 6 4.5 4.5"/>`,
     // 更多：三个点（实心）
     extraMesButtonsHint: `<circle cx="6" cy="12" r="1.6" fill="#000" stroke="none"/><circle cx="12" cy="12" r="1.6" fill="#000" stroke="none"/><circle cx="18" cy="12" r="1.6" fill="#000" stroke="none"/>`,
-    // 编辑模式那一排
-    mes_edit_done: `<path d="m5 12.5 4.5 4.5L19 7.5"/>`,
-    mes_edit_copy: null, // 和 mes_copy 一样，下面补
-    mes_edit_add_reasoning: `<path d="M9 17.5h6M10 20.5h4"/><path d="M12 3.5a6 6 0 0 0-3.6 10.8c.6.5 1 1.3 1 2.2h5.2c0-.9.4-1.7 1-2.2A6 6 0 0 0 12 3.5z"/>`,
-    mes_edit_delete: `<path d="M4.5 7h15M9.5 7V5a1.5 1.5 0 0 1 1.5-1.5h2A1.5 1.5 0 0 1 14.5 5v2"/><path d="M6.5 7l.8 11.2A2.5 2.5 0 0 0 9.8 20.5h4.4a2.5 2.5 0 0 0 2.5-2.3L17.5 7M10 11v5.5M14 11v5.5"/>`,
-    mes_edit_up: `<path d="m6 14.5 6-6 6 6"/>`,
-    mes_edit_down: `<path d="m6 9.5 6 6 6-6"/>`,
-    mes_edit_cancel: `<path d="m6.5 6.5 11 11M17.5 6.5l-11 11"/>`,
+    // 编辑条：短箭头带轴，复制用双页轮廓，推理用带光线的灯泡。
+    mes_edit_done: `<path d="m4.5 12 5 5L19.5 7"/>`,
+    mes_edit_copy: `<rect x="8" y="8" width="12" height="12" rx="2.75"/><path d="M16 5.5A2.5 2.5 0 0 0 13.5 3H6a3 3 0 0 0-3 3v7.5A2.5 2.5 0 0 0 5.5 16"/>`,
+    mes_edit_add_reasoning: `<path d="M9 18v-1.3a3 3 0 0 0-1-2.1 5.6 5.6 0 1 1 8 0 3 3 0 0 0-1 2.1V18zm1 3h4M3 11H1.75m20.5 0H21M5.5 4.5 4.3 3.3m14.2 1.2 1.2-1.2"/>`,
+    mes_edit_delete: `<path d="M4.5 7.5h15M9 7.5V5.75A1.75 1.75 0 0 1 10.75 4h2.5A1.75 1.75 0 0 1 15 5.75V7.5M7 7.5l.7 10.25A2.5 2.5 0 0 0 10.2 20h3.6a2.5 2.5 0 0 0 2.5-2.25L17 7.5M12 11v5"/>`,
+    mes_edit_up: `<path d="M12 19V5m-5 5 5-5 5 5"/>`,
+    mes_edit_down: `<path d="M12 5v14m-5-5 5 5 5-5"/>`,
+    mes_edit_cancel: `<path d="m6.75 6.75 10.5 10.5m0-10.5-10.5 10.5"/>`,
 };
-ICONS.mes_edit_copy = ICONS.mes_copy;
 
 const uri = body => `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" ${A}>${body}</svg>`)}")`;
 export function installMessageIcons() {

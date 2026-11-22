@@ -19,7 +19,7 @@ import { WEB_PRESETS, normalizeWebPreset, webPresetOf } from './web-presets.js';
 import { createBallGlass } from './ball-glass.js';
 import { installMessageIcons } from './mes-icons.js';
 import { createSettingsPanel, downloadDiagnostic } from './settings-panel.js';
-import { createLiquidGlassWeb } from './liquid-glass-web.js';
+import { createLiquidGlassWeb, webCompatibleFilter } from './liquid-glass-web.js';
 import { createCardTextClarity } from './card-clarity.js';
 import { createGlassReflections } from './glass-reflections.js';
 import { createGlassLighting } from './glass-lighting.js';
@@ -36,7 +36,8 @@ window.__ilgLoaded = new URL('.', import.meta.url).pathname;
 let studioUI = null;
 let flickerCapture = null, flickerReport = null;
 const MODULE = 'iosLiquidGlass';
-const BUILD_VERSION = '2.0.10-test.23';
+const BUILD_VERSION = '2.0.10-test.24';
+const MAX_INNER_GLASS_BLUR = 16;
 const ENGINE_NAMES = Object.freeze({performance:'御风性能引擎',refraction:'棱光折射引擎'});
 const NS = 'http://www.w3.org/2000/svg';
 const ctx = SillyTavern.getContext();
@@ -614,7 +615,7 @@ const PRESETS_PREVIOUS = {
     ]
 };
 const DEFAULTS = {
-    chatBackground: 'glass', chatVeil: 45, chatFontSize: 0, firstLineIndent: false, justifyText: false, compatibilityMode: 'auto', androidWebViewRefract: false, iosSvgTrial: false, iosMaterial: true,
+    bubbleStyle: 'classic', bubbleBlur: 3.5, chatBackground: 'glass', chatVeil: 45, chatFontSize: 0, firstLineIndent: false, justifyText: false, compatibilityMode: 'auto', androidWebViewRefract: false, iosSvgTrial: false, iosMaterial: true,
     enabled: true, float: true, islands: true, fold: true, topShortcut1: '', topShortcut2: '', qrFold: true, composerLayout: 'split', home: true, toneBtn: true, homeName: 'NVWA 用户', icons: true, refract: true, refractMes: true, font: true, tone: 'time', dayStart: 7, dayEnd: 19, avatar: 'line', orb: true, panelRead: true, dock: false, floatBall: true, ballSnap: true, ballFuse: true, ballSide: 'right', ballY: 0.62, ballFx: 0.92, ballFy: 0.6, ballDock: false,
     webPreset: 'clear', mobileTilt: false, glassStyle: 'original', engine: 'physical', follow: true, pLight: 135, customTextTone: 'auto', customWallpaper: '', readingStyle: 'warm', proseLeading: 0, proseInset: 0, typography: null,
     // 自然弧度没写的参数（厚度、折射率等，只给物理折射截面用）沿用清透立体的
@@ -686,6 +687,8 @@ if (Object.hasOwn(S, 'cardSolid')) { delete S.cardSolid; ctx.saveSettingsDebounc
 S.chatVeil = normalizeChatVeil(S.chatVeil);
 S.chatFontSize = normalizeChatFontSize(S.chatFontSize);
 migrateProseSpacing(S);
+S.bubbleStyle = S.bubbleStyle === 'double' ? 'double' : 'classic';
+S.bubbleBlur = normalizeBubbleBlur(S.bubbleBlur);
 S.chatBackground = S.chatBackground === 'transparent' ? 'transparent' : 'glass';
 S.readingStyle = normalizeReadingStyle(S.readingStyle);
 S.iosMaterial = S.iosMaterial === true;
@@ -967,6 +970,7 @@ document.addEventListener('focusin', e => { if (e.target.id === 'send_textarea')
 function surfaceBlur(it, el) {
     if (el.matches(HOST_MENU_SEL)) return 10;
     if (composerGlassSurface(el)) return 6;
+    if (it.bubbleReading) return S.barBlur;
     if (it.kind === 'mes' && S.chatBackground === 'transparent') return 0;
     const blur = KIND[it.kind].blur();
     // Native input menus sit over message text; keep that text from competing with their labels.
@@ -1023,7 +1027,7 @@ function buildFilter(it, w, h, r, el) {
             '<feColorMatrix in="dr" type="matrix" values="1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0" result="r"/>' +
             '<feColorMatrix in="dg" type="matrix" values="0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 1 0" result="g"/>' +
             '<feColorMatrix in="db" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 1 0" result="b"/>' +
-            '<feBlend in="r" in2="g" mode="screen" result="rg"/><feBlend in="rg" in2="b" mode="screen"/>';
+            `<feBlend in="r" in2="g" mode="screen" result="rg"/><feBlend in="rg" in2="b" mode="screen"/>`;
     } else {
         html += disp(sc);
     }
@@ -1039,7 +1043,7 @@ function refractAllowed(it) {
 
 // Cards keep their fixed-position descendants outside the filter's containing block.
 // The independent layer uses the same filter builder as ordinary message and input glass.
-function messageSurface(el, it) {
+function messageSurface(el, it, doubleGlass) {
     // Prepare the owned wrapper before folding. CSS switches at the width breakpoint,
     // so an expanded frame does not wait for a resize callback to bound its backdrop.
     const viewportReady = androidHost && it.largeWebView && CSS.supports('overflow', 'clip');
@@ -1050,10 +1054,13 @@ function messageSurface(el, it) {
         const text = el.querySelector('.mes_text');
         if (!el.classList.contains('ilg-card-renderer') && text?.querySelector(CARD_RENDERER_CANDIDATES)) applyCardMarkers([text]);
     }
-    const separate = viewportReady || el.classList.contains('ilg-content-overlay') || el.classList.contains('ilg-card-renderer');
+    // A filtered message row would also be a backdrop root; its inner sheet
+    // could not sample the wallpaper. Paint the outer glass on an empty plane.
+    const separate = doubleGlass || viewportReady || el.classList.contains('ilg-content-overlay') || el.classList.contains('ilg-card-renderer');
     el.classList.toggle('ilg-message-backdrop', separate);
     el.classList.toggle('ilg-message-viewport', viewportReady);
     if (!separate) {
+        if (it.backdrop) webGlass.release(it.backdrop);
         it.backdrop?.remove(); it.backdropClip?.remove();
         it.backdrop = it.backdropClip = null;
         return el;
@@ -1078,10 +1085,17 @@ function messageSurface(el, it) {
 }
 
 // 先量后写：一批表面一起量完尺寸和圆角再统一写样式。边量边写时，每量一个都要让浏览器把整页样式重算一遍（长聊天滚动卡顿的主因）。
-function measure(el) {
-    const w = el.offsetWidth, h = el.offsetHeight;
-    return { w, h, r: w && h ? radiusOf(el, w, h) : 0 };
+function messageGeometry(el, w, h) {
+    const geo = { w, h, r: w && h ? radiusOf(el, w, h) : 0 };
+    if (S.bubbleStyle !== 'double' || w <= 0 || h <= 0) return geo;
+    const it = items.get(el);
+    if (it?.kind !== 'mes' || !document.body.matches('body.bubblechat:not(.waifuMode, .no-blur)')
+        || matchMedia('(forced-colors: active)').matches
+        || el.matches('.smallSysMes, [is_system="true"], [data-nvwa-style="author"], .ilg-card-renderer:not(.ilg-inline-card), .ilg-content-overlay, .ilg-message-viewport')) return geo;
+    geo.bubbleReading = true;
+    return geo;
 }
+function measure(el) { return messageGeometry(el, el.offsetWidth, el.offsetHeight); }
 function paintMany(list, reason, measured = null) {
     const jobs = [];
     for (const el of list) {
@@ -1129,7 +1143,10 @@ function paint(el, geo) {
         }
     }
     it.largeWebView = largeWebViewMessage({webView:androidHost,kind:it.kind,width:geo.w,height:geo.h,dpr:devicePixelRatio,previous:it.largeWebView});
-    const surface = it.kind === 'mes' ? messageSurface(el, it) : el;
+    const surface = it.kind === 'mes' ? messageSurface(el, it, geo.bubbleReading) : el;
+    if (it.kind === 'mes') {
+        it.bubbleReading = geo.bubbleReading && !el.classList.contains('ilg-message-viewport');
+    }
     // Keep only the empty composer glass planes on stable compositor layers.
     // Never transform the message/form ancestors of authored fixed-position UI.
     el.classList.toggle('ilg-stable-composer', androidHost && el.classList.contains('ilg-composer-glass'));
@@ -1144,7 +1161,12 @@ function paint(el, geo) {
     // Scrollable Android panels share the compositor with chat; avoid retaining an SVG backdrop across popup transitions.
     const stablePanel = androidHost && (it.kind === 'panel' || it.kind === 'clearPanel');
     const useWeb = !stablePanel && (it.kind === 'bar' || composer) && webStyleEnabled();
+    const webBubble = it.bubbleReading && webStyleEnabled();
     if (!useWeb) webGlass.release(el);
+    if (!webBubble && it.backdrop?.style.getPropertyValue('--ilg-web-tint')) {
+        webGlass.release(it.backdrop);
+        it.backdrop.style.removeProperty('--ilg-web-tint');
+    }
     if (!useWeb||!iosWallpaperRequested()) iosWallpaper.release(el);
     if (document.body.classList.contains('no-blur')) {
         it.renderPath = 'no-blur';
@@ -1155,7 +1177,7 @@ function paint(el, geo) {
         return;
     }
     const blur = surfaceBlur(it, el);
-    const reading = it.kind === 'mes' ? ' var(--ilg-reading-filter, blur(0px))' : '';
+    const reading = it.kind === 'mes' && !it.bubbleReading ? ' var(--ilg-reading-filter, blur(0px))' : '';
     const tail = `blur(${blur}px) saturate(${S.saturate}) brightness(${S.brightness})` + reading;
     const { w, h, r } = geo;
     // A closed drawer has no pixels to update; retain its last valid filter for reopening.
@@ -1165,12 +1187,35 @@ function paint(el, geo) {
         // CSS material owns its rim; skip displacement maps and canvas reflections.
         setPhys(el, it, false);
         let lightBlur;
-        if (it.kind === 'mes') lightBlur = S.chatBackground === 'transparent' ? 0 : Math.max(1.5, Math.min(6, blur));
+        if (it.bubbleReading) lightBlur = Math.max(1, Math.min(3, blur));
+        else if (it.kind === 'mes') lightBlur = S.chatBackground === 'transparent' ? 0 : Math.max(1.5, Math.min(6, blur));
         else if (control) lightBlur = controlReadable(el) ? (inputGlass(el) ? 3.5 : 4) : Math.max(.75, Math.min(1.5, blur));
         else lightBlur = Math.max(1, Math.min(it.kind === 'panel' || it.kind === 'toast' ? 8 : 3, blur));
         const filter = (lightBlur ? `blur(${lightBlur}px) saturate(${Math.max(1, Math.min(1.35, S.saturate))})` : reading ? 'blur(0px)' : 'none') + reading;
         surface.style.backdropFilter = filter;
         surface.style.webkitBackdropFilter = filter;
+        return;
+    }
+    if (webBubble) {
+        reflections.release(el);
+        setPhys(el, it, false);
+        it.filter?.remove(); it.filter = null; it.physical = null;
+        // Use the chrome's Web lens only on compact, nearby bubbles. Long messages
+        // keep its preset tint and filter chain without a full-size displacement map.
+        const compact = !it.largeWebView && w >= 24 && h >= 24 && Math.max(w, h) <= 1024 && w * h <= 256 * 1024;
+        if (compact && !isIOS && refractAllowed(it)) {
+            webGlass.paint(surface, it, { width: w, height: h, refract: true,
+                filter: () => filterOf(it, w, h, 'webFilter'), radius: r, preset: S.webPreset });
+            it.renderPath = it.web ? 'web' : 'web-compatible';
+        } else {
+            webGlass.release(surface);
+            const recipe = webPresetOf(S.webPreset);
+            const filter = webCompatibleFilter(recipe);
+            surface.style.setProperty('--ilg-web-tint', recipe.tint);
+            surface.style.backdropFilter = filter;
+            surface.style.webkitBackdropFilter = filter;
+            it.renderPath = 'web-compatible';
+        }
         return;
     }
     // Apply the large-surface budget before allocating either reflections or SVG maps.
@@ -1221,8 +1266,10 @@ function paint(el, geo) {
     } else if (!guarded && refractAllowed(it)) {
         it.renderPath = 'legacy';
         buildFilter(it, w, h, r, el);
-        surface.style.backdropFilter = `url(#${it.id}) ${tail}`;
-        if (isIOS) surface.style.webkitBackdropFilter = `url(#${it.id}) ${tail}`;
+        const lens = `url(#${it.id})`;
+        const filter = `${lens} ${tail}`;
+        surface.style.backdropFilter = filter;
+        if (isIOS) surface.style.webkitBackdropFilter = filter;
     } else {
         it.renderPath = iosMaterialActive() ? 'ios-compatible' : 'blur';
         const fallback = control && controlReadable(el) ? `blur(${Math.max(3.5, blur)}px) saturate(${S.saturate}) brightness(${S.brightness})` : tail;
@@ -1254,7 +1301,7 @@ const ro = new ResizeObserver(entries => {
         const box = e.borderBoxSize?.length === 1 ? e.borderBoxSize[0] : null;
         if (box && getComputedStyle(e.target).writingMode === 'horizontal-tb') {
             const w = Math.round(box.inlineSize), h = Math.round(box.blockSize);
-            measured.set(e.target, { w, h, r: w && h ? radiusOf(e.target, w, h) : 0 });
+            measured.set(e.target, messageGeometry(e.target, w, h));
         } else measured.set(e.target, measure(e.target));
     }
     for (const e of entries) {
@@ -1364,6 +1411,7 @@ function untrack(el) {
     if (!it) return;
     it.contentObserver?.disconnect();
     it.filter?.remove();
+    if (it.backdrop) webGlass.release(it.backdrop);
     it.backdrop?.remove();
     it.backdropClip?.remove();
     ro.unobserve(el);
@@ -1850,7 +1898,7 @@ function syncAppearancePanel() {
     document.querySelectorAll('[name="ilg-composer-layout"]').forEach(el => { el.checked = el.value === S.composerLayout; });
     const hint = appearancePanel.querySelector('.ilg-web-style-hint');
     if (hint) hint.textContent = cssGlassActive() ? '通用仿液态玻璃正在使用 CSS 材质；映卿与漾卿的参数会保留。' : S.glassStyle === 'liquid-web'
-        ? (!webStyleEnabled() ? '当前环境暂不支持漾卿，已使用兼容材质。' : iosWallpaperRequested() ? 'iOS 壁纸折射：仅折射壁纸，不包含聊天正文；关闭边缘折射可恢复兼容模糊。' : isIOS ? 'iOS 当前使用兼容模糊；开启边缘折射可尝试壁纸折射。' : !S.refract || !canRefract() ? '当前只用模糊与调色；开启可用的边缘折射后可见弯曲效果。' : '漾卿用于顶栏、输入区与悬浮小球。')
+        ? (!webStyleEnabled() ? '当前环境暂不支持漾卿，已使用兼容材质。' : iosWallpaperRequested() ? 'iOS 壁纸折射：仅折射壁纸，不包含聊天正文；关闭边缘折射可恢复兼容模糊。' : isIOS ? 'iOS 当前使用兼容模糊；开启边缘折射可尝试壁纸折射。' : !S.refract || !canRefract() ? '当前只用模糊与调色；开启可用的边缘折射后可见弯曲效果。' : '漾卿用于顶栏、输入区、双层气泡外层与悬浮小球。')
         : '映卿保留独立弧度；两种材质可随时切换。';
     appearancePanel.querySelector('.ilg-web-presets').hidden = S.glassStyle !== 'liquid-web';
     appearancePanel.querySelectorAll('[name="ilg-web-preset"]').forEach(el => { el.checked = el.value === S.webPreset; });
@@ -2674,7 +2722,7 @@ function sampleCustomWallpaper(url) {
                 const data = g.getImageData(0, 0, 48, 48).data, dark = [], light = [];
                 const linear = v => { v /= 255; return v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; };
                 const luminance = (r,g,b) => .2126 * linear(r) + .7152 * linear(g) + .0722 * linear(b);
-                const ink = luminance(43,52,58), pearl = luminance(233,229,220);
+                const ink = luminance(8, 9, 11), pearl = 1; // Select the wallpaper contrast direction.
                 const contrast = (a,b) => (Math.max(a,b) + .05) / (Math.min(a,b) + .05);
                 for (let y=6;y<42;y++) for (let x=8;x<40;x++) {
                     const i=(y*48+x)*4, l=luminance(data[i],data[i+1],data[i+2]);
@@ -2770,6 +2818,10 @@ sysDark.addEventListener('change', followTone);
 function normalizeChatVeil(value) {
     return typeof value === 'number' && Number.isFinite(value) ? Math.max(0, Math.min(100, Math.round(value))) : 45;
 }
+function normalizeBubbleBlur(value) {
+    if (typeof value !== 'number' || !Number.isFinite(value)) return DEFAULTS.bubbleBlur;
+    return Math.max(0, Math.min(MAX_INNER_GLASS_BLUR, Math.round(value * 2) / 2));
+}
 function normalizeChatFontSize(value) {
     const numeric = Number(value);
     return Number.isFinite(numeric) && numeric > 0 ? Math.min(32, Math.max(12, Math.round(numeric))) : 0;
@@ -2813,7 +2865,20 @@ function queueGlassSettings() {
     });
 }
 
+function applyBubbleBlur() {
+    S.bubbleBlur = normalizeBubbleBlur(S.bubbleBlur);
+    if (S.enabled && S.bubbleStyle === 'double' && S.bubbleBlur > 0) {
+        root.style.setProperty('--ilg-bubble-inner-filter', `blur(${S.bubbleBlur}px)`);
+    } else {
+        root.style.removeProperty('--ilg-bubble-inner-filter');
+    }
+}
+function applyBubbleStyle() {
+    root.classList.toggle('ilg-bubble-double', S.enabled && S.bubbleStyle === 'double');
+    applyBubbleBlur();
+}
 function applyRoot() {
+    applyBubbleStyle();
     if (!S.enabled) hideRangeValue();
     if (!S.enabled) {
         interactionDiagnostics.stop('disabled');
@@ -2997,7 +3062,7 @@ function statusText() {
     if (!S.enabled) return '美化已关闭。';
     if (document.body.classList.contains('no-blur')) return '你开了酒馆的“关闭模糊”，所以玻璃和折射都暂停了。';
     if (cssGlassActive()) return '澄卿 · 通用仿液态玻璃：CSS 轻模糊、细亮边与柔和投影；SVG 折射与轮廓贴图已停用。';
-    if (S.glassStyle === 'liquid-web') return '漾卿 · 顶栏与输入区。' + (iosWallpaperRequested() ? (iosWallpaper.status().surfaces>0?'iOS 壁纸折射图层已启用：仅壁纸，不包含聊天正文；实际位移仍需真机确认。':iosWallpaper.status().reason==='loading-wallpaper'?'iOS 壁纸图层准备中，暂用兼容模糊。':iosWallpaper.status().reason==='image-unavailable'?'iOS 壁纸图层加载失败，已保留兼容模糊。':'iOS 壁纸折射尚未就绪，暂用兼容模糊。') : isIOS ? 'iOS 使用模糊与光感，不宣称真实折射。' : S.refract && canRefract() ? '已请求弯曲背景折射。' : '当前使用模糊与光感。');
+    if (S.glassStyle === 'liquid-web') return '漾卿 · 顶栏、输入区与双层气泡外层。' + (iosWallpaperRequested() ? (iosWallpaper.status().surfaces>0?'iOS 壁纸折射图层已启用：仅壁纸，不包含聊天正文；实际位移仍需真机确认。':iosWallpaper.status().reason==='loading-wallpaper'?'iOS 壁纸图层准备中，暂用兼容模糊。':iosWallpaper.status().reason==='image-unavailable'?'iOS 壁纸图层加载失败，已保留兼容模糊。':'iOS 壁纸折射尚未就绪，暂用兼容模糊。') : isIOS ? 'iOS 使用模糊与光感，不宣称真实折射。' : S.refract && canRefract() ? '已请求弯曲背景折射。' : '当前使用模糊与光感。');
     if (iosMaterialActive()) return 'iOS 兼容玻璃：系统模糊与边缘光感已启用，此模式不包含真实背景折射。';
     if (!S.refract) return '边缘折射已关闭，现在只有模糊。';
     if (isIOS && iosTrialRequested()) return 'iOS SVG 折射实验已请求；不代表背景位移已显示，请对比画面确认。关闭实验开关即可恢复模糊。';
@@ -3224,16 +3289,28 @@ function buildPanel() {
       </select></div>
     <div id="ilg-ios-material-setting" hidden><label class="checkbox_label" for="ilg-opt-iosMaterial"><input type="checkbox" id="ilg-opt-iosMaterial"><span>iOS 兼容玻璃（推荐）</span></label><p class="ilg-hint">为顶栏、输入框与楼层提示添加边缘光感，使用系统模糊，不依赖 SVG 折射。关闭可恢复基础模糊。</p></div>
     ${TOGGLES.filter(([k]) => k !== 'iosSvgTrial' && k !== 'iosMaterial').map(([k, label]) => `<label class="checkbox_label" for="ilg-opt-${k}"><input type="checkbox" id="ilg-opt-${k}"><span>${label}</span></label>`).join('')}
+    <div class="ilg-row"><label for="ilg-opt-bubbleStyle"><span>聊天气泡</span></label>
+      <select id="ilg-opt-bubbleStyle" class="text_pole" aria-describedby="ilg-bubble-style-hint">
+        <option value="classic">经典气泡</option>
+        <option value="double">双层玻璃</option>
+      </select>
+      <p class="ilg-hint" id="ilg-bubble-style-hint">仅在酒馆的「气泡」聊天样式下生效。双层玻璃外层跟随顶栏与输入区材质，内层仅叠加模糊。</p>
+    </div>
     <div class="ilg-row"><label for="ilg-opt-chatBackground"><span>聊天背景</span></label>
       <select id="ilg-opt-chatBackground" class="text_pole" aria-describedby="ilg-chat-background-hint">
         <option value="glass">柔光玻璃（阅读滤镜）</option>
         <option value="transparent">透明玻璃（保留边缘与圆角）</option>
       </select>
-      <p class="ilg-hint" id="ilg-chat-background-hint">柔光档只在每条消息框内柔化背景，框外壁纸保持原样；透明档保留原图与玻璃边缘。卡片按原样显示。</p>
+      <p class="ilg-hint" id="ilg-chat-background-hint">适用于经典气泡和保留原有外框的自定义卡片，不改变框外壁纸。</p>
     </div>
     <div class="ilg-row ilg-reading-filter-row">
       <label for="ilg-opt-chatVeil"><span>消息背景滤镜强度</span><output id="ilg-opt-chatVeil-v" for="ilg-opt-chatVeil">45%</output></label>
       <input type="range" id="ilg-opt-chatVeil" min="0" max="100" step="1" aria-describedby="ilg-chat-background-hint">
+    </div>
+    <div class="ilg-row ilg-reading-filter-row">
+      <label for="ilg-opt-bubbleBlur"><span>内层玻璃模糊</span><output id="ilg-opt-bubbleBlur-v" for="ilg-opt-bubbleBlur"></output></label>
+      <input type="range" id="ilg-opt-bubbleBlur" min="0" max="${MAX_INNER_GLASS_BLUR}" step="0.5" aria-describedby="ilg-bubble-blur-hint">
+      <p class="ilg-hint" id="ilg-bubble-blur-hint">只调整内层模糊，不加底色。外层仍跟随顶栏与输入区，0 为关闭内层模糊。</p>
     </div>
     <div class="ilg-row">
       <button type="button" id="ilg-card-report-copy" class="menu_button">复制卡片显示诊断</button>
@@ -3399,21 +3476,48 @@ function buildPanel() {
         saveChatFont(Math.min(32, Math.max(12, Math.round(value))));
     });
     document.getElementById('ilg-chat-font-reset').addEventListener('click', () => saveChatFont(0));
+    const classicBackground = document.getElementById('ilg-opt-chatBackground');
+    const classicBackgroundHint = document.getElementById('ilg-chat-background-hint');
     const veilRange = document.getElementById('ilg-opt-chatVeil');
+    const bubbleBlurRange = document.getElementById('ilg-opt-bubbleBlur');
+    const bubbleBlurOutput = document.getElementById('ilg-opt-bubbleBlur-v');
     const syncChatVeil = () => {
         veilRange.value = S.chatVeil;
         document.getElementById('ilg-opt-chatVeil-v').textContent = S.chatVeil + '%';
         veilRange.setAttribute('aria-valuetext', S.chatVeil === 0 ? '关闭背景滤镜' : S.chatVeil + '%');
-        veilRange.disabled = S.chatBackground === 'transparent';
+        veilRange.disabled = S.bubbleStyle === 'double' || S.chatBackground === 'transparent';
         veilRange.closest('.ilg-row').hidden = veilRange.disabled;
     };
     veilRange.addEventListener('input', () => {
         S.chatVeil = normalizeChatVeil(Number(veilRange.value));
         applySurfaceSettings(); syncChatVeil(); scheduleAdapt(); ctx.saveSettingsDebounced();
     });
-    const sync = () => {
+    const syncBubbleBlur = () => {
+        bubbleBlurRange.value = S.bubbleBlur;
+        bubbleBlurOutput.textContent = S.bubbleBlur + ' px';
+        bubbleBlurRange.setAttribute('aria-valuetext', S.bubbleBlur === 0 ? '关闭内层模糊' : bubbleBlurOutput.textContent);
+        paintRange(bubbleBlurRange);
+    };
+    const syncBubbleBackground = () => {
+        const double = S.bubbleStyle === 'double';
+        classicBackground.closest('.ilg-row').hidden = double;
+        classicBackground.disabled = double;
+        classicBackgroundHint.hidden = double;
+        bubbleBlurRange.closest('.ilg-row').hidden = !double;
+        bubbleBlurRange.disabled = !double;
         syncChatVeil();
+        syncBubbleBlur();
+    };
+    bubbleBlurRange.addEventListener('input', () => {
+        S.bubbleBlur = Number(bubbleBlurRange.value);
+        applyBubbleBlur();
+        syncBubbleBlur();
+        ctx.saveSettingsDebounced();
+    });
+    const sync = () => {
+        syncBubbleBackground();
         syncChatFont();
+        document.getElementById('ilg-opt-bubbleStyle').value = S.bubbleStyle;
         document.getElementById('ilg-opt-chatBackground').value = S.chatBackground;
         TOGGLES.forEach(([k]) => { document.getElementById(`ilg-opt-${k}`).checked = !!S[k]; });
         // 小球关着时，吸边 / 融合两个子开关变灰
@@ -3452,6 +3556,28 @@ function buildPanel() {
         studioUI?.sync();
         syncSavedAppearance();
     };
+    document.getElementById('ilg-opt-bubbleStyle').addEventListener('change', e => {
+        const choice = e.target.value;
+        if (choice !== 'classic' && choice !== 'double') { e.target.value = S.bubbleStyle; return; }
+        if (S.bubbleStyle === choice) return;
+        const activeBubbleLayout = S.enabled && document.body.matches('body.bubblechat:not(.waifuMode, .no-blur)')
+            && !matchMedia('(forced-colors: active)').matches;
+        const keepBottom = activeBubbleLayout && !externalScrollControl(chatEl)
+            && ctx.powerUserSettings?.auto_scroll_chat_to_bottom
+            && chatEl.scrollHeight - chatEl.scrollTop - chatEl.clientHeight < 8;
+        if (activeBubbleLayout) readingAnchor.capture();
+        S.bubbleStyle = choice;
+        applyBubbleStyle();
+        syncBubbleBackground();
+        if (activeBubbleLayout) {
+            if (keepBottom) chatEl.scrollTop = chatEl.scrollHeight;
+            else readingAnchor.restore();
+            requestAnimationFrame(() => {
+                if (S.enabled) paintMany([...visibleItems].filter(el => items.get(el)?.kind === 'mes'), 'bubble-style');
+            });
+        }
+        ctx.saveSettingsDebounced();
+    });
     document.getElementById('ilg-opt-chatBackground').addEventListener('change', e => {
         if (!['glass', 'transparent'].includes(e.target.value)) { sync(); return; }
         S.chatBackground = e.target.value;
@@ -3590,14 +3716,25 @@ function applyTopTone(el, appearance) {
 }
 function topIconTones(bars, lumAt) {
     const result = [], noBlur = document.body.classList.contains('no-blur');
-    for (const bar of bars) for (const wrapper of bar?.icons || []) {
-        const icon = wrapper.querySelector('.drawer-icon'); if (!icon) continue;
-        const r = icon.getBoundingClientRect();
-        if (!r.width || !r.height) { result.push({el:wrapper,top:null}); continue; }
-        if (noBlur) { result.push({el:wrapper,top:{tone:lightBg?'dark':'light'}}); continue; }
-        const colors = []; let sum = 0, count = 0;
-        for (const f of [.3,.7]) { const l = lumAt(r.left+r.width*f,r.top+r.height*.5,bar,c=>colors.push(c)); if (l !== null) {sum+=l;count++;} }
-        result.push({el:wrapper,top:count?topTone(sum/count,wrapper.dataset.ilgTopTone,colors):null});
+    for (const bar of bars) {
+        const visible = [], colors = [];
+        let sum = 0, count = 0;
+        for (const wrapper of bar?.icons || []) {
+            const icon = wrapper.querySelector('.drawer-icon');
+            if (!icon) continue;
+            const r = icon.getBoundingClientRect();
+            if (!r.width || !r.height) { result.push({el:wrapper,top:null}); continue; }
+            visible.push(wrapper);
+            if (noBlur) continue;
+            for (const x of [.3, .7]) {
+                const sample = lumAt(r.left + r.width * x, r.top + r.height * .5, bar, c => colors.push(c));
+                if (sample !== null) { sum += sample; count++; }
+            }
+        }
+        // One ink per glass island. Keep sampling the area behind each visible icon.
+        const top = noBlur ? {tone:lightBg ? 'dark' : 'light'}
+            : count ? topTone(sum / count, visible[0]?.dataset.ilgTopTone, colors) : null;
+        for (const el of visible) result.push({el, top});
     }
     return result;
 }
@@ -3693,7 +3830,7 @@ function adaptBar(bar, lumAt) {
 }
 // Each input action reads its own backdrop: a bright card in the text area must
 // not turn icons over dark wallpaper dark as well. Unknown pixels use the page tone.
-const INPUT_ACTIONS = '#leftSendForm > div, #rightSendForm > div:not(#mes_stop):not(.mes_stop):not(.stscript_btn)';
+const INPUT_ACTIONS = '#leftSendForm > div, #rightSendForm > :is(#mes_stop, div:not(.mes_stop, .stscript_btn))';
 function inputActionTones(bar, lumAt) {
     if (!bar) return [];
     return [...bar.querySelectorAll(INPUT_ACTIONS)].map(el => {
@@ -4131,7 +4268,7 @@ function cardDisplayReport({includeCapture=true}={}) {
         bundledWallpapers: bundledWallpapers.status(),
         viewport: [innerWidth, innerHeight, devicePixelRatio],
         userAgent: navigator.userAgent,
-        enabled: !!S.enabled, chatBackground: S.chatBackground, chatVeil: S.chatVeil,
+        enabled: !!S.enabled, bubbleStyle: S.bubbleStyle, bubbleBlur: S.bubbleBlur, chatBackground: S.chatBackground, chatVeil: S.chatVeil,
         compatibilityMode: S.compatibilityMode, engine: S.engine, engineNames: ENGINE_NAMES,
         bubble: document.body.classList.contains('bubblechat'), noBlur: document.body.classList.contains('no-blur'),
         messageCount: messages.length, sampledMessages: details,
@@ -4177,7 +4314,7 @@ function applyCardMarkers(texts) {
     // Read one whole level, then write its markers. Children still see their
     // parent's resolved colors, without forcing style/layout once per card.
     const light = root.classList.contains('ilg-light');
-    const messages = texts.map(text => ({ message: text.closest('.mes'), fixedOverlay: false, cardRenderer: false }));
+    const messages = texts.map(text => ({ message: text.closest('.mes'), fixedOverlay: false, cardRenderer: false, inlineFrame: false }));
     let level = texts.map((text, i) => ({ parent: text, base: light ? 0.95 : 0.08, state: messages[i] }));
     while (level.length) {
         const updates = [], next = [];
@@ -4188,7 +4325,10 @@ function applyCardMarkers(texts) {
             const frame = k.matches('iframe');
             if (frame && visible) {
                 const { width, height } = k.getBoundingClientRect();
-                if (width > 0 && height > 0) state.cardRenderer = true;
+                if (width > 0 && height > 0) {
+                    state.cardRenderer = true;
+                    if (cs.position !== 'absolute' && cs.position !== 'fixed') state.inlineFrame = true;
+                }
             }
             if (k.matches('img, video, svg, canvas, q, em, i, b, strong, br')) continue;
             const c = blockBg(k, cs);
@@ -4213,10 +4353,14 @@ function applyCardMarkers(texts) {
         level = next;
     }
     const repaint = [];
-    for (const { message, fixedOverlay, cardRenderer } of messages) {
-        if (!message || (message.classList.contains('ilg-content-overlay') === fixedOverlay && message.classList.contains('ilg-card-renderer') === cardRenderer)) continue;
+    for (const { message, fixedOverlay, cardRenderer, inlineFrame } of messages) {
+        const inlineCard = inlineFrame && !fixedOverlay;
+        if (!message || (message.classList.contains('ilg-content-overlay') === fixedOverlay
+            && message.classList.contains('ilg-card-renderer') === cardRenderer
+            && message.classList.contains('ilg-inline-card') === inlineCard)) continue;
         message.classList.toggle('ilg-content-overlay', fixedOverlay);
         message.classList.toggle('ilg-card-renderer', cardRenderer);
+        message.classList.toggle('ilg-inline-card', inlineCard);
         repaint.push(message);
     }
     return repaint;

@@ -96,7 +96,7 @@ html.ilg.ilg-icons #option_settings i::before {
     mask: var(--ilg-icon) center / contain no-repeat;
 }
 
-/* ---------- 顶栏：统一 22px 字形，选中时出现浅蓝胶囊 ---------- */
+/* ---------- 顶栏：统一 22px 字形，选中时出现中性色胶囊 ---------- */
 html.ilg.ilg-icons #top-settings-holder .drawer-icon {
     position: relative;
     width: 44px;
@@ -106,7 +106,7 @@ html.ilg.ilg-icons #top-settings-holder .drawer-icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: var(--SmartThemeBodyColor);
+    color: var(--ilg-chrome-ink);
     transition: background-color .25s, color .25s, opacity .25s, transform .3s cubic-bezier(.3, 1.6, .5, 1);
 }
 html.ilg.ilg-icons #leftNavDrawerIcon::before,
@@ -121,16 +121,16 @@ html.ilg.ilg-icons #rightNavDrawerIcon::before {
     width: 22px;
     height: 22px;
 }
-html.ilg.ilg-icons #top-settings-holder .drawer-icon.closedIcon { opacity: .78; }
+html.ilg.ilg-icons #top-settings-holder .drawer-icon.closedIcon { opacity: 1; }
 html.ilg.ilg-icons #top-settings-holder .drawer-icon.closedIcon:hover { opacity: 1; background-color: rgba(127, 127, 127, .12); }
 html.ilg.ilg-icons #top-settings-holder .drawer-icon:active { transform: scale(.9); }
 html.ilg.ilg-icons #top-settings-holder .drawer-icon.openIcon {
     opacity: 1;
-    color: #0a84ff;
-    background-color: rgba(10, 132, 255, .16);
+    color: var(--ilg-chrome-ink);
+    background-color: rgba(127, 127, 127, .18);
 }
 /* 未连接 API：不再整个图标发红，改成右上角橙色小圆点 */
-html.ilg.ilg-icons #API-status-top.redOverlayGlow { color: var(--SmartThemeBodyColor); opacity: .78 !important; }
+html.ilg.ilg-icons #API-status-top.redOverlayGlow { color: var(--ilg-chrome-ink); opacity: 1 !important; }
 html.ilg.ilg-icons #API-status-top.redOverlayGlow::after {
     content: "";
     position: absolute;

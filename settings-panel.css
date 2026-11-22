@@ -75,6 +75,7 @@ body.no-blur #ilg-studio[data-tone=light] {--s-sheet:#f7f5f0;}
 /* Fields */
 #ilg-studio :is(.text_pole,select,input[type=number],input[type=text]) {width:100%;min-height:38px;margin:0;padding:8px 12px;border:0;border-radius:11px;background:var(--s-fill);color:var(--s-fg);box-shadow:none;font-size:13.5px;outline-offset:2px;}
 #ilg-studio select {appearance:none;-webkit-appearance:none;padding-right:34px;background:var(--s-chevron) no-repeat right 10px center/16px,var(--s-fill);cursor:pointer;text-overflow:ellipsis;}
+#ilg-studio #ilg-opt-bubbleStyle {min-height:44px;padding-inline-end:36px;background:var(--s-chevron) no-repeat right 12px center / 16px,var(--s-fill);}
 #ilg-studio select option {background:#222428;color:#f2efe9;}
 #ilg-studio[data-tone=light] select option {background:#fff;color:#1f1d1a;}
 #ilg-studio .ilg-hours {display:flex;align-items:center;gap:8px;font-size:13px;color:var(--s-muted);}
