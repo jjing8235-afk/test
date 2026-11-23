@@ -2285,6 +2285,31 @@ html.ilg body.no-blur dialog.popup.ilg-adapted {
 html.ilg.ilg-light body.no-blur dialog.popup.ilg-adapted {
     background-color: #f6f8fa;
 }
+html.ilg body .ilg-follow-material {
+    --ilg-follow-rgb: 18, 26, 38;
+    --ilg-follow-alpha: var(--ilg-web-tint, var(--ilg-css-glaze, var(--ilg-control-a, .06)));
+}
+html.ilg.ilg-light body .ilg-follow-material { --ilg-follow-rgb: 248, 251, 253; }
+html.ilg body:not(.no-blur) dialog.popup.ilg-adapted.ilg-preset-glass {
+    background-color: rgba(var(--ilg-follow-rgb), calc(.20 + var(--ilg-follow-alpha)));
+    background-image: none;
+}
+html.ilg body dialog.popup.ilg-preset-glass.ilg-lens-wallpaper-host { isolation: isolate; }
+html.ilg body dialog.popup.ilg-preset-glass > .ilg-lens-wallpaper {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    clip-path: inset(0 round 28px);
+    opacity: .92;
+    background-color: rgba(18, 26, 38, calc(.23 + var(--ilg-follow-alpha)));
+    background-blend-mode: multiply;
+    pointer-events: none;
+}
+html.ilg.ilg-light body dialog.popup.ilg-preset-glass > .ilg-lens-wallpaper {
+    background-color: rgba(248, 251, 253, calc(.26 + var(--ilg-follow-alpha)));
+    background-blend-mode: screen;
+}
 html.ilg body dialog.popup.ilg-adapted > .popup-body > .popup-content > :is(#nvwa-panel, #nvwa-memory) {
     --nvp-surface: rgba(16, 14, 26, 0.42);
     --nvp-bg: rgba(10, 8, 20, 0.38);
@@ -2318,6 +2343,9 @@ html.ilg body dialog.popup.ilg-adapted > .popup-body > .popup-content > :is(#nvw
 html.ilg.ilg-light body dialog.popup.ilg-adapted > .popup-body > .popup-content > :is(#nvwa-panel, #nvwa-memory) > :is(.nvp-tabbar, .m-tabbar) {
     background: linear-gradient(180deg, rgba(255, 255, 255, .62), transparent 76%), rgba(248, 251, 253, .46);
     box-shadow: inset 0 1px 1px rgba(255, 255, 255, .84);
+}
+html.ilg body:not(.no-blur) dialog.popup.ilg-adapted.ilg-preset-glass > .popup-body > .popup-content > #nvwa-panel > .nvp-tabbar {
+    background: rgba(var(--ilg-follow-rgb), calc(.10 + var(--ilg-follow-alpha)));
 }
 html.ilg body dialog.popup.ilg-adapted > .popup-body > .popup-content > :is(#nvwa-panel, #nvwa-memory) :is(.nvp-tabs, .m-tabs) {
     border-radius: 14px;
@@ -5632,11 +5660,10 @@ html.ilg.ilg-merged-tools.ilg-qrfold.ilg-qr-open body #form_sheld #qr--bar {
     --ilg-panel-key-ink: #222127;
     --ilg-panel-rim: rgba(240,248,255,.38);
     --ilg-panel-foot: rgba(5,12,22,.30);
-    --ilg-tab-track: rgba(32, 27, 30, .78);
+    --ilg-tab-track: rgba(var(--ilg-follow-rgb, 18, 26, 38), calc(.08 + var(--ilg-follow-alpha, .06)));
     --ilg-tab-track-scrolled: #322c2e;
     --ilg-tab-track-glint: rgba(242, 222, 212, .10);
     --ilg-tab-track-contact: rgba(19, 13, 16, .28);
-    --ilg-tab-lens-face: rgba(207, 186, 171, .21);
     --ilg-tab-lens-glint: rgba(255, 222, 194, .34);
     --ilg-tab-lens-fold: rgba(216, 192, 204, .14);
     --ilg-tab-lens-crown: rgba(255, 231, 205, .90);
@@ -5668,11 +5695,9 @@ html.ilg.ilg-light.ilg-merged-tools.ilg-qrfold.ilg-qr-open body #form_sheld #qr-
     --ilg-panel-key-ink: #faf9fc;
     --ilg-panel-rim: rgba(255,255,255,.76);
     --ilg-panel-foot: rgba(60,49,52,.14);
-    --ilg-tab-track: rgba(210, 224, 227, .79);
     --ilg-tab-track-scrolled: #d7e2e5;
     --ilg-tab-track-glint: rgba(242, 252, 255, .47);
     --ilg-tab-track-contact: rgba(53, 79, 91, .17);
-    --ilg-tab-lens-face: rgba(250, 247, 237, .40);
     --ilg-tab-lens-glint: rgba(255, 252, 240, .60);
     --ilg-tab-lens-fold: rgba(151, 186, 196, .27);
     --ilg-tab-lens-crown: rgba(255, 254, 244, .99);
@@ -5683,6 +5708,13 @@ html.ilg.ilg-light.ilg-merged-tools.ilg-qrfold.ilg-qr-open body #form_sheld #qr-
 html.ilg.ilg-merged-tools body :is(#options .options-content, #extensionsMenu).ilg-glass,
 html.ilg.ilg-merged-tools.ilg-qrfold.ilg-qr-open body #form_sheld #qr--bar.ilg-glass {
     --ilg-tray-shadow: inset 0 1px 0 var(--ilg-panel-rim), inset 0 -1px 0 var(--ilg-panel-foot), 0 8px 19px -9px var(--ilg-panel-foot), 0 22px 44px -19px var(--ilg-panel-foot);
+}
+html.ilg.ilg-merged-tools body:not(.no-blur) :is(#options .options-content, #extensionsMenu, #form_sheld #qr--bar).ilg-follow-material {
+    background-color: rgba(var(--ilg-follow-rgb), calc(.38 + var(--ilg-follow-alpha)));
+    background-image: none;
+}
+html.ilg.ilg-light.ilg-merged-tools body:not(.no-blur) :is(#options .options-content, #extensionsMenu, #form_sheld #qr--bar).ilg-follow-material {
+    background-color: rgba(var(--ilg-follow-rgb), calc(.42 + var(--ilg-follow-alpha)));
 }
 html.ilg.ilg-merged-tools body #options .options-content > .ilg-composer-tabs,
 html.ilg.ilg-merged-tools body #extensionsMenu > .ilg-composer-tabs,
@@ -5710,7 +5742,8 @@ html.ilg.ilg-merged-tools body #qr--bar > .ilg-composer-tabs {
     opacity: 1;
 }
 /* Scrolled rows pass under the sticky rail; keep their labels out of the tab text. */
-html.ilg.ilg-merged-tools body .ilg-composer-tabs.ilg-composer-tabs-scrolled {
+html.ilg.ilg-merged-tools body .ilg-composer-tabs.ilg-composer-tabs-scrolled,
+html.ilg.ilg-merged-tools body.no-blur .ilg-composer-tabs {
     --ilg-tab-track: var(--ilg-tab-track-scrolled);
 }
 html.ilg.ilg-merged-tools body .ilg-composer-tabs:has(> [data-pane="tools"][aria-selected="true"]) { --ilg-tab-slot: 1; }
@@ -5724,7 +5757,6 @@ html.ilg.ilg-merged-tools body .ilg-composer-tabs > .ilg-composer-tab-lens {
     inline-size: var(--ilg-tab-width);
     box-sizing: border-box;
     border-radius: inherit;
-    background-color: var(--ilg-tab-lens-face);
     background-image:
         radial-gradient(75% 60% at 24% -8%, var(--ilg-tab-lens-glint), transparent 88%),
         radial-gradient(61% 29% at 79% 113%, var(--ilg-tab-lens-fold), transparent 95%);
@@ -5749,7 +5781,7 @@ html.ilg.ilg-merged-tools body .ilg-composer-tabs > .ilg-composer-tab-lens {
 }
 html.ilg.ilg-merged-tools body .ilg-composer-lens-glass {
     position: absolute; inset: 0; border-radius: inherit; overflow: hidden; pointer-events: none;
-    background-color: rgba(230,237,250,.035);
+    background-color: rgba(var(--ilg-follow-rgb, 18, 26, 38), var(--ilg-web-tint, var(--ilg-css-glaze, var(--ilg-control-a, .06))));
 }
 /* Feed the same displacement map actual wallpaper detail, even over a nearly uniform rail.
    Restrict contrast in the label area; the artwork never moves or filters the text. */

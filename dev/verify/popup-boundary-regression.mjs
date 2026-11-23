@@ -52,7 +52,7 @@ const foreignAuthored=contentPopup(true,null,true);assert(ownsStyle(foreignAutho
 passed.push('Other registered authored popups keep their shell; explicitly supported NVWA roots retain glass');
 const scopedRules=[...css.matchAll(/([^{}]+)\{[^{}]*\}/g)].filter(m=>/#nvwa-(panel|memory)/.test(m[1]));
 assert(scopedRules.length>=7);
-assert(scopedRules.every(m=>m[1].trim().startsWith('html.ilg')&&m[1].includes('dialog.popup.ilg-adapted > .popup-body > .popup-content > ')));
+assert(scopedRules.every(m=>m[1].trim().startsWith('html.ilg')&&/dialog\.popup\.ilg-adapted(?:\.ilg-preset-glass)? > \.popup-body > \.popup-content > /.test(m[1])));
 assert(!source.includes("track(tabbar,"), 'Compatible tabbars share their registered popup shell instead of owning a second filter');
 assert(css.includes('    backdrop-filter: none;'), 'Shared tabbar material must not add another backdrop filter');
 assert(source.includes("'ilg-phys', 'ilg-adapted'"));
@@ -74,6 +74,8 @@ const surface=(menu=false,quick=false,authored=false)=>({classList:{contains:()=
 assert.equal(getSurfaceBlur({kind:'panel'},surface(true)),10);
 assert.equal(getSurfaceBlur({kind:'panel'},surface(false)),1.5);
 assert.equal(getSurfaceBlur({kind:'clearPanel'},surface(false)),1.25);
+assert.equal(getSurfaceBlur({kind:'clearPanel',followMaterial:true},surface()),.25);
+assert.equal(getSurfaceBlur({kind:'panel',followMaterial:true},surface(true)),.25);
 assert.equal(getSurfaceBlur({kind:'panel'},surface(false,true)),6);
 assert.equal(getSurfaceBlur({kind:'panel'},surface(false,true,true)),1.5);
 blurSettings.qrFold=false;assert.equal(getSurfaceBlur({kind:'panel'},surface(false,true)),1.5);

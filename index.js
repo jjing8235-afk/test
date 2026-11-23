@@ -36,7 +36,7 @@ window.__ilgLoaded = new URL('.', import.meta.url).pathname;
 let studioUI = null;
 let flickerCapture = null, flickerReport = null;
 const MODULE = 'iosLiquidGlass';
-const BUILD_VERSION = '2.0.10-test.35';
+const BUILD_VERSION = '2.0.10-test.36';
 const MAX_INNER_GLASS_BLUR = 16;
 const ENGINE_NAMES = Object.freeze({performance:'御风性能引擎',refraction:'棱光折射引擎'});
 const NS = 'http://www.w3.org/2000/svg';
@@ -825,6 +825,12 @@ function popupOwnsStyle(el) {
 function adaptedPanel(el) {
     return isNativePopup(el) ? el.querySelector(ADAPTED_PANEL_SEL) : null;
 }
+function syncAdaptedPanel(el, it) {
+    const panel = adaptedPanel(el);
+    it.kind = panel ? 'clearPanel' : 'panel';
+    el.classList.toggle('ilg-adapted', !!panel);
+    el.classList.toggle('ilg-preset-glass', panel?.id === 'nvwa-panel');
+}
 function trackable(el) {
     const popup = el.closest('dialog, .popup, [role="dialog"]:not(.ilg-recent)');
     return (!popup || isNativePopup(popup) && !popupOwnsStyle(popup)) && !(el.id === 'world_popup' && inDrawer(el));
@@ -879,8 +885,8 @@ function visibleWallpaper() {
 }
 const lensWallpaper = createIOSWallpaperRefraction({
     background: visibleWallpaper, hostClass: 'ilg-lens-wallpaper-host', planeClass: 'ilg-lens-wallpaper', inheritSourceFilter: true,
-    onReady: () => {const lens=document.querySelector('.ilg-composer-lens-glass.ilg-control-surface');if(lens)paint(lens);},
-    followingMotion: el => el.parentElement?.getAnimations().some(a=>a.playState==='running'),
+    onReady: () => paintMany(document.querySelectorAll('.ilg-composer-lens-glass.ilg-control-surface, dialog.ilg-preset-glass[open]'), 'wallpaper-lens'),
+    followingMotion: el => (el.classList.contains('ilg-preset-glass') ? el : el.parentElement)?.getAnimations().some(a => a.playState === 'running'),
 });
 const messageRimFilters = new WeakMap();
 function disposeMessageRim(rim) {
@@ -1043,6 +1049,7 @@ for (const type of ['compositionstart', 'compositionupdate', 'compositionend']) 
 }, true);
 document.addEventListener('focusin', e => { if (e.target.id === 'send_textarea') syncInputMaterial(); });
 function surfaceBlur(it, el) {
+    if (it.followMaterial) return S.barBlur;
     if (el.matches(HOST_MENU_SEL)) return 10;
     if (composerGlassSurface(el)) return 6;
     // Guarded bubbles use one viewport-sized outer blur, not a full-message SVG or inner pass.
@@ -1056,7 +1063,7 @@ function surfaceBlur(it, el) {
 }
 // 新版：模糊、调色、折射全在一个 SVG 滤镜里，所以 backdrop-filter 只写 url()
 function buildPhysical(it, el, w, h, r) {
-    const kind = KIND[it.kind], control = controlReadable(el);
+    const kind = KIND[it.followMaterial ? 'bar' : it.kind], control = controlReadable(el);
     const baseBezel = Math.max(2, S.pBezel * kind.bezelK);
     const bezel = control ? Math.max(2, Math.min(baseBezel, Math.min(w, h) * .2)) : baseBezel;
     const o = {
@@ -1071,7 +1078,7 @@ function buildPhysical(it, el, w, h, r) {
         ...ARC_ONLY,
     };
     // Compact clear lens for composer sheets, using the existing physical map cache.
-    if (it.kind === 'panel' && composerGlassSurface(el)) Object.assign(o, {
+    if (it.kind === 'panel' && !it.followMaterial && composerGlassSurface(el)) Object.assign(o, {
         profile: 'lens', ior: 1.45, magnify: 1.35, bezel: Math.min(14, r * .65),
         thickness: 28, strength: .9, aberration: .15, blur: 6,
         saturate: 1.15, brightness: 1.02, contrast: 1,
@@ -1094,10 +1101,11 @@ function buildPhysical(it, el, w, h, r) {
 
 function buildFilter(it, w, h, r, el) {
     it.physical = null;
-    const sc = S.scale * KIND[it.kind].k * (el && foldedMenuSurface(el) ? .82 : 1), a = S.aberration * KIND[it.kind].k;
+    const kind = it.followMaterial ? 'bar' : it.kind;
+    const sc = S.scale * KIND[kind].k * (el && foldedMenuSurface(el) ? .82 : 1), a = S.aberration * KIND[kind].k;
     const f = filterOf(it, w, h);
     let html = `<feFlood flood-color="rgb(128,128,128)" result="neutral"/>` +
-        `<feImage href="${makeMap(w, h, r, S.bevel * (it.kind === 'bar' ? 1.3 : 1))}" x="0" y="0" width="${w}" height="${h}" preserveAspectRatio="none" result="img"/>` +
+        `<feImage href="${makeMap(w, h, r, S.bevel * (kind === 'bar' ? 1.3 : 1))}" x="0" y="0" width="${w}" height="${h}" preserveAspectRatio="none" result="img"/>` +
         `<feComposite in="img" in2="neutral" operator="over" result="map"/>`;
     if (a > 0.5) {
         html += disp(sc + a, 'dr') + disp(sc, 'dg') + disp(Math.max(0, sc - a), 'db') +
@@ -1188,11 +1196,7 @@ function paintMany(list, reason, measured = null) {
         const it = items.get(el);
         if (!it) continue;
         if (!el.isConnected || !trackable(el)) { untrack(el); continue; }
-        if (it.kind === 'panel' || it.kind === 'clearPanel') {
-            const panel = adaptedPanel(el);
-            it.kind = panel ? 'clearPanel' : 'panel';
-            el.classList.toggle('ilg-adapted', !!panel);
-        }
+        if (it.kind === 'panel' || it.kind === 'clearPanel') syncAdaptedPanel(el, it);
         jobs.push(el);
     }
     if (flickerCapture) flickerCapture.messagePaints(reason, jobs.filter(el => items.get(el).kind === 'mes').length);
@@ -1206,11 +1210,7 @@ function paint(el, geo) {
     if (!geo) {
         if (!el.isConnected) { untrack(el); return; }
         if (!trackable(el)) { untrack(el); return; }
-        if (it.kind === 'panel' || it.kind === 'clearPanel') {
-            const panel = adaptedPanel(el);
-            it.kind = panel ? 'clearPanel' : 'panel';
-            el.classList.toggle('ilg-adapted', !!panel);
-        }
+        if (it.kind === 'panel' || it.kind === 'clearPanel') syncAdaptedPanel(el, it);
         geo = measure(el);
     }
     if (it.kind !== 'mes') {
@@ -1220,6 +1220,7 @@ function paint(el, geo) {
         else {
             visibleItems.delete(el); iosWallpaper.release(el);
             if (it.kind === 'panel' || it.kind === 'clearPanel') {
+                if (it.followMaterial) lensWallpaper.release(el);
                 reflections.release(el); webGlass.release(el);
                 it.filter?.remove(); it.filter = null; it.physical = null;
                 el.style.backdropFilter = ''; el.style.webkitBackdropFilter = '';
@@ -1243,22 +1244,36 @@ function paint(el, geo) {
     it.renderPath = 'pending'; it.fallbackReason = '';
     const composer = it.kind === 'panel' && composerGlassSurface(el);
     el.classList.toggle('ilg-composer-liquid', composer);
+    const preset = it.kind === 'clearPanel' && el.classList.contains('ilg-preset-glass');
+    const wasFollowing = it.followMaterial;
+    it.followMaterial = preset || (composer && root.classList.contains('ilg-merged-tools'));
+    el.classList.toggle('ilg-follow-material', it.followMaterial);
     const cssMode = cssGlassActive();
     el.classList.toggle('ilg-css-surface', cssMode);
     // Scrollable Android panels share the compositor with chat; avoid retaining an SVG backdrop across popup transitions.
     const stablePanel = androidHost && (it.kind === 'panel' || it.kind === 'clearPanel');
-    const useWeb = !stablePanel && (it.kind === 'bar' || composer) && webStyleEnabled();
+    const noBlur = document.body.classList.contains('no-blur');
+    const tabLens = el.classList.contains('ilg-composer-lens-glass');
+    const useWeb = !(noBlur && (it.followMaterial || tabLens))
+        && ((!stablePanel && (it.kind === 'bar' || composer)) || it.followMaterial) && webStyleEnabled();
     const webBubble = it.bubbleReading && webStyleEnabled();
     if (!useWeb) webGlass.release(el);
     if (!webBubble && it.backdrop?.style.getPropertyValue('--ilg-web-tint')) {
         webGlass.release(it.backdrop);
         it.backdrop.style.removeProperty('--ilg-web-tint');
     }
-    const tabLens = el.classList.contains('ilg-composer-lens-glass');
-    const sampleLens = tabLens && !cssMode && S.refract && (canRefract() || iosWallpaperRequested()) && !document.body.classList.contains('no-blur');
-    if(tabLens && !sampleLens)lensWallpaper.release(el);
+    const { w, h, r } = geo;
+    const sampleLens = tabLens && !cssMode && S.refract && (canRefract() || iosWallpaperRequested()) && !noBlur;
+    // The dialog contents keep their native scrolling. On mobile only its static wallpaper can be displaced.
+    const samplePreset = preset && (stablePanel || iosWallpaperRequested()) && !cssMode && !noBlur && S.refract
+        && (canRefract() || iosWallpaperRequested()) && Math.max(w, h) <= 1024
+        && !largeWebViewMessage({webView: true, kind: 'mes', width: w, height: h, dpr: devicePixelRatio});
+    if ((tabLens || wasFollowing || preset) && !sampleLens && !samplePreset) lensWallpaper.release(el);
+    if ((it.followMaterial || tabLens) && (cssMode || noBlur || useWeb || !S.refract)) {
+        it.filter?.remove(); it.filter = null; it.physical = null;
+    }
     if (!useWeb||!iosWallpaperRequested()) iosWallpaper.release(el);
-    if (document.body.classList.contains('no-blur')) {
+    if (noBlur) {
         it.renderPath = 'no-blur';
         if (it.backdrop) messageWallpaper.release(it.backdrop);
         reflections.release(el);
@@ -1268,11 +1283,9 @@ function paint(el, geo) {
         return;
     }
     const blur = surfaceBlur(it, el);
-    // The adapted preset and memory panels need visible frost on the no-SVG path.
-    const fallbackBlur = it.kind === 'clearPanel' ? Math.max(12, blur) : blur;
+    const fallbackBlur = it.kind === 'clearPanel' && !preset ? Math.max(12, blur) : blur;
     const reading = it.kind === 'mes' && !it.bubbleReading ? ' var(--ilg-reading-filter, blur(0px))' : '';
     const tail = `blur(${blur}px) saturate(${S.saturate}) brightness(${S.brightness})` + reading;
-    const { w, h, r } = geo;
     if (it.backdrop) {
         // Draw the wallpaper directly when WebView cannot sample it through a scrolling backdrop.
         if (boundedGlass && it.visible && w && h) {
@@ -1300,6 +1313,7 @@ function paint(el, geo) {
         setPhys(el, it, false);
         let lightBlur;
         if (boundedGlass) lightBlur = blur;
+        else if (it.followMaterial) lightBlur = Math.max(.75, Math.min(1.5, blur));
         else if (it.kind === 'clearPanel') lightBlur = fallbackBlur;
         else if (it.bubbleReading) lightBlur = Math.max(1, Math.min(3, blur));
         else if (it.kind === 'mes') lightBlur = S.chatBackground === 'transparent' ? 0 : Math.max(1.5, Math.min(6, blur));
@@ -1342,14 +1356,37 @@ function paint(el, geo) {
     if (useWeb) {
         it.renderPath = 'web-compatible';
         setPhys(el, it, false);
+        const refract = S.refract && (canRefract() || iosWallpaperRequested()) && (!stablePanel || samplePreset);
+        if (!refract && (it.followMaterial || tabLens) && it.web) webGlass.release(el);
         webGlass.paint(el, it, { width: w, height: h,
-            refract: S.refract && (canRefract() || iosWallpaperRequested()),
-            sourcePlane: sampleLens?value=>lensWallpaper.paint(el,value):iosWallpaperRequested()?value=>iosWallpaper.paint(el,value):null,
+            refract,
+            sourcePlane: sampleLens || samplePreset ? value => {
+                const painted = lensWallpaper.paint(el, value);
+                if (painted) {
+                    it.renderPath = 'web-wallpaper';
+                    if (samplePreset) lensWallpaper.follow();
+                }
+                return painted;
+            } : !stablePanel && iosWallpaperRequested() ? value => iosWallpaper.paint(el, value) : null,
             filter: () => filterOf(it, w, h, 'webFilter'), radius: r, preset: S.webPreset, refractionScale: foldedMenuSurface(el) ? .82 : 1, controlCore: control && controlReadable(el), controlBlur: inputGlass(el) ? 3 : 5.5,
             // 输入胶囊上下两条边的折射圈加厚一点（用户 2026-11-05 要求），岛保持上游原样
             bendY: inputGlass(el) ? 1.5 : 1 });
         if(iosWallpaperRequested()&&el.querySelector(':scope > .ilg-ios-wallpaper-plane'))it.renderPath='web-wallpaper';
         return;
+    }
+    if (samplePreset) {
+        const physical = S.engine === 'physical';
+        const url = `url(#${it.id})`;
+        if (lensWallpaper.paint(el, physical ? url : `${url} ${tail}`)) {
+            if (physical) buildPhysical(it, el, w, h, r);
+            else buildFilter(it, w, h, r, el);
+            lensWallpaper.follow();
+            it.renderPath = physical ? 'physical-wallpaper' : 'legacy-wallpaper';
+            setPhys(el, it, physical);
+            surface.style.backdropFilter = 'none';
+            surface.style.webkitBackdropFilter = 'none';
+            return;
+        }
     }
     const phys = refractAllowed(it) && S.engine === 'physical' && !guarded;
     if (guarded && refractAllowed(it)) {
@@ -1472,7 +1509,9 @@ function observeSurface(el, it) {
         if (content) {
             it.contentObserver = new MutationObserver(() => {
                 if (popupOwnsStyle(el)) { untrack(el); return; }
-                if (el.classList.contains('ilg-adapted') !== !!adaptedPanel(el)) paint(el);
+                const panel = adaptedPanel(el);
+                if (el.classList.contains('ilg-adapted') !== !!panel
+                    || el.classList.contains('ilg-preset-glass') !== (panel?.id === 'nvwa-panel')) paint(el);
             });
             it.contentObserver.observe(content, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-nvwa-style'] });
         }
@@ -1538,6 +1577,7 @@ function untrack(el) {
     ro.unobserve(el);
     io.unobserve(el);
     el.classList.remove('ilg-glass', 'ilg-sheen', 'ilg-clear', 'ilg-phys', 'ilg-adapted', 'ilg-message-backdrop', 'ilg-message-viewport', 'ilg-message-bounded-glass', 'ilg-bounded-hit', 'ilg-control-surface', 'ilg-control-readable', 'ilg-css-surface', 'ilg-composer-liquid', 'ilg-stable-composer');
+    el.classList.remove('ilg-preset-glass', 'ilg-follow-material');
     if (el.id === 'nonQRFormItems') el.querySelectorAll('[data-ilg-input-tone]').forEach(action => delete action.dataset.ilgInputTone);
     el.style.backdropFilter = '';
     el.style.webkitBackdropFilter = '';
