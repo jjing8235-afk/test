@@ -3821,12 +3821,12 @@ html.ilg body.bubblechat #chat :is(.ilg-message-wallpaper-plane, .ilg-message-wa
 }
 /* Fade the refracted edge into the sheet; the row itself clips the outer corners. */
 html.ilg body.bubblechat #chat .ilg-message-wallpaper-rim {
-    --ilg-rim-start: calc(var(--ilg-wallpaper-bleed) + 6px);
-    --ilg-rim-end: calc(var(--ilg-wallpaper-bleed) + 15px);
+    --ilg-rim-start: calc(var(--ilg-wallpaper-bleed) + 5px);
+    --ilg-rim-end: calc(var(--ilg-wallpaper-bleed) + 16px);
     --ilg-rim-mask:
         linear-gradient(to right, #000 var(--ilg-rim-start), transparent var(--ilg-rim-end), transparent calc(100% - var(--ilg-rim-end)), #000 calc(100% - var(--ilg-rim-start))),
-        linear-gradient(to bottom, #000 calc(var(--ilg-rim-top) + 15px), transparent calc(var(--ilg-rim-top) + 33px)),
-        linear-gradient(to top, #000 calc(var(--ilg-rim-bottom) + 10px), transparent calc(var(--ilg-rim-bottom) + 25px));
+        linear-gradient(to bottom, #000 calc(var(--ilg-rim-top) + 10px), transparent calc(var(--ilg-rim-top) + 27px)),
+        linear-gradient(to top, #000 calc(var(--ilg-rim-bottom) + 8px), transparent calc(var(--ilg-rim-bottom) + 22px));
     mask-image: var(--ilg-rim-mask);
 }
 html.ilg body.bubblechat #chat .ilg-message-wallpaper-host::after {
@@ -3840,6 +3840,13 @@ html.ilg body.bubblechat #chat .ilg-message-wallpaper-host::after {
    A grazing reflection on the viewport-sized plane supplies depth without tinting the text shell. */
 html.ilg.ilg-bubble-double body.bubblechat:not(.no-blur,.waifuMode) #chat .ilg-message-bounded-glass .ilg-message-clip > .ilg-message-wallpaper-host::after {
     background-image: linear-gradient(90deg,rgba(240,250,255,.48),rgba(216,235,250,.20) 8px,rgba(202,224,245,.12) 17px,transparent 29px,transparent calc(100% - 24px),rgba(13,23,37,.20) calc(100% - 7px),rgba(244,248,255,.33));
+}
+/* Leave the stronger painted fallback for wallpaper slices without a physical rim. */
+html.ilg.ilg-bubble-double body.bubblechat #chat .ilg-message-wallpaper-host:has(> .ilg-message-wallpaper-rim:not([hidden])) {
+    --ilg-wallpaper-core-min: max(3.5px, var(--ilg-bubble-inner-blur, 0px));
+}
+html.ilg.ilg-bubble-double body.bubblechat:not(.no-blur,.waifuMode) #chat .ilg-message-bounded-glass .ilg-message-clip > .ilg-message-wallpaper-host:has(> .ilg-message-wallpaper-rim:not([hidden]))::after {
+    background-image: linear-gradient(90deg, rgba(244,250,255,.18), transparent 6px, transparent calc(100% - 5px), rgba(244,250,255,.08));
 }
 html.ilg body:is(.no-blur, .waifuMode) #chat .ilg-message-wallpaper-host > :is(.ilg-message-wallpaper-plane, .ilg-message-wallpaper-rim),
 html.ilg body:is(.no-blur, .waifuMode) #chat .ilg-message-wallpaper-host::after {
@@ -5161,7 +5168,7 @@ html.ilg.ilg-kb-open body #ilg-ball { visibility: hidden; }
     /* Guarded rows get real borders instead of full-row masks, and no second full-row blur. */
     html.ilg:where(.ilg-bubble-double) body.bubblechat:not(.waifuMode, .no-blur) #chat > .mes.ilg-glass:where(:not(.smallSysMes, [is_system="true"], [data-nvwa-style="author"], .ilg-card-renderer:not(.ilg-inline-card), .ilg-content-overlay)).ilg-message-viewport { --ilg-bubble-inner-filter: none; }
     html.ilg:where(.ilg-bubble-double) body.bubblechat:not(.waifuMode, .no-blur) #chat > .mes.ilg-message-bounded-glass:has(> .ilg-message-clip > .ilg-message-glass > .ilg-message-wallpaper-rim:not([hidden]))::after {
-        box-shadow: inset 1px 1px 0 var(--ilg-bubble-key), inset -1px -1px 0 var(--ilg-bubble-return), inset 2px 0 2px var(--ilg-bubble-cut);
+        box-shadow: inset 0 1px 1px rgba(255,255,255,.25), inset 0 -1px .5px rgba(255,255,255,.08);
     }
     @media (min-width: 600px) {
         /* Keep the preset's content stacking level, but anchor the unfiltered inner rim to the row. */

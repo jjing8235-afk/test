@@ -36,7 +36,7 @@ window.__ilgLoaded = new URL('.', import.meta.url).pathname;
 let studioUI = null;
 let flickerCapture = null, flickerReport = null;
 const MODULE = 'iosLiquidGlass';
-const BUILD_VERSION = '2.0.10-test.33';
+const BUILD_VERSION = '2.0.10-test.34';
 const MAX_INNER_GLASS_BLUR = 16;
 const ENGINE_NAMES = Object.freeze({performance:'御风性能引擎',refraction:'棱光折射引擎'});
 const NS = 'http://www.w3.org/2000/svg';
@@ -909,16 +909,25 @@ function layoutMessageCrop(plane, surface, rect, bleed, rim, geometry) {
         return '';
     }
     const map = getMaps(rowWidth, fullHeight, radius, options);
+    // Red and blue each need one more viewport-sized displacement pass. Keep their
+    // combined area inside the existing surface budget; larger crops still refract.
+    const aberration = options.strength > 0 && !largeWebViewMessage({webView: true, kind: 'mes', width, height: height * 2, dpr: devicePixelRatio})
+        ? options.aberration : 0;
+    const spread = 1 + aberration / 100;
+    const samplingLimit = (bleed - 2 - 3 * options.blur) / map.max;
+    const lensLimit = options.profile === 'lens' ? 0.95 / (1 - 1 / Math.max(1.01, options.magnify)) : Infinity;
+    const strength = Math.min(options.strength, Math.min(samplingLimit, lensLimit) / spread);
+    const filterKey = `${key}:${aberration}:${strength}`;
     // Offscreen caps do not move the straight-side samples. Keep their map geometry stable while scrolling.
     const cropTop = Math.max(-map.C, Math.round(top));
     const cropBottom = Math.min(height + map.C, Math.round(top + clip.height));
     const rowHeight = cropBottom - cropTop;
     const crop = { left: bleed, top: cropTop, height };
     const previous = messageRimFilters.get(rim);
-    if (previous?.map !== map || previous.key !== key) {
+    if (previous?.map !== map || previous.key !== filterKey) {
         const filter = filterOf(previous || { id }, width, height);
-        filter.innerHTML = physicalFilter(map, options, rowWidth, rowHeight, S.pLight, crop);
-        messageRimFilters.set(rim, { id, filter, map, key, width, height, rowWidth, rowHeight, cropTop });
+        filter.innerHTML = physicalFilter(map, { ...options, aberration, strength }, rowWidth, rowHeight, S.pLight, crop);
+        messageRimFilters.set(rim, { id, filter, map, key: filterKey, width, height, rowWidth, rowHeight, cropTop });
     } else if (previous.width !== width || previous.height !== height || previous.rowWidth !== rowWidth
         || previous.rowHeight !== rowHeight || previous.cropTop !== cropTop) {
         if (previous.width !== width || previous.height !== height) filterOf(previous, width, height);
@@ -1271,13 +1280,14 @@ function paint(el, geo) {
             let rim = null;
             if (refractRim) {
                 const options = {
-                    ...ARC_ONLY, profile: S.profile, ior: S.pIor, magnify: S.pMagnify, bezel: Math.min(30, Math.max(2, S.pBezel)),
-                    thickness: Math.min(60, S.pThickness), strength: Math.min(1.5, S.pStrength * KIND.mes.k),
-                    blur: 2.2, saturate: S.pSaturate, brightness: S.pBrightness, contrast: S.pContrast, aberration: 0,
+                    ...ARC_ONLY, profile: S.profile, ior: S.pIor, magnify: S.pMagnify,
+                    bezel: Math.min(40, Math.max(2, S.pBezel * KIND.bar.bezelK)), thickness: Math.min(60, S.pThickness * KIND.bar.thickK),
+                    strength: S.pStrength * KIND.bar.k, aberration: Math.min(6, S.pAberration), blur: Math.min(1.5, KIND.bar.blur()),
+                    saturate: S.pSaturate, brightness: S.pBrightness, contrast: S.pContrast,
                 };
                 rim = { id: it.id + '-rim', radius: r, options, key: JSON.stringify(options) };
             }
-            messageWallpaper.paint(surface, `blur(${Math.max(6, blur)}px) ${wallpaperTone}${reading}`, rim);
+            messageWallpaper.paint(surface, `blur(max(var(--ilg-wallpaper-core-min, 6px), ${blur}px)) ${wallpaperTone}${reading}`, rim);
         } else messageWallpaper.release(it.backdrop);
     }
     // A closed drawer has no pixels to update; retain its last valid filter for reopening.
@@ -2978,8 +2988,10 @@ function applyBubbleBlur() {
     S.bubbleBlur = normalizeBubbleBlur(S.bubbleBlur);
     if (S.enabled && S.bubbleStyle === 'double' && S.bubbleBlur > 0) {
         root.style.setProperty('--ilg-bubble-inner-filter', `blur(${S.bubbleBlur}px)`);
+        root.style.setProperty('--ilg-bubble-inner-blur', `${S.bubbleBlur}px`);
     } else {
         root.style.removeProperty('--ilg-bubble-inner-filter');
+        root.style.removeProperty('--ilg-bubble-inner-blur');
     }
 }
 function applyBubbleStyle() {
