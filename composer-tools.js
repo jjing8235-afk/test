@@ -1,9 +1,9 @@
 // One launcher for native chat, extension and quick-reply menus. Host action nodes stay in place.
-export function createComposerTools({root}) {
+export function createComposerTools({root, attachLens, detachLens}) {
     const doc=root.ownerDocument, win=doc.defaultView, bars=new Map(), ownedRows=new Set(), ownedGroups=new Set();
     const panes=['chat','tools','quick'], labels={chat:'聊天',tools:'扩展',quick:'快捷'};
     let enabled=false,pane='chat',routing=false,plus=null,wand=null,saved=[],focusFrame=0,rowsFrame=0;
-    let tabSlide=null;
+    let tabSlide=null, liveLens=null, gesture=null;
     const reduceMotion=win.matchMedia('(prefers-reduced-motion: reduce)');
     const menu=kind=>doc.getElementById(kind==='chat'?'options':kind==='tools'?'extensionsMenu':'qr--bar');
     const content=kind=>kind==='chat'?doc.querySelector('#options .options-content'):menu(kind);
@@ -64,22 +64,80 @@ export function createComposerTools({root}) {
         tabSlide={animation,kind};
         animation.onfinish=()=>{if(tabSlide?.animation===animation)tabSlide=null;};
     }
+    function setLiveLens(next) {
+        if(next===liveLens)return;
+        const old=liveLens; liveLens=next;
+        if(old)detachLens?.(old);
+        if(next)attachLens?.(next);
+    }
+    function endDrag() {
+        if(!gesture)return;
+        const {bar,lens,id}=gesture; gesture=null;
+        lens.style.removeProperty('translate'); bar.classList.remove('ilg-tab-drag');
+        if(bar.hasPointerCapture(id))bar.releasePointerCapture(id);
+    }
+    function wireDrag(bar,lens) {
+        let suppressClick=false;
+        bar.addEventListener('pointerdown',event=>{
+            if(!event.isPrimary||event.button!==0||gesture)return;
+            suppressClick=false;
+            const active=bar.querySelector('[aria-selected="true"]');
+            if(!active.contains(event.target))return; // Other tabs keep their native tap.
+            gesture={bar,lens,id:event.pointerId,x:event.clientX,y:event.clientY,moved:false};
+        });
+        bar.addEventListener('pointermove',event=>{
+            const g=gesture;if(!g||g.bar!==bar||g.id!==event.pointerId)return;
+            if(!event.buttons){endDrag();return;}
+            const dx=event.clientX-g.x,dy=event.clientY-g.y;
+            if(!g.moved){
+                if(Math.abs(dy)>6&&Math.abs(dy)>Math.abs(dx)){endDrag();return;}
+                if(Math.abs(dx)<5)return;
+                const painted=lens.getBoundingClientRect(); cancelTabSlide();
+                g.origin=painted.left+painted.width/2;
+                g.stops=[...bar.querySelectorAll('[role="tab"]:not(:disabled)')].map(button=>{
+                    const r=button.getBoundingClientRect();return {button,x:r.left+r.width/2};
+                }).sort((a,b)=>a.x-b.x);
+                g.home=g.stops.find(stop=>stop.button.getAttribute('aria-selected')==='true').x;
+                bar.setPointerCapture(g.id);g.moved=true;bar.classList.add('ilg-tab-drag');
+            }
+            const x=Math.max(g.stops[0].x,Math.min(g.stops.at(-1).x,g.origin+dx));
+            lens.style.translate=`${x-g.home}px 0`;
+        });
+        bar.addEventListener('pointerup',event=>{
+            const g=gesture;if(!g||g.bar!==bar||g.id!==event.pointerId)return;
+            if(!g.moved){endDrag();return;}
+            const x=g.origin+event.clientX-g.x;
+            const target=g.stops.reduce((a,b)=>Math.abs(a.x-x)<=Math.abs(b.x-x)?a:b);
+            const active=bar.querySelector('[aria-selected="true"]').dataset.pane;
+            const from=tabLensGeometry(active);endDrag();suppressClick=true;
+            win.setTimeout(()=>{suppressClick=false;},0);
+            select(target.button.dataset.pane,{focus:true,dragFrom:from});
+        });
+        for(const type of ['pointercancel','lostpointercapture','pointerleave'])bar.addEventListener(type,event=>{
+            if(type==='lostpointercapture'&&event.target!==bar)return;
+            if(gesture?.id===event.pointerId&&gesture.bar===bar&&(type!=='pointerleave'||!gesture.moved))endDrag();
+        });
+        bar.addEventListener('click',event=>{if(suppressClick&&event.detail){event.preventDefault();event.stopImmediatePropagation();}},true);
+    }
     function refresh(){
         if(!enabled||!plus)return;
         if(tabSlide&&!visible(tabSlide.kind))cancelTabSlide();
         for(const kind of panes)menu(kind)?.classList.toggle('ilg-composer-open',visible(kind));
         const expanded=panes.some(visible);if(plus.getAttribute('aria-expanded')!==String(expanded))plus.setAttribute('aria-expanded',String(expanded));
         for(const [el,bar]of bars)updateBar(el,bar);
+        const open=panes.find(visible),bar=open&&bars.get(content(open));
+        if(gesture&&gesture.bar!==bar)endDrag();
+        setLiveLens(bar?.querySelector('.ilg-composer-lens-glass')||null);
         toolObserver.disconnect();
         if(visible('tools')){classifyTools();toolObserver.observe(menu('tools'),{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['data-nvwa-style','style']});}
     }
-    function select(kind,{toggle=false,focus=false}={}){
+    function select(kind,{toggle=false,focus=false,dragFrom=null}={}){
         if(!enabled||!available(kind))return;
         cancelAnimationFrame(focusFrame);focusFrame=0;finishAnimations();
         if(toggle&&visible(kind)){nativeClick(kind);finishAnimations();focusLauncher();refresh();return;}
         const previous=panes.find(visible);
         const switching=previous&&previous!==kind;
-        const from=switching&&!reduceMotion.matches&&!doc.body.classList.contains('reduced-motion') ? tabLensGeometry(previous) : null;
+        const from=!reduceMotion.matches&&!doc.body.classList.contains('reduced-motion') ? dragFrom||(switching?tabLensGeometry(previous):null) : null;
         if(switching)cancelTabSlide();
         for(const other of panes)if(other!==kind&&visible(other)){nativeClick(other);finishAnimations();}
         pane=kind;focusLauncher();if(!visible(kind))nativeClick(kind);finishAnimations();
@@ -107,6 +165,7 @@ export function createComposerTools({root}) {
         if(!bar){
             bar=doc.createElement('div');bar.className='ilg-composer-tabs';bar.setAttribute('role','tablist');bar.setAttribute('aria-label','输入工具');
             const lens=doc.createElement('span');lens.className='ilg-composer-tab-lens';lens.setAttribute('aria-hidden','true');bar.append(lens);
+            const glass=doc.createElement('span');glass.className='ilg-composer-lens-glass';lens.append(glass);wireDrag(bar,lens);
             for(const kind of panes){const b=doc.createElement('button');b.type='button';b.dataset.pane=kind;b.textContent=labels[kind];b.setAttribute('role','tab');b.id='ilg-composer-tab-'+(el.id==='extensionsMenu'?'tools':el.id==='qr--bar'?'quick':'chat')+'-'+kind;b.setAttribute('aria-controls',kind==='chat'?'options':kind==='tools'?'extensionsMenu':'qr--bar');b.addEventListener('click',event=>{event.preventDefault();event.stopImmediatePropagation();select(kind,{focus:true});});bar.append(b);}
             bar.addEventListener('keydown',event=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;event.preventDefault();event.stopPropagation();const choices=panes.filter(available),active=el.id==='extensionsMenu'?'tools':el.id==='qr--bar'?'quick':'chat',i=choices.indexOf(active);select(event.key==='Home'?choices[0]:event.key==='End'?choices.at(-1):choices[(i+(event.key==='ArrowLeft'?-1:1)+choices.length)%choices.length],{focus:true});});bars.set(el,bar);
             el.addEventListener('scroll',updateTrackScroll,{passive:true});
@@ -114,12 +173,12 @@ export function createComposerTools({root}) {
         bar.classList.toggle('ilg-composer-tabs-scrolled',el.scrollTop>1);
         updateBar(el,bar);if(bar.parentElement!==el)el.prepend(bar);
     }
-    function release(el){el.removeEventListener('scroll',updateTrackScroll);bars.get(el)?.remove();bars.delete(el);if(el===menu('tools')){toolObserver.disconnect();clearToolLayout();}}
+    function release(el){const bar=bars.get(el);if(bar&&gesture?.bar===bar)endDrag();if(bar&&liveLens&&bar.contains(liveLens))setLiveLens(null);el.removeEventListener('scroll',updateTrackScroll);bars.get(el)?.remove();bars.delete(el);if(el===menu('tools')){toolObserver.disconnect();clearToolLayout();}}
     function ownAttribute(el,name,value){saved.push({el,name,before:el.getAttribute(name),value});el.setAttribute(name,value);}
     function setEnabled(value){
         if(value===enabled){if(value)refresh();return;}
         if(!value){
-            cancelTabSlide();
+            endDrag();setLiveLens(null);cancelTabSlide();
             observer.disconnect();toolObserver.disconnect();cancelAnimationFrame(focusFrame);cancelAnimationFrame(rowsFrame);focusFrame=rowsFrame=0;
             plus?.removeEventListener('click',launcherClick,true);wand?.removeEventListener('click',toolsClick,true);doc.removeEventListener('keydown',keydown,true);
             finishAnimations();for(const kind of panes)if(visible(kind))nativeClick(kind);finishAnimations();enabled=false;root.classList.remove('ilg-merged-tools');

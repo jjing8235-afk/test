@@ -36,7 +36,7 @@ window.__ilgLoaded = new URL('.', import.meta.url).pathname;
 let studioUI = null;
 let flickerCapture = null, flickerReport = null;
 const MODULE = 'iosLiquidGlass';
-const BUILD_VERSION = '2.0.10-test.29';
+const BUILD_VERSION = '2.0.10-test.30';
 const MAX_INNER_GLASS_BLUR = 16;
 const ENGINE_NAMES = Object.freeze({performance:'御风性能引擎',refraction:'棱光折射引擎'});
 const NS = 'http://www.w3.org/2000/svg';
@@ -832,7 +832,7 @@ function trackable(el) {
 const MES_SEL = '.mes:not(.smallSysMes)';
 
 const root = document.documentElement;
-const composerTools = createComposerTools({root});
+const composerTools = createComposerTools({root, attachLens: el => track(el, 'bar'), detachLens: untrack});
 const lightScope = createLightScope(root);
 const webGlass = createLiquidGlassWeb();
 const reflections = createGlassReflections();
@@ -952,8 +952,8 @@ function filterOf(it, w, h, slot = 'filter') {
 // 滤镜只负责折射；两种材质的表面反光统一在 CSS / 融合距离场中绘制，避免重复叠亮。
 const ARC_ONLY = Object.freeze({ specular: 0, sharp: 4, edgeShade: 0, fresnel: 0, caustic: 0 });
 // 统一玻璃表面；折叠顶栏与空输入区保持高透，仅有内容的输入区启用可读层。
-const inputGlass = el => el.matches('#nonQRFormItems, #ilg-composer-input-glass');
-const controlSurface = el => el.matches('.ilg-island, #nonQRFormItems, #ilg-floor, .ilg-composer-glass');
+const inputGlass = el => el.matches('#nonQRFormItems, #ilg-composer-input-glass, .ilg-composer-lens-glass');
+const controlSurface = el => el.matches('.ilg-island, #nonQRFormItems, #ilg-floor, .ilg-composer-glass, .ilg-composer-lens-glass');
 let inputMaterialReadable = false, inputCompositionText = '';
 const foldedMenuSurface = el => S.fold && el.classList.contains('ilg-island') && el.icons?.some(icon => icon.id === 'ilg-fold-button');
 const controlReadable = el => controlSurface(el) && (inputGlass(el) ? inputMaterialReadable : el.id === 'ilg-composer-plus-glass' ? false : S.islands && S.dock);

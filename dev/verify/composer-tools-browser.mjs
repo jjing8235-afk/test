@@ -19,6 +19,13 @@ check('Inserted utilities form a three-column grid below tabs; Continue keeps a 
     return tiles.every(tile=>getComputedStyle(tile).flexDirection==='column') && rects.every(r=>r.top>=tabs.bottom) && rects[0].top===rects[2].top && rects[3].top>rects[0].top && primary.offsetWidth>2*rects[0].width && getComputedStyle(primary).flexDirection==='row';
 }));
 check('Fullscreen has an outline mask rather than a solid square',await page.locator('#option_toggle_fullscreen > i').evaluate(el=>getComputedStyle(el,'::before').maskImage.includes('data:image/svg+xml')));
+const activeTab=page.locator('#options [aria-selected="true"]');
+const box=await activeTab.boundingBox();
+const x=box.x+box.width/2,y=box.y+box.height/2;
+await page.mouse.move(x,y);await page.mouse.down();await page.mouse.move(x+box.width*.63,y,{steps:8});
+check('Held lens follows a horizontal drag before selection changes',await activeTab.evaluate(el=>el.dataset.pane==='chat'&&el.parentElement.querySelector('.ilg-composer-tab-lens').getBoundingClientRect().left>el.getBoundingClientRect().left+20));
+await page.mouse.up();check('Release selects the nearest available pane',await page.locator('#extensionsMenu [data-pane="tools"][aria-selected="true"]').isVisible());
+await page.locator('#extensionsMenu [data-pane="chat"]').click();await page.waitForTimeout(320);
 const tabTravel=await page.evaluate(()=>{
     const track=()=>[...document.querySelectorAll('.ilg-composer-tabs')].find(el=>el.offsetWidth>0);
     const center=(bar,el)=>{const rail=bar.getBoundingClientRect(),r=el.getBoundingClientRect();return (r.left+r.width/2-rail.left)/rail.width;};
