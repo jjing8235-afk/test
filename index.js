@@ -36,7 +36,7 @@ window.__ilgLoaded = new URL('.', import.meta.url).pathname;
 let studioUI = null;
 let flickerCapture = null, flickerReport = null;
 const MODULE = 'iosLiquidGlass';
-const BUILD_VERSION = '2.0.10-test.32';
+const BUILD_VERSION = '2.0.10-test.33';
 const MAX_INNER_GLASS_BLUR = 16;
 const ENGINE_NAMES = Object.freeze({performance:'御风性能引擎',refraction:'棱光折射引擎'});
 const NS = 'http://www.w3.org/2000/svg';
@@ -891,7 +891,10 @@ function layoutMessageCrop(plane, surface, rect, bleed, rim, geometry) {
     // The texture is viewport-sized, but the reading sheet's corners belong to the row, not the viewport.
     const clip=surface.parentElement.getBoundingClientRect();
     const top=bleed+clip.top-rect.top, bottom=bleed+rect.bottom-clip.bottom;
-    const inset=`inset(calc(${top}px + var(--ilg-bubble-seam)) calc(${bleed}px + var(--ilg-bubble-inset)) calc(${bottom}px + var(--ilg-bubble-inset)) round max(0px, calc(var(--ilg-bubble-r) - var(--ilg-bubble-inset))))`;
+    // The largest avatar seam plus corner radius fits in this offscreen allowance.
+    // Beyond it, scrolling through the body should not invalidate the wallpaper clip.
+    const sheetTop = Math.max(-256, top), sheetBottom = Math.max(-256, bottom);
+    const inset=`inset(calc(${sheetTop}px + var(--ilg-bubble-seam)) calc(${bleed}px + var(--ilg-bubble-inset)) calc(${sheetBottom}px + var(--ilg-bubble-inset)) round max(0px, calc(var(--ilg-bubble-r) - var(--ilg-bubble-inset))))`;
     if(plane._ilgClip!==inset){plane._ilgClip=inset;plane.style.clipPath=inset;}
     if (!rim) return '';
     const width = Math.ceil(rect.width + bleed * 2), height = Math.ceil(rect.height + bleed * 2);

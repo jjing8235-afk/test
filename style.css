@@ -3808,6 +3808,9 @@ html.ilg body.bubblechat #chat .mes.ilg-message-viewport > .ilg-message-clip > .
 }
 /* Draw a wallpaper crop without reading back pixels through the scroll container. */
 html.ilg body.bubblechat #chat .ilg-message-glass.ilg-message-wallpaper-host {
+    /* Keep the sticky texture anchored even when the row's caps pass through the viewport. */
+    margin-block: -100vh;
+    margin-block: -100dvh;
     overflow: hidden;
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
