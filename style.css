@@ -3783,31 +3783,41 @@ html.ilg body.bubblechat #chat .mes.ilg-message-backdrop:not(.ilg-phys)[is_user=
 html.ilg body.bubblechat #chat .mes.ilg-message-backdrop:not(.ilg-phys)[is_user="true"] > .ilg-message-clip > .ilg-message-glass {
     background-color: var(--SmartThemeUserMesBlurTintColor);
 }
-/* The wrapper has no box on folded screens; existing full-message glass is retained. */
-html.ilg body.bubblechat #chat .mes > .ilg-message-clip {
-    display: contents;
+/* The empty plane follows the visible part of a long Android message. */
+html.ilg body.bubblechat #chat .mes.ilg-message-viewport > .ilg-message-clip {
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    overflow: clip;
     border-radius: inherit;
     pointer-events: none;
 }
-@media (min-width: 600px) {
-    /* Large Android cards filter one visible viewport, including during live unfolding. */
-    html.ilg body.bubblechat #chat .mes.ilg-message-viewport > .ilg-message-clip {
-        display: block;
+html.ilg body.bubblechat #chat .mes.ilg-message-viewport > .ilg-message-clip > .ilg-message-glass {
+    position: sticky;
+    inset: auto;
+    top: calc(-1 * var(--ilg-chat-top-space, 0px));
+    width: 100%;
+    height: min(100%, 100vh);
+    height: min(100%, 100dvh);
+    z-index: auto;
+    border-radius: 0;
+}
+@media (width < 600px) {
+    /* Keep the classic and protected author layouts unchanged on narrow screens. */
+    html.ilg body.bubblechat #chat .mes.ilg-message-viewport:not(.ilg-message-bounded-glass) > .ilg-message-clip {
+        display: contents;
+    }
+    html.ilg body.bubblechat #chat .mes.ilg-message-viewport:not(.ilg-message-bounded-glass) > .ilg-message-clip > .ilg-message-glass {
         position: absolute;
         inset: 0;
+        width: auto;
+        height: auto;
         z-index: -2;
-        overflow: clip;
+        border-radius: inherit;
     }
-    html.ilg body.bubblechat #chat .mes.ilg-message-viewport > .ilg-message-clip > .ilg-message-glass {
-        position: sticky;
-        inset: auto;
-        top: calc(-1 * var(--ilg-chat-top-space, 0px));
-        width: 100%;
-        height: min(100%, 100vh);
-        height: min(100%, 100dvh);
-        z-index: auto;
-        border-radius: 0;
-    }
+}
+@media (min-width: 600px) {
     /* Preset content keeps its normal paint path. Only the empty glass and rim
        share the decoration level; do not isolate the entire tall message or
        transform/contain ancestors of authored fixed-position windows. */
@@ -5047,7 +5057,8 @@ html.ilg.ilg-kb-open body #ilg-ball { visibility: hidden; }
     }
     /* The outer plane follows the chrome's resting tint, without input/menu contrast overrides. */
     html.ilg:where(.ilg-bubble-double) body.bubblechat:not(.waifuMode, .no-blur) #chat > .mes.ilg-glass:where(:not(.smallSysMes, [is_system="true"], [data-nvwa-style="author"], .ilg-card-renderer:not(.ilg-inline-card), .ilg-content-overlay)).ilg-phys::before { background: transparent; }
-    html.ilg:where(.ilg-bubble-double) body.bubblechat:not(.waifuMode, .no-blur) #chat > .mes.ilg-glass:where(:not(.smallSysMes, [is_system="true"], [data-nvwa-style="author"], .ilg-card-renderer:not(.ilg-inline-card), .ilg-content-overlay)).ilg-message-backdrop > .ilg-message-glass {
+    html.ilg:where(.ilg-bubble-double) body.bubblechat:not(.waifuMode, .no-blur) #chat > .mes.ilg-glass:where(:not(.smallSysMes, [is_system="true"], [data-nvwa-style="author"], .ilg-card-renderer:not(.ilg-inline-card), .ilg-content-overlay)).ilg-message-backdrop > .ilg-message-glass,
+    html.ilg:where(.ilg-bubble-double) body.bubblechat:not(.waifuMode, .no-blur) #chat > .mes.ilg-glass.ilg-message-bounded-glass:where(:not(.ilg-card-renderer:not(.ilg-inline-card))) > .ilg-message-clip > .ilg-message-glass {
         background: rgba(var(--ilg-bubble-material-rgb), var(--ilg-web-tint, var(--ilg-css-glaze, var(--ilg-control-a, .06))));
     }
 

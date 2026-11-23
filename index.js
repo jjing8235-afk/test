@@ -36,7 +36,7 @@ window.__ilgLoaded = new URL('.', import.meta.url).pathname;
 let studioUI = null;
 let flickerCapture = null, flickerReport = null;
 const MODULE = 'iosLiquidGlass';
-const BUILD_VERSION = '2.0.10-test.26';
+const BUILD_VERSION = '2.0.10-test.27';
 const MAX_INNER_GLASS_BLUR = 16;
 const ENGINE_NAMES = Object.freeze({performance:'御风性能引擎',refraction:'棱光折射引擎'});
 const NS = 'http://www.w3.org/2000/svg';
@@ -970,6 +970,8 @@ document.addEventListener('focusin', e => { if (e.target.id === 'send_textarea')
 function surfaceBlur(it, el) {
     if (el.matches(HOST_MENU_SEL)) return 10;
     if (composerGlassSurface(el)) return 6;
+    // Guarded bubbles use one viewport-sized outer blur, not a full-message SVG or inner pass.
+    if (el.classList.contains('ilg-message-bounded-glass')) return Math.max(3.5, S.barBlur);
     if (it.bubbleReading) return S.barBlur;
     if (it.kind === 'mes' && S.chatBackground === 'transparent') return 0;
     const blur = KIND[it.kind].blur();
@@ -1056,6 +1058,11 @@ function messageSurface(el, it, doubleGlass) {
     }
     // A filtered message row would also be a backdrop root; its inner sheet
     // could not sample the wallpaper. Paint the outer glass on an empty plane.
+    const boundedGlass = viewportReady && S.bubbleStyle === 'double'
+        && document.body.matches('body.bubblechat:not(.waifuMode, .no-blur)')
+        && !matchMedia('(forced-colors: active)').matches
+        && !el.matches('.smallSysMes, [is_system="true"], [data-nvwa-style="author"], .ilg-content-overlay');
+    el.classList.toggle('ilg-message-bounded-glass', boundedGlass);
     const separate = doubleGlass || viewportReady || el.classList.contains('ilg-content-overlay') || el.classList.contains('ilg-card-renderer');
     el.classList.toggle('ilg-message-backdrop', separate);
     el.classList.toggle('ilg-message-viewport', viewportReady);
@@ -1088,7 +1095,7 @@ function messageSurface(el, it, doubleGlass) {
 function messageGeometry(el, w, h) {
     const geo = { w, h, r: w && h ? radiusOf(el, w, h) : 0 };
     if (S.bubbleStyle !== 'double' || w <= 0 || h <= 0) return geo;
-    // Guarded Android rows get the double layout in CSS only; keep their existing filter path.
+    // Guarded Android rows use the bounded outer plane instead of the ordinary two-filter path.
     const it = items.get(el);
     if (it?.kind !== 'mes' || !document.body.matches('body.bubblechat:not(.waifuMode, .no-blur)')
         || matchMedia('(forced-colors: active)').matches
@@ -1188,7 +1195,8 @@ function paint(el, geo) {
         // CSS material owns its rim; skip displacement maps and canvas reflections.
         setPhys(el, it, false);
         let lightBlur;
-        if (it.bubbleReading) lightBlur = Math.max(1, Math.min(3, blur));
+        if (el.classList.contains('ilg-message-bounded-glass')) lightBlur = blur;
+        else if (it.bubbleReading) lightBlur = Math.max(1, Math.min(3, blur));
         else if (it.kind === 'mes') lightBlur = S.chatBackground === 'transparent' ? 0 : Math.max(1.5, Math.min(6, blur));
         else if (control) lightBlur = controlReadable(el) ? (inputGlass(el) ? 3.5 : 4) : Math.max(.75, Math.min(1.5, blur));
         else lightBlur = Math.max(1, Math.min(it.kind === 'panel' || it.kind === 'toast' ? 8 : 3, blur));
@@ -1417,7 +1425,7 @@ function untrack(el) {
     it.backdropClip?.remove();
     ro.unobserve(el);
     io.unobserve(el);
-    el.classList.remove('ilg-glass', 'ilg-sheen', 'ilg-clear', 'ilg-phys', 'ilg-adapted', 'ilg-message-backdrop', 'ilg-message-viewport', 'ilg-bounded-hit', 'ilg-control-surface', 'ilg-control-readable', 'ilg-css-surface', 'ilg-composer-liquid', 'ilg-stable-composer');
+    el.classList.remove('ilg-glass', 'ilg-sheen', 'ilg-clear', 'ilg-phys', 'ilg-adapted', 'ilg-message-backdrop', 'ilg-message-viewport', 'ilg-message-bounded-glass', 'ilg-bounded-hit', 'ilg-control-surface', 'ilg-control-readable', 'ilg-css-surface', 'ilg-composer-liquid', 'ilg-stable-composer');
     if (el.id === 'nonQRFormItems') el.querySelectorAll('[data-ilg-input-tone]').forEach(action => delete action.dataset.ilgInputTone);
     el.style.backdropFilter = '';
     el.style.webkitBackdropFilter = '';
@@ -3084,8 +3092,13 @@ function viewportDiagnostic() {
     const rect=id=>{const el=document.getElementById(id);if(!el)return null;const r=el.getBoundingClientRect();return{x:Math.round(r.x),y:Math.round(r.y),width:Math.round(r.width),height:Math.round(r.height)};};
     const paths={},surfaces=[];let large=0,bounded=0;
     for(const [el,it] of items){const path=it.renderPath||'pending';paths[path]=(paths[path]||0)+1;if(it.fallbackReason==='large-android-message'||it.fallbackReason==='large-webview-message')large++;
-        if(it.backdropClip&&innerWidth>=600)bounded++;
-        if(surfaces.length<3&&it.visible&&el.matches('.mes')){const r=el.getBoundingClientRect(),b=(it.backdrop||el).getBoundingClientRect();surfaces.push({width:Math.round(r.width),height:Math.round(r.height),backdropWidth:Math.round(b.width),backdropHeight:Math.round(b.height),boundedBackdrop:!!it.backdropClip&&innerWidth>=600,path,fallbackReason:it.fallbackReason||''});}}
+        if (it.backdropClip && (innerWidth >= 600 || el.classList.contains('ilg-message-bounded-glass'))) bounded++;
+        if (surfaces.length < 3 && it.visible && el.matches('.mes')) {
+            const r = el.getBoundingClientRect(), b = (it.backdrop || el).getBoundingClientRect();
+            const boundedBackdrop = !!it.backdropClip && getComputedStyle(it.backdropClip).display !== 'contents';
+            surfaces.push({width:Math.round(r.width),height:Math.round(r.height),backdropWidth:Math.round(b.width),backdropHeight:Math.round(b.height),boundedBackdrop,path,fallbackReason:it.fallbackReason||''});
+        }
+    }
     return{layout:{width:innerWidth,height:innerHeight,dpr:devicePixelRatio},visual:vv?{width:vv.width,height:vv.height,offsetTop:vv.offsetTop,offsetLeft:vv.offsetLeft,scale:vv.scale}:null,
         composerFocused:document.activeElement===document.getElementById('send_textarea'),keyboard:keyboard.status(),chat:{scrollTop:chatEl.scrollTop,scrollHeight:chatEl.scrollHeight,clientHeight:chatEl.clientHeight,readingAnchor:readingAnchor.status()},composer:rect('nonQRFormItems'),form:rect('form_sheld'),ball:{shown:S.enabled&&S.floatBall,keyboardHidden:root.classList.contains('ilg-kb-open'),rect:rect('ilg-ball')},
         rendering:{iosCompatible:iosMaterialActive(),engineRequested:S.engine,largeWebViewMessages:large,largeAndroidMessages:large,boundedMessageBackdrops:bounded,paths,surfaces},
