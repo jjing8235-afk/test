@@ -5089,7 +5089,7 @@ html.ilg.ilg-kb-open body #ilg-ball { visibility: hidden; }
         html.ilg:where(.ilg-bubble-double) body.bubblechat:not(.waifuMode, .no-blur) #chat > .mes.ilg-glass:where(:not(.smallSysMes, [is_system="true"], [data-nvwa-style="author"], .ilg-card-renderer:not(.ilg-inline-card), .ilg-content-overlay, .ilg-message-viewport))::after {
             padding: 1px !important;
             background:
-                radial-gradient(ellipse 51% 69% at 9% 0%, var(--ilg-bubble-key), transparent 100%),
+                radial-gradient(ellipse var(--ilg-bubble-key-span, 51%) 69% at 9% 0%, var(--ilg-bubble-key), transparent 100%),
                 radial-gradient(ellipse 39% 53% at 92% 100%, var(--ilg-bubble-return), transparent 100%),
                 linear-gradient(146deg, var(--ilg-bubble-edge), transparent 49%, var(--ilg-bubble-cut) 80%, var(--ilg-bubble-edge)) !important;
         }
@@ -5100,23 +5100,30 @@ html.ilg.ilg-kb-open body #ilg-ball { visibility: hidden; }
             content: "";
             padding: .8px;
             background:
-                radial-gradient(ellipse 43% 68% at 13% 0%, var(--ilg-bubble-seam-key), transparent 100%),
+                radial-gradient(ellipse var(--ilg-bubble-seam-key-span, 43%) 68% at 13% 0%, var(--ilg-bubble-seam-key), transparent 100%),
                 radial-gradient(ellipse 32% 53% at 92% 100%, var(--ilg-bubble-seam-return), transparent 100%),
                 linear-gradient(146deg, var(--ilg-bubble-edge), transparent 42%, var(--ilg-bubble-cut) 82%, var(--ilg-bubble-edge));
         }
     }
 
-    /* 名片式：头像跨过内框上沿，身份、工具、正文按顺序进入内框。 */
+    /* 名片式：外框顶部留出独立玻璃区，头像跨过内框上沿。 */
+    html.ilg:where(.ilg-bubble-double).ilg-avline body #chat { --ilg-bubble-unit: 1vw; }
+    @media (min-width: 1001px) {
+        /* Desktop chats can be much narrower than the browser window. */
+        html.ilg:where(.ilg-bubble-double).ilg-avline body #chat { --ilg-bubble-unit: min(1vw, calc(var(--sheldWidth, 100vw) / 100)); }
+    }
     html.ilg:where(.ilg-bubble-double).ilg-avline body.bubblechat:not(.waifuMode, .no-blur) #chat > .mes.ilg-glass:where(:not(.smallSysMes, [is_system="true"], [data-nvwa-style="author"], .ilg-card-renderer:not(.ilg-inline-card), .ilg-content-overlay, .ilg-message-viewport)) {
-        --ilg-bubble-r: clamp(30px, calc(var(--ilg-radius) + 2.2vw), 48px);
-        --ilg-bubble-inset: clamp(8px, 2vw, 14px);
-        --ilg-bubble-pad-x: clamp(19px, 5vw, 42px);
-        --ilg-bubble-pad-y: calc(var(--ilg-bubble-inset) + 17px);
-        --ilg-bubble-avatar-top: clamp(17px, 4.5vw, 27px);
-        --ilg-av: clamp(50px, 13vw, 65px);
+        --ilg-bubble-r: clamp(36px, calc(var(--ilg-radius) + min(calc(var(--ilg-bubble-unit) * 6.5), 50px)), 78px);
+        --ilg-bubble-inset: clamp(9px, calc(var(--ilg-bubble-unit) * 2.6), 18px);
+        --ilg-bubble-pad-x: clamp(22px, calc(var(--ilg-bubble-unit) * 7), 52px);
+        --ilg-bubble-pad-y: calc(var(--ilg-bubble-inset) + 14px);
+        --ilg-bubble-avatar-top: clamp(49px, calc(var(--ilg-bubble-unit) * 14), 88px);
+        --ilg-av: clamp(74px, calc(var(--ilg-bubble-unit) * 23), 124px);
         --ilg-bubble-seam: calc(var(--ilg-bubble-avatar-top) + var(--ilg-av) * .4);
-        --ilg-bubble-head: calc(var(--ilg-bubble-seam) + 8px);
-        --ilg-bubble-action-size: clamp(44px, 11.5vw, 48px);
+        --ilg-bubble-head: calc(var(--ilg-bubble-seam) + 10px);
+        --ilg-bubble-action-size: clamp(46px, calc(var(--ilg-bubble-unit) * 13), 60px);
+        --ilg-bubble-key-span: 76%;
+        --ilg-bubble-seam-key-span: 67%;
         padding: var(--ilg-bubble-head) var(--ilg-bubble-pad-x) var(--ilg-bubble-pad-y);
     }
     /* 玩家和角色消息与聊天栏两侧对齐，经典气泡仍按正文长短收窄。 */
@@ -5136,25 +5143,14 @@ html.ilg.ilg-kb-open body #ilg-ball { visibility: hidden; }
     }
     html.ilg:where(.ilg-bubble-double) body.bubblechat:not(.waifuMode, .no-blur) #chat > .mes.ilg-glass:where(:not(.smallSysMes, [is_system="true"], [data-nvwa-style="author"], .ilg-card-renderer:not(.ilg-inline-card), .ilg-content-overlay, .ilg-message-viewport)) > .mesAvatarWrapper > .avatar {
         padding: 0;
+        border: 0;
         border-radius: 50%;
         overflow: visible;
         background: none;
     }
-    html.ilg:where(.ilg-bubble-double) body.bubblechat:not(.waifuMode, .no-blur) #chat > .mes.ilg-glass:where(:not(.smallSysMes, [is_system="true"], [data-nvwa-style="author"], .ilg-card-renderer:not(.ilg-inline-card), .ilg-content-overlay, .ilg-message-viewport)) > .mesAvatarWrapper > .avatar::before {
-        content: "";
-        inset: -3px;
-        border: 1px solid var(--ilg-bubble-edge);
-        border-top-color: var(--ilg-bubble-key);
-        border-right-color: var(--ilg-bubble-seam-key);
-        border-bottom-color: var(--ilg-bubble-return);
-        border-radius: 50%;
-        background: none;
-        box-shadow: 0 0 0 2px var(--ilg-bubble-edge);
-        -webkit-mask: none;
-        mask: none;
-        animation: none;
-    }
+    html.ilg:where(.ilg-bubble-double) body.bubblechat:not(.waifuMode, .no-blur) #chat > .mes.ilg-glass:where(:not(.smallSysMes, [is_system="true"], [data-nvwa-style="author"], .ilg-card-renderer:not(.ilg-inline-card), .ilg-content-overlay, .ilg-message-viewport)) > .mesAvatarWrapper > .avatar::before { content: none; }
     html.ilg:where(.ilg-bubble-double) body.bubblechat:not(.waifuMode, .no-blur) #chat > .mes.ilg-glass:where(:not(.smallSysMes, [is_system="true"], [data-nvwa-style="author"], .ilg-card-renderer:not(.ilg-inline-card), .ilg-content-overlay, .ilg-message-viewport)) > .mesAvatarWrapper > .avatar > :is(img, .missing-avatar) {
+        border: 0;
         border-radius: 50% !important;
         -webkit-mask: none !important;
         mask: none !important;
@@ -5171,8 +5167,8 @@ html.ilg.ilg-kb-open body #ilg-ball { visibility: hidden; }
         html.ilg:where(.ilg-bubble-double).ilg-avline body.bubblechat:not(.waifuMode, .no-blur) #chat > .mes.ilg-glass:where(:not(.smallSysMes, [is_system="true"], [data-nvwa-style="author"], .ilg-card-renderer:not(.ilg-inline-card), .ilg-content-overlay, .ilg-message-viewport)) > .mes_block > .ch_name > .flex1 {
             min-height: calc(var(--ilg-av) * .6);
             min-width: 0;
-            margin-inline-start: calc(var(--ilg-av) + 14px);
-            margin-block-end: 13px;
+            margin-inline-start: calc(var(--ilg-av) + clamp(11px, 3vw, 20px));
+            margin-block-end: clamp(9px, 2.5vw, 13px);
             justify-content: flex-start;
             color: var(--ilg-bubble-page-ink);
         }
@@ -5185,8 +5181,8 @@ html.ilg.ilg-kb-open body #ilg-ball { visibility: hidden; }
         }
         html.ilg:where(.ilg-bubble-double).ilg-avline body.bubblechat:not(.waifuMode, .no-blur) #chat > .mes.ilg-glass:where(:not(.smallSysMes, [is_system="true"], [data-nvwa-style="author"], .ilg-card-renderer:not(.ilg-inline-card), .ilg-content-overlay, .ilg-message-viewport)) > .mes_block > .ch_name .name_text {
             min-width: 0;
-            font-size: clamp(1.02rem, 3.8vw, 1.34rem);
-            font-weight: 600;
+            font-size: clamp(1.06rem, 4.5vw, 1.55rem);
+            font-weight: 550;
             line-height: 1.15;
             overflow-wrap: anywhere;
         }
@@ -5213,7 +5209,7 @@ html.ilg.ilg-kb-open body #ilg-ball { visibility: hidden; }
             margin-block-end: clamp(12px, 3vw, 17px);
         }
         html.ilg:where(.ilg-bubble-double).ilg-avline body.bubblechat:not(.waifuMode, .no-blur) #chat > .mes.ilg-glass:where(:not(.smallSysMes, [is_system="true"], [data-nvwa-style="author"], .ilg-card-renderer:not(.ilg-inline-card), .ilg-content-overlay, .ilg-message-viewport)) > .mes_block > .ch_name > .mes_buttons {
-            gap: clamp(6px, 1.8vw, 10px);
+            gap: clamp(8px, 2vw, 14px);
             min-width: 0;
             padding: 0;
             transition: none;
@@ -5229,14 +5225,14 @@ html.ilg.ilg-kb-open body #ilg-ball { visibility: hidden; }
             border-radius: 999px;
             /* Soft inset light wraps the caps without a hard join between border sides. */
             box-shadow:
-                inset .75px 1px 1.5px var(--ilg-bubble-action-rim),
-                inset -.75px -1px 1.5px var(--ilg-bubble-action-depth);
+                inset .5px .75px 1px var(--ilg-bubble-action-rim),
+                inset -.75px -1.25px 2px var(--ilg-bubble-action-depth);
             line-height: 1;
             text-shadow: none;
             color: var(--ilg-bubble-action-ink);
             opacity: 1;
             background:
-                radial-gradient(ellipse 82% 122% at 18% -28%, var(--ilg-bubble-action-glint), transparent 80%),
+                radial-gradient(ellipse 74% 104% at 16% -38%, var(--ilg-bubble-action-glint), transparent 84%),
                 linear-gradient(var(--ilg-bubble-action-sheen), transparent 48%),
                 var(--ilg-bubble-action-fill);
         }
@@ -5254,7 +5250,7 @@ html.ilg.ilg-kb-open body #ilg-ball { visibility: hidden; }
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-            font: 600 .92rem / 1 system-ui, sans-serif;
+            font: 550 .92rem / 1 system-ui, sans-serif;
         }
         html.ilg:where(.ilg-bubble-double).ilg-avline body.bubblechat:not(.waifuMode, .no-blur) #chat > .mes.ilg-glass:where(:not(.smallSysMes, [is_system="true"], [data-nvwa-style="author"], .ilg-card-renderer:not(.ilg-inline-card), .ilg-content-overlay, .ilg-message-viewport)) > .mes_block > .ch_name > .mes_buttons > .mes_edit::before { margin: 0; }
         html.ilg:where(.ilg-bubble-double).ilg-avline body.bubblechat:not(.waifuMode, .no-blur) #chat > .mes.ilg-glass:where(:not(.smallSysMes, [is_system="true"], [data-nvwa-style="author"], .ilg-card-renderer:not(.ilg-inline-card), .ilg-content-overlay, .ilg-message-viewport)) > .mes_block > .ch_name > .mes_buttons > .mes_bookmark { order: -1; }

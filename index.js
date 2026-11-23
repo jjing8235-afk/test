@@ -36,7 +36,7 @@ window.__ilgLoaded = new URL('.', import.meta.url).pathname;
 let studioUI = null;
 let flickerCapture = null, flickerReport = null;
 const MODULE = 'iosLiquidGlass';
-const BUILD_VERSION = '2.0.10-test.24';
+const BUILD_VERSION = '2.0.10-test.25';
 const MAX_INNER_GLASS_BLUR = 16;
 const ENGINE_NAMES = Object.freeze({performance:'御风性能引擎',refraction:'棱光折射引擎'});
 const NS = 'http://www.w3.org/2000/svg';
@@ -4314,20 +4314,35 @@ function applyCardMarkers(texts) {
     // Read one whole level, then write its markers. Children still see their
     // parent's resolved colors, without forcing style/layout once per card.
     const light = root.classList.contains('ilg-light');
-    const messages = texts.map(text => ({ message: text.closest('.mes'), fixedOverlay: false, cardRenderer: false, inlineFrame: false }));
-    let level = texts.map((text, i) => ({ parent: text, base: light ? 0.95 : 0.08, state: messages[i] }));
+    const messages = texts.map(text => ({
+        text, message: text.closest('.mes'), fixedOverlay: false, cardRenderer: false,
+        inlineFrame: false, nativeProse: false, inlineStatus: false, unboundedRenderer: false,
+    }));
+    let level = messages.map(state => ({ parent: state.text, base: light ? 0.95 : 0.08, state, inFlow: true, anchor: null }));
     while (level.length) {
         const updates = [], next = [];
-        for (const { parent, base, state } of level) for (const k of parent.children) {
+        for (const { parent, base, state, inFlow, anchor } of level) for (const k of parent.children) {
             const cs = getComputedStyle(k);
             const visible = cs.display !== 'none' && cs.visibility !== 'hidden';
+            const staysInFlow = inFlow && (cs.position === 'static' || cs.position === 'relative');
             if (cs.position === 'fixed' && visible && k.getClientRects().length) state.fixedOverlay = true;
+            if (!state.nativeProse && parent === state.text && staysInFlow && visible && k.classList.contains('ilg-type-prose')
+                && k.textContent.trim() && k.getClientRects().length) state.nativeProse = true;
             const frame = k.matches('iframe');
             if (frame && visible) {
-                const { width, height } = k.getBoundingClientRect();
-                if (width > 0 && height > 0) {
+                const rect = k.getBoundingClientRect();
+                if (rect.width > 0 && rect.height > 0) {
                     state.cardRenderer = true;
                     if (cs.position !== 'absolute' && cs.position !== 'fixed') state.inlineFrame = true;
+                    // A positioned frame is inline only when a message-local
+                    // wrapper in the flow reserves all of its space.
+                    const bounds = cs.position === 'absolute' && inFlow && anchor && k.offsetParent === anchor
+                        ? anchor.getBoundingClientRect() : null;
+                    const bounded = bounds && bounds.width > 0 && bounds.height > 0
+                        && rect.left >= bounds.left - 1 && rect.right <= bounds.right + 1
+                        && rect.top >= bounds.top - 1 && rect.bottom <= bounds.bottom + 1;
+                    if (bounded) state.inlineStatus = true;
+                    else if (!staysInFlow) state.unboundedRenderer = true;
                 }
             }
             if (k.matches('img, video, svg, canvas, q, em, i, b, strong, br')) continue;
@@ -4337,10 +4352,19 @@ function applyCardMarkers(texts) {
             // A pseudo-element may provide the apparent color. It alone does
             // not opt ordinary paragraphs into the separate glass path.
             const surface = frame || renderer || (panel && !!cardColors(k, cs).best);
-            if (renderer && visible && k.getClientRects().length) state.cardRenderer = true;
+            if (renderer && visible && k.getClientRects().length) {
+                state.cardRenderer = true;
+                if (!frame) {
+                    if (staysInFlow) state.inlineStatus = true;
+                    else state.unboundedRenderer = true;
+                }
+            }
             const lum = c ? lumOf(c) * c.a + base * (1 - c.a) : base;
             updates.push({ element: k, surface, lit: !!c && lum > 0.62 && !light, dim: !!c && lum < 0.38 && light });
-            if (k.children.length) next.push({ parent: k, base: lum, state });
+            if (k.children.length) next.push({
+                parent: k, base: lum, state, inFlow: staysInFlow,
+                anchor: staysInFlow && cs.position === 'relative' ? k : anchor,
+            });
         }
         for (const { element, surface, lit, dim } of updates) {
             element.classList.toggle('ilg-card-surface', surface);
@@ -4353,8 +4377,8 @@ function applyCardMarkers(texts) {
         level = next;
     }
     const repaint = [];
-    for (const { message, fixedOverlay, cardRenderer, inlineFrame } of messages) {
-        const inlineCard = inlineFrame && !fixedOverlay;
+    for (const { message, fixedOverlay, cardRenderer, inlineFrame, nativeProse, inlineStatus, unboundedRenderer } of messages) {
+        const inlineCard = !fixedOverlay && (inlineFrame || (nativeProse && inlineStatus && !unboundedRenderer));
         if (!message || (message.classList.contains('ilg-content-overlay') === fixedOverlay
             && message.classList.contains('ilg-card-renderer') === cardRenderer
             && message.classList.contains('ilg-inline-card') === inlineCard)) continue;
