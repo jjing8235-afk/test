@@ -70,13 +70,13 @@ const blurSettings={barBlur:.25,mesBlur:.5,panelBlur:1.5,panelRead:false,chatBac
 const blurKinds=vm.runInNewContext('('+material+')',{S:blurSettings});
 const composerSource=source.match(/const composerGlassSurface = el =>[^]*?;\n/)[0];
 const getSurfaceBlur=vm.runInNewContext(composerSource+surfaceBlurSource+';surfaceBlur',{S:blurSettings,KIND:blurKinds,HOST_MENU_SEL:menuSelector,controlReadable:()=>false});
-const surface=(menu=false,quick=false,authored=false)=>({matches(selector){return selector===menuSelector?menu:selector==='#form_sheld #qr--bar'?quick:false;},closest(){return authored?{}:null;}});
-assert.equal(getSurfaceBlur({kind:'panel'},surface(true)),6);
+const surface=(menu=false,quick=false,authored=false)=>({classList:{contains:()=>false},matches(selector){return selector===menuSelector?menu:selector==='#form_sheld #qr--bar'?quick:false;},closest(){return authored?{}:null;}});
+assert.equal(getSurfaceBlur({kind:'panel'},surface(true)),10);
 assert.equal(getSurfaceBlur({kind:'panel'},surface(false)),1.5);
 assert.equal(getSurfaceBlur({kind:'clearPanel'},surface(false)),1.25);
 assert.equal(getSurfaceBlur({kind:'panel'},surface(false,true)),6);
 assert.equal(getSurfaceBlur({kind:'panel'},surface(false,true,true)),1.5);
 blurSettings.qrFold=false;assert.equal(getSurfaceBlur({kind:'panel'},surface(false,true)),1.5);
-blurSettings.panelBlur=18;assert.equal(getSurfaceBlur({kind:'panel'},surface(true)),6);assert.equal(getSurfaceBlur({kind:'panel'},surface()),18);
+blurSettings.panelBlur=18;assert.equal(getSurfaceBlur({kind:'panel'},surface(true)),10);assert.equal(getSurfaceBlur({kind:'panel'},surface()),18);
 passed.push('Native composer menus and the owned folded quick tray use a stable liquid-glass blur; other panels, authored quick bars and explicit NVWA material retain their settings');
 console.log(JSON.stringify({passed},null,2));

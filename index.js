@@ -36,7 +36,7 @@ window.__ilgLoaded = new URL('.', import.meta.url).pathname;
 let studioUI = null;
 let flickerCapture = null, flickerReport = null;
 const MODULE = 'iosLiquidGlass';
-const BUILD_VERSION = '2.0.10-test.34';
+const BUILD_VERSION = '2.0.10-test.35';
 const MAX_INNER_GLASS_BLUR = 16;
 const ENGINE_NAMES = Object.freeze({performance:'御风性能引擎',refraction:'棱光折射引擎'});
 const NS = 'http://www.w3.org/2000/svg';
@@ -1268,6 +1268,8 @@ function paint(el, geo) {
         return;
     }
     const blur = surfaceBlur(it, el);
+    // The adapted preset and memory panels need visible frost on the no-SVG path.
+    const fallbackBlur = it.kind === 'clearPanel' ? Math.max(12, blur) : blur;
     const reading = it.kind === 'mes' && !it.bubbleReading ? ' var(--ilg-reading-filter, blur(0px))' : '';
     const tail = `blur(${blur}px) saturate(${S.saturate}) brightness(${S.brightness})` + reading;
     const { w, h, r } = geo;
@@ -1298,6 +1300,7 @@ function paint(el, geo) {
         setPhys(el, it, false);
         let lightBlur;
         if (boundedGlass) lightBlur = blur;
+        else if (it.kind === 'clearPanel') lightBlur = fallbackBlur;
         else if (it.bubbleReading) lightBlur = Math.max(1, Math.min(3, blur));
         else if (it.kind === 'mes') lightBlur = S.chatBackground === 'transparent' ? 0 : Math.max(1.5, Math.min(6, blur));
         else if (control) lightBlur = controlReadable(el) ? (inputGlass(el) ? 3.5 : 4) : Math.max(.75, Math.min(1.5, blur));
@@ -1385,7 +1388,8 @@ function paint(el, geo) {
         if (isIOS) surface.style.webkitBackdropFilter = filter;
     } else {
         it.renderPath = iosMaterialActive() ? 'ios-compatible' : 'blur';
-        const fallback = control && controlReadable(el) ? `blur(${Math.max(3.5, blur)}px) saturate(${S.saturate}) brightness(${S.brightness})` : tail;
+        const visibleBlur = control && controlReadable(el) ? Math.max(3.5, blur) : fallbackBlur;
+        const fallback = visibleBlur !== blur ? `blur(${visibleBlur}px) saturate(${S.saturate}) brightness(${S.brightness})${reading}` : tail;
         surface.style.backdropFilter = fallback;
         if (isIOS || !canRefract()) surface.style.webkitBackdropFilter = fallback;
     }

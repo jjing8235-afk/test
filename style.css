@@ -2268,13 +2268,22 @@ html.ilg body #form_sheld #send_form:has(#send_textarea:focus-visible) { outline
 
 /* ---------- NVWA 预设 / 记忆面板定点适配：只有已确认的原生 Popup 生效 ----------
    只适配用户明确指定的两个内容根，不改变其他第三方浮窗。
-   外壳保留折射，吸顶标签栏共用外壳玻璃，避免重复过滤同一背景。 */
+   外壳负责折射或模糊，吸顶标签栏只画表面高光。 */
 html.ilg body dialog.popup.ilg-adapted {
     border-radius: 28px;
-    background-color: rgba(12, 8, 20, 0.12);
+    background-color: rgba(18, 24, 33, .39);
+    background-image: linear-gradient(152deg, rgba(240, 249, 255, .12), transparent 46%);
 }
 html.ilg.ilg-light body dialog.popup.ilg-adapted {
-    background-color: rgba(255, 255, 255, 0.22);
+    background-color: rgba(248, 251, 253, .49);
+    background-image: linear-gradient(152deg, rgba(255, 255, 255, .45), transparent 50%);
+}
+html.ilg body.no-blur dialog.popup.ilg-adapted {
+    background-color: #1c232e;
+    background-image: none;
+}
+html.ilg.ilg-light body.no-blur dialog.popup.ilg-adapted {
+    background-color: #f6f8fa;
 }
 html.ilg body dialog.popup.ilg-adapted > .popup-body > .popup-content > :is(#nvwa-panel, #nvwa-memory) {
     --nvp-surface: rgba(16, 14, 26, 0.42);
@@ -2299,13 +2308,16 @@ html.ilg.ilg-light body dialog.popup.ilg-adapted > .popup-body > .popup-content 
 html.ilg body dialog.popup.ilg-adapted > .popup-body > .popup-content > :is(#nvwa-panel, #nvwa-memory) > :is(.nvp-tabbar, .m-tabbar) {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
-    background: rgba(16, 14, 26, 0.28);
+    background: linear-gradient(180deg, rgba(239, 248, 255, .10), transparent 72%), rgba(19, 25, 35, .32);
+    border: 1px solid var(--nvp-line);
+    box-shadow: inset 0 1px 1px rgba(243, 249, 255, .20);
     border-radius: 18px;
     padding: 4px;
     margin-bottom: 8px;
 }
 html.ilg.ilg-light body dialog.popup.ilg-adapted > .popup-body > .popup-content > :is(#nvwa-panel, #nvwa-memory) > :is(.nvp-tabbar, .m-tabbar) {
-    background: rgba(255, 255, 255, 0.38);
+    background: linear-gradient(180deg, rgba(255, 255, 255, .62), transparent 76%), rgba(248, 251, 253, .46);
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, .84);
 }
 html.ilg body dialog.popup.ilg-adapted > .popup-body > .popup-content > :is(#nvwa-panel, #nvwa-memory) :is(.nvp-tabs, .m-tabs) {
     border-radius: 14px;
@@ -5356,11 +5368,15 @@ html.ilg.ilg-kb-open body #ilg-ball { visibility: hidden; }
         --ilg-editor-paper: rgba(19, 25, 34, .96);
         --ilg-editor-ink: #f7f9fd;
         --ilg-editor-edge: rgba(233, 243, 255, .28);
-        --ilg-editor-rim: rgba(241, 247, 255, .58);
+        --ilg-editor-rim: rgba(244, 250, 255, .38);
         --ilg-editor-focus: #b0d8ff;
-        --ilg-editor-button: rgba(26, 34, 46, .88);
-        --ilg-editor-button-hover: #343f52;
-        --ilg-editor-glint: rgba(215, 236, 255, .16);
+        --ilg-editor-button: rgba(25, 34, 44, .76);
+        --ilg-editor-button-hover: rgba(43, 55, 70, .93);
+        --ilg-editor-glint: rgba(223, 240, 255, .24);
+        --ilg-editor-control-edge: rgba(223, 239, 255, .14);
+        --ilg-editor-control-depth: rgba(0, 8, 16, .38);
+        --ilg-editor-confirm: #d5e7df;
+        --ilg-editor-confirm-ink: #162b26;
         --ilg-editor-danger: #ffb4bd;
     }
     html.ilg.ilg-light {
@@ -5369,15 +5385,21 @@ html.ilg.ilg-kb-open body #ilg-ball { visibility: hidden; }
         --ilg-editor-edge: rgba(38, 48, 63, .28);
         --ilg-editor-rim: rgba(255, 255, 255, .9);
         --ilg-editor-focus: #294f7c;
-        --ilg-editor-button: rgba(246, 245, 242, .92);
-        --ilg-editor-button-hover: #e1e6ed;
-        --ilg-editor-glint: rgba(255, 255, 255, .75);
+        --ilg-editor-button: rgba(246, 248, 250, .84);
+        --ilg-editor-button-hover: #e3ebef;
+        --ilg-editor-glint: rgba(255, 255, 255, .92);
+        --ilg-editor-control-edge: rgba(41, 56, 68, .16);
+        --ilg-editor-control-depth: rgba(30, 44, 53, .22);
+        --ilg-editor-confirm: #254f46;
+        --ilg-editor-confirm-ink: #f7fffc;
         --ilg-editor-danger: #851e36;
     }
     html.ilg body #chat > .mes:where(:not(.smallSysMes, [is_system="true"], [data-nvwa-style="author"])) > .mes_block > .mes_text > textarea.edit_textarea {
         box-sizing: border-box;
         inline-size: 100%;
         max-inline-size: 100%;
+        max-block-size: min(54vh, 30rem);
+        max-block-size: min(54dvh, 30rem);
         padding: clamp(10px, 2.8vw, 16px);
         border: 1px solid var(--ilg-editor-edge);
         border-radius: 14px;
@@ -5406,27 +5428,32 @@ html.ilg.ilg-kb-open body #ilg-ball { visibility: hidden; }
         flex: 0 0 auto;
         padding: 0;
         margin: 0;
-        border: 1px solid var(--ilg-editor-edge);
+        border: 1px solid var(--ilg-editor-control-edge);
         border-top-color: var(--ilg-editor-rim);
         border-radius: 50%;
         color: var(--ilg-editor-ink);
         text-shadow: none;
-        background: linear-gradient(145deg, var(--ilg-editor-glint), transparent 63%), var(--ilg-editor-button);
+        background: radial-gradient(ellipse 85% 64% at 28% -10%, var(--ilg-editor-glint), transparent 98%), var(--ilg-editor-button);
+        box-shadow: inset 0 -1px 1px var(--ilg-editor-control-depth), 0 2px 5px -3px var(--ilg-editor-control-depth);
         filter: none;
         opacity: 1;
     }
     html.ilg body #chat > .mes:where(:not(.smallSysMes, [is_system="true"], [data-nvwa-style="author"])) > .mes_block > .ch_name > .mes_edit_buttons > :is(.mes_edit_done, .mes_edit_copy, .mes_edit_add_reasoning, .mes_edit_delete, .mes_edit_up, .mes_edit_down, .mes_edit_cancel).menu_button::before { margin: 0; }
     html.ilg body #chat > .mes:where(:not(.smallSysMes, [is_system="true"], [data-nvwa-style="author"])) > .mes_block > .ch_name > .mes_edit_buttons > .mes_edit_done.menu_button {
         inline-size: calc(var(--ilg-editor-action-size) + 8px);
-        border-color: var(--ilg-editor-edge);
+        border-color: var(--ilg-editor-control-edge);
+        border-top-color: var(--ilg-editor-rim);
         border-radius: 999px;
-        color: var(--ilg-editor-paper);
-        background: var(--ilg-editor-ink);
+        color: var(--ilg-editor-confirm-ink);
+        background-color: var(--ilg-editor-confirm);
     }
     html.ilg body #chat > .mes:where(:not(.smallSysMes, [is_system="true"], [data-nvwa-style="author"])) > .mes_block > .ch_name > .mes_edit_buttons > :is(.mes_edit_done, .mes_edit_copy, .mes_edit_add_reasoning, .mes_edit_delete, .mes_edit_up, .mes_edit_down, .mes_edit_cancel).menu_button:not(.mes_edit_done, .disabled, [disabled], [aria-disabled="true"]):hover {
         background-color: var(--ilg-editor-button-hover);
     }
     html.ilg body #chat > .mes:where(:not(.smallSysMes, [is_system="true"], [data-nvwa-style="author"])) > .mes_block > .ch_name > .mes_edit_buttons > .mes_edit_delete.menu_button:hover { color: var(--ilg-editor-danger); }
+    html.ilg body #chat > .mes:where(:not(.smallSysMes, [is_system="true"], [data-nvwa-style="author"])) > .mes_block > .ch_name > .mes_edit_buttons > .menu_button:not(.disabled, [disabled], [aria-disabled="true"]):active {
+        box-shadow: inset 0 2px 4px var(--ilg-editor-control-depth);
+    }
     html.ilg body #chat > .mes:where(:not(.smallSysMes, [is_system="true"], [data-nvwa-style="author"])) > .mes_block > .ch_name > .mes_edit_buttons > :is(.mes_edit_done, .mes_edit_copy, .mes_edit_add_reasoning, .mes_edit_delete, .mes_edit_up, .mes_edit_down, .mes_edit_cancel).menu_button:focus-visible {
         outline: 2px solid var(--ilg-editor-focus);
         outline-offset: 1px;

@@ -74,6 +74,7 @@ export function createKeyboard({ root, enabled, input }) {
 export function createReadingAnchor({ chat, enabled }) {
     const active = () => enabled() && !externalScrollControl(chat);
     let anchor = null, restoring = false, destroyed = false;
+    let editing = null;
     let lastH = chat.clientHeight, lastSH = chat.scrollHeight;
     let captureFrame = 0, captureTimer = 0, restoreFrame = 0, releaseFrame = 0, settleUntil = 0, inputUntil = 0;
     let restores = 0, yielded = 0, lastRestoreDelta = 0;
@@ -107,13 +108,50 @@ export function createReadingAnchor({ chat, enabled }) {
         if (releaseFrame) cancelAnimationFrame(releaseFrame);
         releaseFrame = requestAnimationFrame(() => { releaseFrame = 0; restoring = false; });
     };
+    function restoreEditor() {
+        if (!active() || !editing?.editor || document.activeElement !== editing.editor || performance.now() > editing.until) return false;
+        const view = chat.getBoundingClientRect();
+        const row = editing.row.getBoundingClientRect();
+        const field = editing.editor.getBoundingClientRect();
+        const bottom = Math.min(view.bottom, vv && Math.abs(vv.scale - 1) < .01 ? vv.offsetTop + vv.height : innerHeight);
+        // Keep at least the first line visible if the keyboard covers the old position.
+        const offset = Math.min(editing.offset, bottom - view.top - (field.top - row.top) - 44);
+        const drift = row.top - view.top - offset;
+        if (Math.abs(drift) >= 1) chat.scrollTop += drift;
+        return true;
+    }
+    function onEditClick(event) {
+        const row = event.target.closest?.('.mes_edit')?.closest('.mes');
+        if (row?.parentElement !== chat || !active() || row.matches('.smallSysMes,[is_system="true"],[data-nvwa-style="author"]')) return;
+        editing = { row, offset: row.getBoundingClientRect().top - chat.getBoundingClientRect().top, until: performance.now() + 1200 };
+    }
+    function onEditorFocus(event) {
+        const editor = event.target;
+        const state = editing;
+        if (!state || performance.now() > state.until || !editor.matches('#curEditTextarea.edit_textarea') || editor.closest('.mes') !== state.row) return;
+        // SillyTavern selects the end immediately after focus; let short edits keep that behavior.
+        queueMicrotask(() => {
+            if (editing !== state || !active() || document.activeElement !== editor || editor.scrollHeight <= editor.clientHeight + 4) return;
+            Object.assign(state, { editor, until: performance.now() + 1000 });
+            anchor = null;
+            editor.setSelectionRange(0, 0);
+            editor.scrollTop = 0;
+            restoreEditor();
+            queueRestore();
+        });
+    }
+    function onEditorBlur(event) {
+        if (editing?.editor === event.target) editing = null;
+    }
     const queueRestore = () => {
-        if (destroyed || !active()) { anchor = null; return; }
-        if (!anchor || performance.now() < inputUntil) return;
+        if (destroyed || !active()) { anchor = null; editing = null; return; }
+        const openingEditor = editing?.editor && performance.now() <= editing.until;
+        if (!openingEditor && (!anchor || performance.now() < inputUntil)) return;
         settleUntil = performance.now() + 250;
-        if (!restoreFrame) restoreFrame = requestAnimationFrame(() => { restoreFrame = 0; restore(); });
+        if (!restoreFrame) restoreFrame = requestAnimationFrame(() => { restoreFrame = 0; if (!restoreEditor()) restore(); });
     };
     const onIntent = event => {
+        editing = null;
         if (event.type === 'keydown' && (!['ArrowUp','ArrowDown','PageUp','PageDown','Home','End',' '].includes(event.key)
             || event.target?.closest?.('input,textarea,select,[contenteditable="true"],[contenteditable=""]'))) return;
         inputUntil = performance.now() + 350;
@@ -146,6 +184,9 @@ export function createReadingAnchor({ chat, enabled }) {
     const onLoad = event => { if (event.target?.tagName === 'IMG') queueRestore(); };
     const intentEvents = ['touchstart','touchmove','pointerdown','wheel','keydown'];
     for (const type of intentEvents) chat.addEventListener(type, onIntent, { passive: true, capture: true });
+    chat.addEventListener('click', onEditClick, true);
+    chat.addEventListener('focusin', onEditorFocus);
+    chat.addEventListener('focusout', onEditorBlur);
     chat.addEventListener('scroll', onScroll, { passive: true });
     chat.addEventListener('load', onLoad, true);
     const ro = new ResizeObserver(onResize); ro.observe(chat);
@@ -153,7 +194,7 @@ export function createReadingAnchor({ chat, enabled }) {
     const ownerObserver = new MutationObserver(() => {
         const next = externalScrollControl(chat);
         if (next === external) return;
-        external = next; anchor = null; settleUntil = 0;
+        external = next; anchor = null; editing = null; settleUntil = 0;
         cancelRestore();
         if (captureFrame) cancelAnimationFrame(captureFrame);
         if (captureTimer) clearTimeout(captureTimer);
@@ -166,12 +207,15 @@ export function createReadingAnchor({ chat, enabled }) {
         capture, restore, get anchor() { return anchor; },
         status: () => ({ owner: externalScrollControl(chat) ? 'baibai' : 'nvwa', pendingRestore: !!restoreFrame, pendingCapture: !!(captureFrame || captureTimer), userScrolling: performance.now() < inputUntil, restores, yielded, lastRestoreDelta }),
         destroy() {
-            destroyed = true; anchor = null; cancelRestore();
+            destroyed = true; anchor = null; editing = null; cancelRestore();
             if (captureFrame) cancelAnimationFrame(captureFrame);
             if (releaseFrame) cancelAnimationFrame(releaseFrame);
             if (captureTimer) clearTimeout(captureTimer);
             captureFrame = captureTimer = releaseFrame = 0; ro.disconnect(); ownerObserver.disconnect(); unsubscribe();
             for (const type of intentEvents) chat.removeEventListener(type, onIntent, true);
+            chat.removeEventListener('click', onEditClick, true);
+            chat.removeEventListener('focusin', onEditorFocus);
+            chat.removeEventListener('focusout', onEditorBlur);
             chat.removeEventListener('scroll', onScroll); chat.removeEventListener('load', onLoad, true);
         },
     };

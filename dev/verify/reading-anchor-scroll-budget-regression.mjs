@@ -21,4 +21,39 @@ listeners.get('load')({target:{tagName:'IMG'}});frame();
 assert.equal(chat.scrollTop,before+80,'Stationary image growth must preserve the settled reading point');
 assert.equal(anchored.el.getBoundingClientRect().top,oldOffset);
 frame();listeners.get('touchstart')({type:'touchstart'});listeners.get('scroll')({type:'scroll'});context.controller.destroy();reads=0;frame(500);assert.equal(reads,0,'Destroy cancels the deferred reading capture');
-console.log(JSON.stringify({passed:true,gestureFrames:100,geometryReadsDuringGesture:gestureReads,idleCapture:true,stationaryImageGrowth:true,destroyCancelsIdleCapture:true}));
+// The host focuses the editor and selects the tail within the same click handler.
+const microtasks=[];
+let viewportChanged;
+Object.assign(context,{
+  document:{activeElement:null},vv:{height:400,offsetTop:0,scale:1},innerHeight:400,
+  queueMicrotask:fn=>microtasks.push(fn),onViewportChange:fn=>{viewportChanged=fn;return ()=>{};},
+});
+vm.runInNewContext('globalThis.controller=createReadingAnchor({chat,enabled:()=>true});',context);
+const row=chat.children[4];
+Object.assign(row,{parentElement:chat,matches:()=>false});
+chat.getBoundingClientRect=()=>({top:0,bottom:chat.clientHeight});
+chat.scrollTop=1200;
+const editor={
+  selectionStart:5000,scrollTop:4800,scrollHeight:5000,clientHeight:300,
+  matches:()=>true,closest:()=>row,getBoundingClientRect:()=>({top:row.getBoundingClientRect().top+100}),
+  setSelectionRange(start){this.selectionStart=start;},
+};
+listeners.get('click')({target:{closest:()=>({closest:()=>row})}});
+chat.scrollTop=1500;
+context.document.activeElement=editor;
+listeners.get('focusin')({target:editor});
+microtasks.shift()();
+assert.equal(chat.scrollTop,1200,'Opening a long editor restores the row before paint');
+assert.equal(editor.selectionStart,0);
+assert.equal(editor.scrollTop,0);
+frame();
+context.vv.height=170;
+viewportChanged();frame();
+assert.equal(editor.getBoundingClientRect().top,126,'Keyboard leaves enough room for the first line');
+listeners.get('wheel')({type:'wheel'});
+chat.scrollTop=1550;
+viewportChanged();frame();
+assert.equal(chat.scrollTop,1550,'A user scroll immediately releases the opening anchor');
+listeners.get('focusout')({target:editor});
+context.controller.destroy();
+console.log(JSON.stringify({passed:true,gestureFrames:100,geometryReadsDuringGesture:gestureReads,idleCapture:true,stationaryImageGrowth:true,destroyCancelsIdleCapture:true,longEditRestored:true,keyboardReflow:true,manualScrollWins:true}));
