@@ -3803,6 +3803,27 @@ html.ilg body.bubblechat #chat .mes.ilg-message-viewport > .ilg-message-clip > .
     z-index: auto;
     border-radius: 0;
 }
+/* Draw a wallpaper crop without reading back pixels through the scroll container. */
+html.ilg body.bubblechat #chat .ilg-message-glass.ilg-message-wallpaper-host {
+    overflow: hidden;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+}
+html.ilg body.bubblechat #chat .ilg-message-wallpaper-plane {
+    position: absolute;
+    pointer-events: none;
+}
+html.ilg body.bubblechat #chat .ilg-message-wallpaper-host::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-color: inherit;
+    pointer-events: none;
+}
+html.ilg body:is(.no-blur, .waifuMode) #chat .ilg-message-wallpaper-host > .ilg-message-wallpaper-plane,
+html.ilg body:is(.no-blur, .waifuMode) #chat .ilg-message-wallpaper-host::after {
+    display: none;
+}
 @media (width < 600px) {
     /* Keep the classic and protected author layouts unchanged on narrow screens. */
     html.ilg body.bubblechat #chat .mes.ilg-message-viewport:not(.ilg-message-bounded-glass) > .ilg-message-clip {

@@ -1,4 +1,4 @@
-import assert from 'node:assert/strict';import {wallpaperPlacement} from '../../ios-wallpaper-refraction.js';
+import assert from 'node:assert/strict';import {createIOSWallpaperRefraction,wallpaperPlacement} from '../../ios-wallpaper-refraction.js';
 const base={width:400,height:300,imageWidth:200,imageHeight:200};
 assert.deepEqual(wallpaperPlacement({...base,size:'cover'}),{width:400,height:400,x:0,y:-50});
 assert.deepEqual(wallpaperPlacement({...base,size:'contain'}),{width:300,height:300,x:50,y:0});
@@ -7,3 +7,25 @@ assert.deepEqual(wallpaperPlacement({...base,size:'50% auto',position:'left top'
 assert.deepEqual(wallpaperPlacement({...base,size:'auto 100%',position:'right bottom'}),{width:300,height:300,x:100,y:0});
 assert.equal(wallpaperPlacement({...base,width:0}),null);assert.equal(wallpaperPlacement({...base,size:'calc(100% - 2px) auto'}),null);assert.equal(wallpaperPlacement({...base,position:'right 10px top 20px'}),null);
 console.log('PASS wallpaper foreground cover/contain/stretch/position geometry and unsupported-layout fallback');
+
+const wallpaperStyle={backgroundImage:'url("wallpaper.png")',backgroundSize:'cover',backgroundPosition:'50% 50%',backgroundRepeat:'no-repeat',filter:'brightness(0.94)'};
+const backdrop={getBoundingClientRect:()=>({width:400,height:300,left:0,top:0})};
+const hostClasses=new Set(), children=[];
+const host={isConnected:true,classList:{add:name=>hostClasses.add(name),remove:name=>hostClasses.delete(name)},getBoundingClientRect:()=>({width:350,height:220,left:20,top:35}),prepend:plane=>children.unshift(plane)};
+const doc={addEventListener(){},removeEventListener(){},createElement:()=>({style:{},setAttribute(){},remove(){children.splice(children.indexOf(this),1);}})};
+let bitmap;
+const win={Image:class{constructor(){bitmap=this;this.naturalWidth=200;this.naturalHeight=200;}},getComputedStyle:()=>wallpaperStyle,addEventListener(){},removeEventListener(){}};
+const layer=createIOSWallpaperRefraction({win,doc,background:()=>backdrop,hostClass:'crop-host',planeClass:'crop-plane',bleed:24,inheritSourceFilter:true});
+layer.setEnabled(true);
+assert.equal(layer.paint(host,'blur(6px)'),false,'Use native CSS while the bitmap is loading');
+bitmap.onload();
+assert.equal(layer.paint(host,'blur(6px)'),true);
+assert(hostClasses.has('crop-host'));
+assert.equal(children[0].className,'crop-plane');
+assert.equal(children[0].style.backgroundPosition,'4px -61px');
+assert.equal(children[0].style.inset,'-24px');
+assert.equal(children[0].style.filter,'brightness(0.94) blur(6px)');
+layer.setEnabled(false);
+assert.equal(children.length,0);
+assert(!hostClasses.has('crop-host'));
+console.log('PASS wallpaper crop preserves source placement and releases on disable');

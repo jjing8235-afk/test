@@ -15,11 +15,12 @@ export function wallpaperPlacement({width,height,imageWidth,imageHeight,size='co
     const x=offset(parts[0],width-w),y=offset(parts[1],height-h);
     return [w,h,x,y].every(Number.isFinite)?{width:w,height:h,x,y}:null;
 }
-export function createIOSWallpaperRefraction({background,onReady=()=>{},win=window,doc=document}={}) {
+export function createIOSWallpaperRefraction({background,onReady=()=>{},win=window,doc=document,
+    hostClass='ilg-ios-wallpaper-host',planeClass='ilg-ios-wallpaper-plane',bleed=0,inheritSourceFilter=false}={}) {
     const entries=new Map();let enabled=false,source=null,raf=0,listening=false,reason='disabled';
     const events=[[win,'resize'],[win.visualViewport,'resize'],[win.visualViewport,'scroll'],[doc,'scroll']];
     const listen=on=>{if(on===listening)return;listening=on;for(const [target,type]of events)target?.[on?'addEventListener':'removeEventListener'](type,schedule,{capture:true,passive:true});};
-    function release(el){const item=entries.get(el);item?.plane.remove();entries.delete(el);el.classList.toggle('ilg-ios-wallpaper-host',false);if(!entries.size){listen(false);if(raf)win.cancelAnimationFrame(raf);raf=0;}}
+    function release(el){const item=entries.get(el);if(!item)return;item.plane.remove();entries.delete(el);el.classList.remove(hostClass);if(!entries.size){listen(false);if(raf)win.cancelAnimationFrame(raf);raf=0;}}
     function queuePaint(){if(enabled)onReady();}
     function getSource(){
         const el=background?.();if(!el){reason='no-wallpaper';return null;}
@@ -39,16 +40,24 @@ export function createIOSWallpaperRefraction({background,onReady=()=>{},win=wind
         if(!(host.width>0&&host.height>0)){release(el);return false;}
         const placement=wallpaperPlacement({width:bg.width,height:bg.height,imageWidth:src.image.naturalWidth,imageHeight:src.image.naturalHeight,size:src.css.backgroundSize,position:src.css.backgroundPosition});
         if(!placement){reason='unsupported-background-layout';release(el);return false;}
-        const x=bg.left+placement.x-host.left,y=bg.top+placement.y-host.top;
-        const key=[src.url,placement.width,placement.height,x,y,src.css.backgroundRepeat,item.filter].join('|');
-        if(item.key!==key){item.key=key;item.plane.style.backgroundImage=src.css.backgroundImage;item.plane.style.backgroundSize=placement.width+'px '+placement.height+'px';item.plane.style.backgroundPosition=x+'px '+y+'px';item.plane.style.backgroundRepeat=src.css.backgroundRepeat;item.plane.style.filter=item.filter;}
+        const x=bg.left+placement.x-host.left+bleed,y=bg.top+placement.y-host.top+bleed;
+        const filter=inheritSourceFilter && src.css.filter!=='none' ? `${src.css.filter} ${item.filter}` : item.filter;
+        const key=[src.url,placement.width,placement.height,x,y,src.css.backgroundRepeat,filter].join('|');
+        if(item.key!==key){item.key=key;item.plane.style.backgroundImage=src.css.backgroundImage;item.plane.style.backgroundSize=placement.width+'px '+placement.height+'px';item.plane.style.backgroundPosition=x+'px '+y+'px';item.plane.style.backgroundRepeat=src.css.backgroundRepeat;item.plane.style.filter=filter;}
         reason='ready';return true;
     }
     function schedule(){if(!enabled||raf||!entries.size)return;raf=win.requestAnimationFrame(()=>{raf=0;const src=getSource();if(!src){for(const el of [...entries.keys()])release(el);queuePaint();return;}for(const [el,item]of [...entries])update(el,item,src);});}
     return {
         setEnabled(on){enabled=on===true;if(!enabled){for(const el of [...entries.keys()])release(el);if(source){source.image.onload=source.image.onerror=null;}source=null;reason='disabled';}},
         paint(el,filter){if(!enabled)return false;const src=getSource();if(!src){release(el);return false;}
-            let item=entries.get(el);if(!item){if(entries.size>=8){reason='surface-budget';return false;}const plane=doc.createElement('div');plane.className='ilg-ios-wallpaper-plane';plane.setAttribute('aria-hidden','true');el.prepend(plane);el.classList.add('ilg-ios-wallpaper-host');item={plane,key:'',filter};entries.set(el,item);}item.filter=filter;
+            let item=entries.get(el);
+            if(!item){
+                if(entries.size>=8){reason='surface-budget';return false;}
+                const plane=doc.createElement('div');plane.className=planeClass;plane.setAttribute('aria-hidden','true');
+                if(bleed)plane.style.inset=`-${bleed}px`;
+                el.prepend(plane);el.classList.add(hostClass);item={plane,key:'',filter};entries.set(el,item);
+            }
+            item.filter=filter;
             const ok=update(el,item,src);if(ok)listen(true);return ok;
         },release,refresh(){if(enabled){if(entries.size)schedule();else queuePaint();}},status:()=>({enabled,mode:'wallpaper-only',reason,surfaces:entries.size,imageLoaded:source?.loaded===true,fullBackdropRefraction:false,phonePixelsConfirmed:false}),
         destroy(){this.setEnabled(false);}

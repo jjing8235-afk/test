@@ -36,7 +36,7 @@ window.__ilgLoaded = new URL('.', import.meta.url).pathname;
 let studioUI = null;
 let flickerCapture = null, flickerReport = null;
 const MODULE = 'iosLiquidGlass';
-const BUILD_VERSION = '2.0.10-test.27';
+const BUILD_VERSION = '2.0.10-test.28';
 const MAX_INNER_GLASS_BLUR = 16;
 const ENGINE_NAMES = Object.freeze({performance:'御风性能引擎',refraction:'棱光折射引擎'});
 const NS = 'http://www.w3.org/2000/svg';
@@ -868,6 +868,19 @@ const iosWallpaper=createIOSWallpaperRefraction({background:()=>{
     return null;
 },onReady:()=>requestAnimationFrame(()=>{repaintVisible('wallpaper');const status=document.getElementById('ilg-status');if(status)status.textContent=statusText();})});
 const iosWallpaperRequested=()=>isIOS&&S.refract&&S.compatibilityMode!=='blur'&&webStyleEnabled()&&!document.body.classList.contains('no-blur');
+const messageWallpaper = createIOSWallpaperRefraction({
+    background: () => {
+        for (const id of ['bg_custom', 'bg1']) {
+            const el = document.getElementById(id);
+            if (!el) continue;
+            const style = getComputedStyle(el);
+            if (style.display !== 'none' && style.visibility === 'visible' && +style.opacity >= .98 && /^url\(/.test(style.backgroundImage)) return el;
+        }
+        return null;
+    },
+    hostClass: 'ilg-message-wallpaper-host', planeClass: 'ilg-message-wallpaper-plane', bleed: 24, inheritSourceFilter: true,
+    onReady: () => requestAnimationFrame(() => paintMany([...visibleItems].filter(el => el.classList.contains('ilg-message-bounded-glass')), 'message-wallpaper')),
+});
 const items = new Map();
 // Host UI state changes only need surfaces near the viewport; other messages update on intersection.
 const visibleItems = new Set();
@@ -1067,7 +1080,10 @@ function messageSurface(el, it, doubleGlass) {
     el.classList.toggle('ilg-message-backdrop', separate);
     el.classList.toggle('ilg-message-viewport', viewportReady);
     if (!separate) {
-        if (it.backdrop) webGlass.release(it.backdrop);
+        if (it.backdrop) {
+            webGlass.release(it.backdrop);
+            messageWallpaper.release(it.backdrop);
+        }
         it.backdrop?.remove(); it.backdropClip?.remove();
         it.backdrop = it.backdropClip = null;
         return el;
@@ -1152,6 +1168,7 @@ function paint(el, geo) {
     }
     it.largeWebView = largeWebViewMessage({webView:androidHost,kind:it.kind,width:geo.w,height:geo.h,dpr:devicePixelRatio,previous:it.largeWebView});
     const surface = it.kind === 'mes' ? messageSurface(el, it, geo.bubbleReading) : el;
+    const boundedGlass = it.kind === 'mes' && el.classList.contains('ilg-message-bounded-glass');
     if (it.kind === 'mes') {
         it.bubbleReading = geo.bubbleReading && !el.classList.contains('ilg-message-viewport');
     }
@@ -1178,6 +1195,7 @@ function paint(el, geo) {
     if (!useWeb||!iosWallpaperRequested()) iosWallpaper.release(el);
     if (document.body.classList.contains('no-blur')) {
         it.renderPath = 'no-blur';
+        if (it.backdrop) messageWallpaper.release(it.backdrop);
         reflections.release(el);
         setPhys(el, it, false);
         surface.style.backdropFilter = 'none';
@@ -1188,6 +1206,12 @@ function paint(el, geo) {
     const reading = it.kind === 'mes' && !it.bubbleReading ? ' var(--ilg-reading-filter, blur(0px))' : '';
     const tail = `blur(${blur}px) saturate(${S.saturate}) brightness(${S.brightness})` + reading;
     const { w, h, r } = geo;
+    if (it.backdrop) {
+        // Draw the wallpaper directly when WebView cannot sample it through a scrolling backdrop.
+        if (boundedGlass && it.visible && w && h) {
+            messageWallpaper.paint(surface, `blur(${Math.max(6, blur)}px) saturate(${S.saturate}) brightness(${S.brightness})${reading}`);
+        } else messageWallpaper.release(it.backdrop);
+    }
     // A closed drawer has no pixels to update; retain its last valid filter for reopening.
     if (!w || !h) return;
     if (cssMode) {
@@ -1195,7 +1219,7 @@ function paint(el, geo) {
         // CSS material owns its rim; skip displacement maps and canvas reflections.
         setPhys(el, it, false);
         let lightBlur;
-        if (el.classList.contains('ilg-message-bounded-glass')) lightBlur = blur;
+        if (boundedGlass) lightBlur = blur;
         else if (it.bubbleReading) lightBlur = Math.max(1, Math.min(3, blur));
         else if (it.kind === 'mes') lightBlur = S.chatBackground === 'transparent' ? 0 : Math.max(1.5, Math.min(6, blur));
         else if (control) lightBlur = controlReadable(el) ? (inputGlass(el) ? 3.5 : 4) : Math.max(.75, Math.min(1.5, blur));
@@ -1420,7 +1444,10 @@ function untrack(el) {
     if (!it) return;
     it.contentObserver?.disconnect();
     it.filter?.remove();
-    if (it.backdrop) webGlass.release(it.backdrop);
+    if (it.backdrop) {
+        webGlass.release(it.backdrop);
+        messageWallpaper.release(it.backdrop);
+    }
     it.backdrop?.remove();
     it.backdropClip?.remove();
     ro.unobserve(el);
@@ -2791,6 +2818,7 @@ function followTone() {
 async function applyTone() {
     const request = ++toneRequest, url = wallpaperUrl(), custom = !!url && !onToneWall();
     if(iosWallpaperRequested())iosWallpaper.refresh();
+    messageWallpaper.refresh();
     if (currentWallpaperSample?.url !== url) currentWallpaperSample = null;
     let sampled = null;
     root.classList.toggle('ilg-custom-wallpaper', S.enabled && custom);
@@ -2884,6 +2912,7 @@ function applyBubbleBlur() {
 }
 function applyBubbleStyle() {
     root.classList.toggle('ilg-bubble-double', S.enabled && S.bubbleStyle === 'double');
+    messageWallpaper.setEnabled(S.enabled && androidHost && S.bubbleStyle === 'double');
     applyBubbleBlur();
 }
 function applyRoot() {
@@ -3096,12 +3125,12 @@ function viewportDiagnostic() {
         if (surfaces.length < 3 && it.visible && el.matches('.mes')) {
             const r = el.getBoundingClientRect(), b = (it.backdrop || el).getBoundingClientRect();
             const boundedBackdrop = !!it.backdropClip && getComputedStyle(it.backdropClip).display !== 'contents';
-            surfaces.push({width:Math.round(r.width),height:Math.round(r.height),backdropWidth:Math.round(b.width),backdropHeight:Math.round(b.height),boundedBackdrop,path,fallbackReason:it.fallbackReason||''});
+            surfaces.push({width:Math.round(r.width),height:Math.round(r.height),backdropWidth:Math.round(b.width),backdropHeight:Math.round(b.height),boundedBackdrop,wallpaperLayer:!!it.backdrop?.classList.contains('ilg-message-wallpaper-host'),path,fallbackReason:it.fallbackReason||''});
         }
     }
     return{layout:{width:innerWidth,height:innerHeight,dpr:devicePixelRatio},visual:vv?{width:vv.width,height:vv.height,offsetTop:vv.offsetTop,offsetLeft:vv.offsetLeft,scale:vv.scale}:null,
         composerFocused:document.activeElement===document.getElementById('send_textarea'),keyboard:keyboard.status(),chat:{scrollTop:chatEl.scrollTop,scrollHeight:chatEl.scrollHeight,clientHeight:chatEl.clientHeight,readingAnchor:readingAnchor.status()},composer:rect('nonQRFormItems'),form:rect('form_sheld'),ball:{shown:S.enabled&&S.floatBall,keyboardHidden:root.classList.contains('ilg-kb-open'),rect:rect('ilg-ball')},
-        rendering:{iosCompatible:iosMaterialActive(),engineRequested:S.engine,largeWebViewMessages:large,largeAndroidMessages:large,boundedMessageBackdrops:bounded,paths,surfaces},
+        rendering:{iosCompatible:iosMaterialActive(),engineRequested:S.engine,largeWebViewMessages:large,largeAndroidMessages:large,boundedMessageBackdrops:bounded,messageWallpaper:messageWallpaper.status(),paths,surfaces},
         typography:{mode:!S.enabled||!S.font?'host':androidHost?'system':'unified',status:document.fonts?.status||'unavailable',...fontActivity},
         appearance:{requested:S.tone,actual:appearanceMode(),lightThumbnail:!!wallThumb('light'),darkThumbnail:!!wallThumb('dark'),customThumbnail:!!customWallThumb(),chatBackgroundLocked:chatBgLocked(),lastAction:lastAppearanceAction},
         wallpapers:bundledWallpapers.status(),wallpaperRefraction:iosWallpaper.status(),workers:{reflections:reflections.status(),ball:((({mode,reason,suspended,pending,failures})=>({mode,reason,suspended,pending,failures}))(ballGlass.status()))},lighting:lighting.status(),captureNote:'Frame intervals describe page callbacks, not display flicker detection'};
@@ -4680,5 +4709,9 @@ ctx.eventSource.on(ctx.eventTypes.CHAT_CHANGED, () => {
 onViewportChange(v => { if (v.widthChanged) repaintAll(); });
 ['bg1', 'bg_custom'].forEach(id => {
     const el = document.getElementById(id);
-    if (el) new MutationObserver(() => S.enabled && applyTone()).observe(el, { attributes: true, attributeFilter: ['style'] });
+    if (!el) return;
+    new MutationObserver(() => S.enabled && applyTone()).observe(el, { attributes: true, attributeFilter: ['style'] });
+    if (androidHost) el.addEventListener('transitionend', event => {
+        if (event.propertyName === 'opacity' || event.propertyName === 'background-image') messageWallpaper.refresh();
+    });
 });

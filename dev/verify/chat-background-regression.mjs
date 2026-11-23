@@ -110,7 +110,7 @@ for (const mode of ['glass', 'transparent']) {
                         setPhys(node, _item, on) { node.classList.toggle('ilg-phys', on); },
                         measure: () => ({ w: 300, h: 120, r: 22 }),
                         cssGlassActive: () => engine === 'css', webStyleEnabled: () => false, controlSurface: () => false, controlReadable: () => false, composerGlassSurface: () => false,
-                        iosWallpaperRequested:()=>false, iosWallpaper:{release(){}}, webGlass: { release() {}, paint() {} }, reflections: { release() {}, paint() {}, paintMessage() {} },
+                        iosWallpaperRequested:()=>false, iosWallpaper:{release(){}}, messageWallpaper:{release(){}}, webGlass: { release() {}, paint() {} }, reflections: { release() {}, paint() {}, paintMessage() {} },
                         foldedMenuSurface: () => false,
                         buildPhysical() { calls.push('physical'); }, buildFilter() { calls.push('legacy'); },
                     };
