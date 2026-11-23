@@ -20,6 +20,7 @@ function node(tag, { color = 'rgba(0, 0, 0, 0)', image = 'none', pseudo = false,
         },
         classList: { contains: value => classes.has(value), toggle(value, enabled) { if (enabled) classes.add(value); else classes.delete(value); } },
         matches: selector => selector.split(',').some(part => part.trim() === tag),
+        querySelector: selector => el.children.map(child => child.matches(selector) ? child : child.querySelector(selector)).find(Boolean),
         getClientRects: () => [{}], getBoundingClientRect: () => ({ width: 313, height, left: 0, right: 313, top, bottom: top + height }),
     };
     Object.defineProperty(el, 'contentDocument', { get() { throw Error('Card frame internals must remain untouched'); } });
@@ -91,6 +92,24 @@ assert.equal(isInline(), false, 'An overflowing frame keeps the authored rendere
 test([paragraph]);
 assert.equal(isInline(), false);
 assert.equal(message.classList.contains('ilg-card-renderer'), false);
+const wrap = node('section');
+const innerWrap = node('div');
+const styledParagraph = node('p', { text: 'Wrapped story with author styling' });
+wrap.children.push(innerWrap);
+innerWrap.children.push(styledParagraph);
+test([wrap, status]);
+assert.equal(isInline(), true, 'A status panel can sit beside wrapped prose without typography markers');
+assert.equal(styledParagraph.classList.contains('ilg-type-prose'), false);
+status.children.push(wrap);
+test([status]);
+assert.equal(isInline(), false, 'Prose inside the authored panel must not classify it as an inline status');
+const clearDetails = node('details');
+clearDetails.children.push(wrap, node('button'));
+test([clearDetails]);
+assert.equal(isInline(), false, 'Text inside transparent details is still panel content');
+const decoratedStory = node('p', { text: 'A self-rendered block', image: 'linear-gradient(black, white)' });
+test([decoratedStory, status]);
+assert.equal(isInline(), false, 'A decorated paragraph does not establish ordinary story content');
 const migration=source.match(/if \(Object.hasOwn\(S, 'cardSolid'\)\) \{[^]*?\}/)[0];
 const old={cardSolid:true,chatBackground:'transparent',mesTint:.12};let saves=0;
 vm.runInNewContext(migration,{S:old,ctx:{saveSettingsDebounced(){saves++}}});

@@ -36,7 +36,7 @@ window.__ilgLoaded = new URL('.', import.meta.url).pathname;
 let studioUI = null;
 let flickerCapture = null, flickerReport = null;
 const MODULE = 'iosLiquidGlass';
-const BUILD_VERSION = '2.0.10-test.25';
+const BUILD_VERSION = '2.0.10-test.26';
 const MAX_INNER_GLASS_BLUR = 16;
 const ENGINE_NAMES = Object.freeze({performance:'御风性能引擎',refraction:'棱光折射引擎'});
 const NS = 'http://www.w3.org/2000/svg';
@@ -1088,6 +1088,7 @@ function messageSurface(el, it, doubleGlass) {
 function messageGeometry(el, w, h) {
     const geo = { w, h, r: w && h ? radiusOf(el, w, h) : 0 };
     if (S.bubbleStyle !== 'double' || w <= 0 || h <= 0) return geo;
+    // Guarded Android rows get the double layout in CSS only; keep their existing filter path.
     const it = items.get(el);
     if (it?.kind !== 'mes' || !document.body.matches('body.bubblechat:not(.waifuMode, .no-blur)')
         || matchMedia('(forced-colors: active)').matches
@@ -4315,19 +4316,17 @@ function applyCardMarkers(texts) {
     // parent's resolved colors, without forcing style/layout once per card.
     const light = root.classList.contains('ilg-light');
     const messages = texts.map(text => ({
-        text, message: text.closest('.mes'), fixedOverlay: false, cardRenderer: false,
-        inlineFrame: false, nativeProse: false, inlineStatus: false, unboundedRenderer: false,
+        message: text.closest('.mes'), fixedOverlay: false, cardRenderer: false,
+        inlineFrame: false, messageProse: false, inlineStatus: false, unboundedRenderer: false,
     }));
-    let level = messages.map(state => ({ parent: state.text, base: light ? 0.95 : 0.08, state, inFlow: true, anchor: null }));
+    let level = texts.map((parent, i) => ({ parent, base: light ? 0.95 : 0.08, state: messages[i], inFlow: true, anchor: null, insideCard: false }));
     while (level.length) {
         const updates = [], next = [];
-        for (const { parent, base, state, inFlow, anchor } of level) for (const k of parent.children) {
+        for (const { parent, base, state, inFlow, anchor, insideCard } of level) for (const k of parent.children) {
             const cs = getComputedStyle(k);
             const visible = cs.display !== 'none' && cs.visibility !== 'hidden';
             const staysInFlow = inFlow && (cs.position === 'static' || cs.position === 'relative');
             if (cs.position === 'fixed' && visible && k.getClientRects().length) state.fixedOverlay = true;
-            if (!state.nativeProse && parent === state.text && staysInFlow && visible && k.classList.contains('ilg-type-prose')
-                && k.textContent.trim() && k.getClientRects().length) state.nativeProse = true;
             const frame = k.matches('iframe');
             if (frame && visible) {
                 const rect = k.getBoundingClientRect();
@@ -4352,6 +4351,12 @@ function applyCardMarkers(texts) {
             // A pseudo-element may provide the apparent color. It alone does
             // not opt ordinary paragraphs into the separate glass path.
             const surface = frame || renderer || (panel && !!cardColors(k, cs).best);
+            // Presets can wrap or color the story paragraphs. Only prose outside
+            // a self-rendered panel counts; do not change its typography marker.
+            if (!state.messageProse && !insideCard && staysInFlow && visible && !surface && !c
+                && cs.backgroundImage === 'none' && (k.classList.contains('ilg-type-prose')
+                    || (k.matches('p, ul, ol, blockquote') && !k.querySelector(CARD_RENDERER_CANDIDATES)))
+                && k.textContent.trim() && k.getClientRects().length) state.messageProse = true;
             if (renderer && visible && k.getClientRects().length) {
                 state.cardRenderer = true;
                 if (!frame) {
@@ -4364,6 +4369,7 @@ function applyCardMarkers(texts) {
             if (k.children.length) next.push({
                 parent: k, base: lum, state, inFlow: staysInFlow,
                 anchor: staysInFlow && cs.position === 'relative' ? k : anchor,
+                insideCard: insideCard || surface || k.matches('details, dialog, [data-nvwa-style="author"]'),
             });
         }
         for (const { element, surface, lit, dim } of updates) {
@@ -4377,8 +4383,8 @@ function applyCardMarkers(texts) {
         level = next;
     }
     const repaint = [];
-    for (const { message, fixedOverlay, cardRenderer, inlineFrame, nativeProse, inlineStatus, unboundedRenderer } of messages) {
-        const inlineCard = !fixedOverlay && (inlineFrame || (nativeProse && inlineStatus && !unboundedRenderer));
+    for (const { message, fixedOverlay, cardRenderer, inlineFrame, messageProse, inlineStatus, unboundedRenderer } of messages) {
+        const inlineCard = !fixedOverlay && (inlineFrame || (messageProse && inlineStatus && !unboundedRenderer));
         if (!message || (message.classList.contains('ilg-content-overlay') === fixedOverlay
             && message.classList.contains('ilg-card-renderer') === cardRenderer
             && message.classList.contains('ilg-inline-card') === inlineCard)) continue;
