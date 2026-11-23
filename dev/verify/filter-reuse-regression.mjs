@@ -34,6 +34,19 @@ for (const maps of [tiled, full]) {
 }
 passed.push('Full and nine-slice geometry matches fresh filters across resize and back; nodes and image sources retained');
 
+const cropped = filterFrom(api.physicalFilter(tiled, options, 350, 2573, 135, {left:24,top:24,height:806}));
+const rect = index => ['x','y','width','height'].map(name => Number(cropped.images[index].attrs[name]));
+const C = tiled.C;
+assert.deepEqual(rect(4), [24,24,C,C]);
+assert.deepEqual(rect(6), [0,0,0,0]);
+api.resizePhysicalFilter(cropped, tiled, 350, 2573, {left:24,top:-1000,height:806});
+assert.deepEqual(rect(2), [24,0,C,806]);
+assert.deepEqual(rect(4), [0,0,0,0]);
+api.resizePhysicalFilter(cropped, tiled, 350, 2573, {left:24,top:-2200,height:806});
+assert.deepEqual(rect(6), [24,373-C,C,C]);
+assert.deepEqual(rect(4), [0,0,0,0]);
+passed.push('A bounded long-row filter retains actual corners and never stretches sides beyond the viewport');
+
 const body = source.match(/function buildPhysical\(it, el, w, h, r\) \{([\s\S]*?)\n\}/)?.[1];
 assert(body);
 let builds = 0, sizes = 0, bounds = 0, currentMap = tiled, angle = 135, lastOptions;
@@ -42,7 +55,7 @@ const settings = { profile: 'lens', pIor: 1.5, pMagnify: 3, pBezel: 40, pThickne
     pSpecular: 0, pSharp: 4, pEdgeShade: 0, pFresnel: 0, pCaustic: 0 };
 let lightWrites = 0;
 const lights = [{ dataset: { light: '1' }, setAttribute() { lightWrites++; } }];
-const it = { kind: 'panel' }, plainElement={matches:()=>false};
+const it = { kind: 'panel' }, plainElement={matches:()=>false,classList:{contains:()=>false}};
 const surfaceBlur = source.match(/function surfaceBlur\(it, el\) \{[\s\S]*?\n\}/)[0];
 const build = vm.runInNewContext(surfaceBlur + '\n(function(it,el,w,h,r){' + body + '})', {
     HOST_MENU_SEL:'host-menu', inputGlass:()=>false, controlReadable: () => false, foldedMenuSurface: () => false, composerGlassSurface: el => el.composer === true,
@@ -74,7 +87,7 @@ build(it, plainElement, 374, 600, 20);
 assert.equal(builds, 4);
 passed.push('Unchanged material reuses nodes; resize only patches bounds; parameter, map and engine changes rebuild; arc-only light changes do not rebuild');
 
-const composerItem={kind:'panel'},composerElement={composer:true,matches:()=>false};
+const composerItem={kind:'panel'},composerElement={...plainElement,composer:true};
 build(composerItem,composerElement,344,478,30);
 const composerBuilds=builds;
 assert.equal(lastOptions.profile,'lens');assert.equal(lastOptions.magnify,1.35);assert.equal(lastOptions.blur,6);

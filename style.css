@@ -3816,12 +3816,14 @@ html.ilg body.bubblechat #chat :is(.ilg-message-wallpaper-plane, .ilg-message-wa
     position: absolute;
     pointer-events: none;
 }
-/* Mask only the viewport-height crop. The actual row clips its rounded corners. */
+/* Fade the refracted edge into the sheet; the row itself clips the outer corners. */
 html.ilg body.bubblechat #chat .ilg-message-wallpaper-rim {
-    --ilg-rim-start: calc(var(--ilg-wallpaper-bleed) + 4px);
-    --ilg-rim-end: calc(var(--ilg-wallpaper-bleed) + 8px);
-    --ilg-rim-mask: linear-gradient(to right, #000 var(--ilg-rim-start), transparent var(--ilg-rim-end), transparent calc(100% - var(--ilg-rim-end)), #000 calc(100% - var(--ilg-rim-start)));
-    -webkit-mask-image: var(--ilg-rim-mask);
+    --ilg-rim-start: calc(var(--ilg-wallpaper-bleed) + 6px);
+    --ilg-rim-end: calc(var(--ilg-wallpaper-bleed) + 15px);
+    --ilg-rim-mask:
+        linear-gradient(to right, #000 var(--ilg-rim-start), transparent var(--ilg-rim-end), transparent calc(100% - var(--ilg-rim-end)), #000 calc(100% - var(--ilg-rim-start))),
+        linear-gradient(to bottom, #000 calc(var(--ilg-rim-top) + 15px), transparent calc(var(--ilg-rim-top) + 33px)),
+        linear-gradient(to top, #000 calc(var(--ilg-rim-bottom) + 10px), transparent calc(var(--ilg-rim-bottom) + 25px));
     mask-image: var(--ilg-rim-mask);
 }
 html.ilg body.bubblechat #chat .ilg-message-wallpaper-host::after {
@@ -5155,7 +5157,7 @@ html.ilg.ilg-kb-open body #ilg-ball { visibility: hidden; }
 
     /* Guarded rows get real borders instead of full-row masks, and no second full-row blur. */
     html.ilg:where(.ilg-bubble-double) body.bubblechat:not(.waifuMode, .no-blur) #chat > .mes.ilg-glass:where(:not(.smallSysMes, [is_system="true"], [data-nvwa-style="author"], .ilg-card-renderer:not(.ilg-inline-card), .ilg-content-overlay)).ilg-message-viewport { --ilg-bubble-inner-filter: none; }
-    html.ilg:where(.ilg-bubble-double) body.bubblechat:not(.waifuMode, .no-blur) #chat > .mes.ilg-message-bounded-glass:has(> .ilg-message-clip > .ilg-message-glass > .ilg-message-wallpaper-rim)::after {
+    html.ilg:where(.ilg-bubble-double) body.bubblechat:not(.waifuMode, .no-blur) #chat > .mes.ilg-message-bounded-glass:has(> .ilg-message-clip > .ilg-message-glass > .ilg-message-wallpaper-rim:not([hidden]))::after {
         box-shadow: inset 1px 1px 0 var(--ilg-bubble-key), inset -1px -1px 0 var(--ilg-bubble-return), inset 2px 0 2px var(--ilg-bubble-cut);
     }
     @media (min-width: 600px) {

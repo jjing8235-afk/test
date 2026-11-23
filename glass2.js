@@ -185,15 +185,26 @@ const lightNode = (res, angle, sign) => `<feColorMatrix in="nmap" type="matrix" 
 /* 滤镜：磨砂 → 材质调色（饱和/亮度/对比）→ 折射（可选色散）→ 厚度阴影 → 高光层（迎光边、背光边、细亮边、边缘反光、内部聚光）
    滤镜区域比贴图高（消息流式输出时卡片会先变高），贴图外面垫中性色：不偏移、不发光 */
 // 把贴图铺到元素上：整张直接拉满；九宫格先铺四条边（往角里多伸 1 像素，盖住拼缝），再铺四个角
-function mapRects(m, w, h) {
+function mapRects(m, w, h, crop) {
     if (m.full) return [[0, 0, w, h]];
     const C = m.C, L = w - 2 * C + 2, H = h - 2 * C + 2;
-    return [[C - 1, 0, L, C], [C - 1, h - C, L, C], [0, C - 1, C, H], [w - C, C - 1, C, H],
+    const rects = [[C - 1, 0, L, C], [C - 1, h - C, L, C], [0, C - 1, C, H], [w - C, C - 1, C, H],
         [0, 0, C, C], [w - C, 0, C, C], [0, h - C, C, C], [w - C, h - C, C, C]];
+    if (!crop) return rects;
+    return rects.map(([x, y, width, height], index) => {
+        y += crop.top;
+        if (y + height <= 0 || y >= crop.height) return [0, 0, 0, 0];
+        // Only the straight side maps are vertically uniform and can be cropped by resizing.
+        if (index === 2 || index === 3) {
+            height = Math.min(y + height, crop.height) - Math.max(0, y);
+            y = Math.max(0, y);
+        }
+        return [x + crop.left, y, width, height];
+    });
 }
 
-export function resizePhysicalFilter(filter, m, w, h) {
-    const rects = mapRects(m, w, h);
+export function resizePhysicalFilter(filter, m, w, h, crop) {
+    const rects = mapRects(m, w, h, crop);
     filter.querySelectorAll('feImage[data-ilg-map]').forEach(image => {
         const rect = rects[Number(image.getAttribute('data-ilg-map'))];
         ['x', 'y', 'width', 'height'].forEach((name, i) => {
@@ -203,9 +214,9 @@ export function resizePhysicalFilter(filter, m, w, h) {
     });
 }
 
-function mapLayer(m, ch, w, h, neutral, res) {
+function mapLayer(m, ch, w, h, neutral, res, crop) {
     const img = (href, rect, id, part) => `<feImage href="${href}" x="${rect[0]}" y="${rect[1]}" width="${rect[2]}" height="${rect[3]}" data-ilg-map="${part}" preserveAspectRatio="none" result="${id}"/>`;
-    const rects = mapRects(m, w, h);
+    const rects = mapRects(m, w, h, crop);
     let html = `<feFlood flood-color="${neutral}" result="${res}0"/>`;
     if (m.full) return html + img(m.full[ch], rects[0], `${res}i`, 0) + `<feComposite in="${res}i" in2="${res}0" operator="over" result="${res}"/>`;
     const T = m.tiles, parts = [T.t, T.b, T.l, T.r, T.tl, T.tr, T.bl, T.br];
@@ -213,15 +224,15 @@ function mapLayer(m, ch, w, h, neutral, res) {
     return html + `<feMerge result="${res}"><feMergeNode in="${res}0"/>${parts.map((_, i) => `<feMergeNode in="${res}${i + 1}"/>`).join('')}</feMerge>`;
 }
 
-export function physicalFilter(m, o, w, h, angle) {
+export function physicalFilter(m, o, w, h, angle, crop) {
     // 放大镜截面再乘折射强度时，超过 1/(1 − 1/放大倍数) 边缘就会折叠成镜像，所以封顶在它的 95%
     const k = o.profile === 'lens' ? Math.min(o.strength, 0.95 / (1 - 1 / Math.max(1.01, o.magnify))) : o.strength;
     const sc = m.scale * k, sp = o.specular, g = o.sharp;
     let out = 'refr', src = 'SourceGraphic';
-    let html = mapLayer(m, 'd', w, h, 'rgb(128,128,128)', 'dmap');
+    let html = mapLayer(m, 'd', w, h, 'rgb(128,128,128)', 'dmap', crop);
     if (needsNormals(o)) {
         // tb：白色，透明度 = 表面倾斜度。仅供已启用的光照与厚度阴影使用。
-        html += mapLayer(m, 'n', w, h, 'rgb(128,128,0)', 'nmap') +
+        html += mapLayer(m, 'n', w, h, 'rgb(128,128,0)', 'nmap', crop) +
             '<feColorMatrix in="nmap" type="matrix" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 1 0 0" result="tb"/>';
     }
     if (o.blur > 0) { html += `<feGaussianBlur in="SourceGraphic" stdDeviation="${num(o.blur)}" edgeMode="duplicate" result="pre"/>`; src = 'pre'; }

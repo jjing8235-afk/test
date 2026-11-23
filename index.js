@@ -36,7 +36,7 @@ window.__ilgLoaded = new URL('.', import.meta.url).pathname;
 let studioUI = null;
 let flickerCapture = null, flickerReport = null;
 const MODULE = 'iosLiquidGlass';
-const BUILD_VERSION = '2.0.10-test.31';
+const BUILD_VERSION = '2.0.10-test.32';
 const MAX_INNER_GLASS_BLUR = 16;
 const ENGINE_NAMES = Object.freeze({performance:'御风性能引擎',refraction:'棱光折射引擎'});
 const NS = 'http://www.w3.org/2000/svg';
@@ -882,15 +882,53 @@ const lensWallpaper = createIOSWallpaperRefraction({
     onReady: () => {const lens=document.querySelector('.ilg-composer-lens-glass.ilg-control-surface');if(lens)paint(lens);},
     followingMotion: el => el.parentElement?.getAnimations().some(a=>a.playState==='running'),
 });
-function layoutMessageCrop(plane, surface, rect, bleed) {
+const messageRimFilters = new WeakMap();
+function disposeMessageRim(rim) {
+    messageRimFilters.get(rim)?.filter.remove();
+    messageRimFilters.delete(rim);
+}
+function layoutMessageCrop(plane, surface, rect, bleed, rim, geometry) {
     // The texture is viewport-sized, but the reading sheet's corners belong to the row, not the viewport.
     const clip=surface.parentElement.getBoundingClientRect();
     const top=bleed+clip.top-rect.top, bottom=bleed+rect.bottom-clip.bottom;
     const inset=`inset(calc(${top}px + var(--ilg-bubble-seam)) calc(${bleed}px + var(--ilg-bubble-inset)) calc(${bottom}px + var(--ilg-bubble-inset)) round max(0px, calc(var(--ilg-bubble-r) - var(--ilg-bubble-inset))))`;
     if(plane._ilgClip!==inset){plane._ilgClip=inset;plane.style.clipPath=inset;}
+    if (!rim) return '';
+    const width = Math.ceil(rect.width + bleed * 2), height = Math.ceil(rect.height + bleed * 2);
+    if (largeWebViewMessage({webView: true, kind: 'mes', width, height, dpr: devicePixelRatio})) {
+        disposeMessageRim(rim);
+        return '';
+    }
+    const { id, radius, options, key } = geometry;
+    const rowWidth = Math.round(clip.width), fullHeight = Math.round(clip.height);
+    if (Math.min(rowWidth, fullHeight) < 2 * Math.ceil(Math.max(radius, options.bezel)) + 4) {
+        disposeMessageRim(rim);
+        return '';
+    }
+    const map = getMaps(rowWidth, fullHeight, radius, options);
+    // Offscreen caps do not move the straight-side samples. Keep their map geometry stable while scrolling.
+    const cropTop = Math.max(-map.C, Math.round(top));
+    const cropBottom = Math.min(height + map.C, Math.round(top + clip.height));
+    const rowHeight = cropBottom - cropTop;
+    const crop = { left: bleed, top: cropTop, height };
+    const previous = messageRimFilters.get(rim);
+    if (previous?.map !== map || previous.key !== key) {
+        const filter = filterOf(previous || { id }, width, height);
+        filter.innerHTML = physicalFilter(map, options, rowWidth, rowHeight, S.pLight, crop);
+        messageRimFilters.set(rim, { id, filter, map, key, width, height, rowWidth, rowHeight, cropTop });
+    } else if (previous.width !== width || previous.height !== height || previous.rowWidth !== rowWidth
+        || previous.rowHeight !== rowHeight || previous.cropTop !== cropTop) {
+        if (previous.width !== width || previous.height !== height) filterOf(previous, width, height);
+        resizePhysicalFilter(previous.filter, map, rowWidth, rowHeight, crop);
+        Object.assign(previous, { width, height, rowWidth, rowHeight, cropTop });
+    }
+    const topStop = `${cropTop}px`, bottomStop = `${height - cropBottom}px`;
+    if (rim.style.getPropertyValue('--ilg-rim-top') !== topStop) rim.style.setProperty('--ilg-rim-top', topStop);
+    if (rim.style.getPropertyValue('--ilg-rim-bottom') !== bottomStop) rim.style.setProperty('--ilg-rim-bottom', bottomStop);
+    return `url(#${id})`;
 }
 const messageWallpaper = createIOSWallpaperRefraction({background: visibleWallpaper, layoutPlane:layoutMessageCrop,
-    hostClass: 'ilg-message-wallpaper-host', planeClass: 'ilg-message-wallpaper-plane', rimClass: 'ilg-message-wallpaper-rim', bleed: 24, inheritSourceFilter: true,
+    hostClass: 'ilg-message-wallpaper-host', planeClass: 'ilg-message-wallpaper-plane', rimClass: 'ilg-message-wallpaper-rim', bleed: 24, inheritSourceFilter: true, disposeRim: disposeMessageRim,
     onReady: () => requestAnimationFrame(() => paintMany([...visibleItems].filter(el => el.classList.contains('ilg-message-bounded-glass')), 'message-wallpaper')),
 });
 const items = new Map();
@@ -1225,10 +1263,18 @@ function paint(el, geo) {
         // Draw the wallpaper directly when WebView cannot sample it through a scrolling backdrop.
         if (boundedGlass && it.visible && w && h) {
             const wallpaperTone = `saturate(${S.saturate}) brightness(${S.brightness})`;
-            // The edge borrows the bounded crop, never the full-height backdrop filter.
-            const rim = !cssMode && S.engine === 'physical' && refractAllowed(it)
+            const refractRim = !cssMode && S.engine === 'physical' && refractAllowed(it)
                 && !el.matches('.ilg-card-renderer:not(.ilg-inline-card)');
-            messageWallpaper.paint(surface, `blur(${Math.max(6, blur)}px) ${wallpaperTone}${reading}`, rim ? `blur(1.25px) ${wallpaperTone}` : '');
+            let rim = null;
+            if (refractRim) {
+                const options = {
+                    ...ARC_ONLY, profile: S.profile, ior: S.pIor, magnify: S.pMagnify, bezel: Math.min(30, Math.max(2, S.pBezel)),
+                    thickness: Math.min(60, S.pThickness), strength: Math.min(1.5, S.pStrength * KIND.mes.k),
+                    blur: 2.2, saturate: S.pSaturate, brightness: S.pBrightness, contrast: S.pContrast, aberration: 0,
+                };
+                rim = { id: it.id + '-rim', radius: r, options, key: JSON.stringify(options) };
+            }
+            messageWallpaper.paint(surface, `blur(${Math.max(6, blur)}px) ${wallpaperTone}${reading}`, rim);
         } else messageWallpaper.release(it.backdrop);
     }
     // A closed drawer has no pixels to update; retain its last valid filter for reopening.
@@ -3149,7 +3195,8 @@ function viewportDiagnostic() {
         if (surfaces.length < 3 && it.visible && el.matches('.mes')) {
             const r = el.getBoundingClientRect(), b = (it.backdrop || el).getBoundingClientRect();
             const boundedBackdrop = !!it.backdropClip && getComputedStyle(it.backdropClip).display !== 'contents';
-            surfaces.push({width:Math.round(r.width),height:Math.round(r.height),backdropWidth:Math.round(b.width),backdropHeight:Math.round(b.height),boundedBackdrop,wallpaperLayer:!!it.backdrop?.classList.contains('ilg-message-wallpaper-host'),wallpaperRim:!!it.backdrop?.querySelector(':scope > .ilg-message-wallpaper-rim'),path,fallbackReason:it.fallbackReason||''});
+            const rim = it.backdrop?.querySelector(':scope > .ilg-message-wallpaper-rim:not([hidden])');
+            surfaces.push({width:Math.round(r.width),height:Math.round(r.height),backdropWidth:Math.round(b.width),backdropHeight:Math.round(b.height),boundedBackdrop,wallpaperLayer:!!it.backdrop?.classList.contains('ilg-message-wallpaper-host'),wallpaperRim:!!rim,wallpaperRimMode:rim?'physical-displacement':'none',path,fallbackReason:it.fallbackReason||''});
         }
     }
     return{layout:{width:innerWidth,height:innerHeight,dpr:devicePixelRatio},visual:vv?{width:vv.width,height:vv.height,offsetTop:vv.offsetTop,offsetLeft:vv.offsetLeft,scale:vv.scale}:null,
