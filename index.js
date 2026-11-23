@@ -36,7 +36,7 @@ window.__ilgLoaded = new URL('.', import.meta.url).pathname;
 let studioUI = null;
 let flickerCapture = null, flickerReport = null;
 const MODULE = 'iosLiquidGlass';
-const BUILD_VERSION = '2.0.10-test.28';
+const BUILD_VERSION = '2.0.10-test.29';
 const MAX_INNER_GLASS_BLUR = 16;
 const ENGINE_NAMES = Object.freeze({performance:'御风性能引擎',refraction:'棱光折射引擎'});
 const NS = 'http://www.w3.org/2000/svg';
@@ -878,7 +878,7 @@ const messageWallpaper = createIOSWallpaperRefraction({
         }
         return null;
     },
-    hostClass: 'ilg-message-wallpaper-host', planeClass: 'ilg-message-wallpaper-plane', bleed: 24, inheritSourceFilter: true,
+    hostClass: 'ilg-message-wallpaper-host', planeClass: 'ilg-message-wallpaper-plane', rimClass: 'ilg-message-wallpaper-rim', bleed: 24, inheritSourceFilter: true,
     onReady: () => requestAnimationFrame(() => paintMany([...visibleItems].filter(el => el.classList.contains('ilg-message-bounded-glass')), 'message-wallpaper')),
 });
 const items = new Map();
@@ -1209,7 +1209,11 @@ function paint(el, geo) {
     if (it.backdrop) {
         // Draw the wallpaper directly when WebView cannot sample it through a scrolling backdrop.
         if (boundedGlass && it.visible && w && h) {
-            messageWallpaper.paint(surface, `blur(${Math.max(6, blur)}px) saturate(${S.saturate}) brightness(${S.brightness})${reading}`);
+            const wallpaperTone = `saturate(${S.saturate}) brightness(${S.brightness})`;
+            // The edge borrows the bounded crop, never the full-height backdrop filter.
+            const rim = !cssMode && S.engine === 'physical' && refractAllowed(it)
+                && !el.matches('.ilg-card-renderer:not(.ilg-inline-card)');
+            messageWallpaper.paint(surface, `blur(${Math.max(6, blur)}px) ${wallpaperTone}${reading}`, rim ? `blur(1.25px) ${wallpaperTone}` : '');
         } else messageWallpaper.release(it.backdrop);
     }
     // A closed drawer has no pixels to update; retain its last valid filter for reopening.
@@ -3125,7 +3129,7 @@ function viewportDiagnostic() {
         if (surfaces.length < 3 && it.visible && el.matches('.mes')) {
             const r = el.getBoundingClientRect(), b = (it.backdrop || el).getBoundingClientRect();
             const boundedBackdrop = !!it.backdropClip && getComputedStyle(it.backdropClip).display !== 'contents';
-            surfaces.push({width:Math.round(r.width),height:Math.round(r.height),backdropWidth:Math.round(b.width),backdropHeight:Math.round(b.height),boundedBackdrop,wallpaperLayer:!!it.backdrop?.classList.contains('ilg-message-wallpaper-host'),path,fallbackReason:it.fallbackReason||''});
+            surfaces.push({width:Math.round(r.width),height:Math.round(r.height),backdropWidth:Math.round(b.width),backdropHeight:Math.round(b.height),boundedBackdrop,wallpaperLayer:!!it.backdrop?.classList.contains('ilg-message-wallpaper-host'),wallpaperRim:!!it.backdrop?.querySelector(':scope > .ilg-message-wallpaper-rim'),path,fallbackReason:it.fallbackReason||''});
         }
     }
     return{layout:{width:innerWidth,height:innerHeight,dpr:devicePixelRatio},visual:vv?{width:vv.width,height:vv.height,offsetTop:vv.offsetTop,offsetLeft:vv.offsetLeft,scale:vv.scale}:null,

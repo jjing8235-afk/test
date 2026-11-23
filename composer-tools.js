@@ -3,6 +3,8 @@ export function createComposerTools({root}) {
     const doc=root.ownerDocument, win=doc.defaultView, bars=new Map(), ownedRows=new Set(), ownedGroups=new Set();
     const panes=['chat','tools','quick'], labels={chat:'聊天',tools:'扩展',quick:'快捷'};
     let enabled=false,pane='chat',routing=false,plus=null,wand=null,saved=[],focusFrame=0,rowsFrame=0;
+    let tabSlide=null;
+    const reduceMotion=win.matchMedia('(prefers-reduced-motion: reduce)');
     const menu=kind=>doc.getElementById(kind==='chat'?'options':kind==='tools'?'extensionsMenu':'qr--bar');
     const content=kind=>kind==='chat'?doc.querySelector('#options .options-content'):menu(kind);
     const trigger=kind=>kind==='chat'?plus:kind==='tools'?wand:doc.getElementById('ilg-qr-toggle');
@@ -32,9 +34,39 @@ export function createComposerTools({root}) {
     function finishAnimations(){const jq=win.jQuery;if(typeof jq==='function')for(const kind of ['chat','tools'])jq(menu(kind)).stop?.(true,true);}
     function nativeClick(kind){const button=trigger(kind);if(!button)return;routing=true;try{button.click();}finally{routing=false;}}
     function focusLauncher(){plus?.focus({preventScroll:true});}
-    function updateBar(el,bar){const active=el.id==='extensionsMenu'?'tools':el.id==='qr--bar'?'quick':'chat';for(const b of bar.children){const selected=b.dataset.pane===active;b.setAttribute('aria-selected',String(selected));b.tabIndex=selected?0:-1;b.disabled=!available(b.dataset.pane);b.title=b.disabled?'当前没有可用的'+labels[b.dataset.pane]+'入口':'';}}
+    function updateBar(el,bar){const active=el.id==='extensionsMenu'?'tools':el.id==='qr--bar'?'quick':'chat';for(const b of bar.querySelectorAll('[role="tab"]')){const selected=b.dataset.pane===active;b.setAttribute('aria-selected',String(selected));b.tabIndex=selected?0:-1;b.disabled=!available(b.dataset.pane);b.title=b.disabled?'当前没有可用的'+labels[b.dataset.pane]+'入口':'';}}
+    function cancelTabSlide(){
+        tabSlide?.animation.cancel();
+        tabSlide=null;
+    }
+    function tabLensGeometry(kind){
+        const bar=bars.get(content(kind));
+        const lens=bar?.querySelector('.ilg-composer-tab-lens');
+        if(!lens)return null;
+        const track=bar.getBoundingClientRect(),rect=lens.getBoundingClientRect();
+        return track.width&&rect.width ? {lens,track,rect} : null;
+    }
+    function animateTabSlide(from,kind){
+        const target=tabLensGeometry(kind);
+        if(!from||!target||!target.lens.animate)return;
+        // Menus remain native. Carry the painted lens position across their separate tracks.
+        // Sampling the animated rect lets a rapid reversal continue where the lens is now.
+        const ratio=target.track.width/from.track.width;
+        const center=target.track.left+(from.rect.left+from.rect.width/2-from.track.left)*ratio;
+        const distance=center-(target.rect.left+target.rect.width/2);
+        const scale=from.rect.width*ratio/target.rect.width;
+        if(Math.abs(distance)<.5)return;
+        const animation=target.lens.animate([
+            {transform:`translateX(${distance}px) scaleX(${scale})`,easing:'cubic-bezier(.21,.65,.29,1)'},
+            {transform:`translateX(${distance*.13}px) scaleX(1.035)`,offset:.66,easing:'cubic-bezier(.24,.7,.38,1)'},
+            {transform:'none'},
+        ],{duration:310});
+        tabSlide={animation,kind};
+        animation.onfinish=()=>{if(tabSlide?.animation===animation)tabSlide=null;};
+    }
     function refresh(){
         if(!enabled||!plus)return;
+        if(tabSlide&&!visible(tabSlide.kind))cancelTabSlide();
         for(const kind of panes)menu(kind)?.classList.toggle('ilg-composer-open',visible(kind));
         const expanded=panes.some(visible);if(plus.getAttribute('aria-expanded')!==String(expanded))plus.setAttribute('aria-expanded',String(expanded));
         for(const [el,bar]of bars)updateBar(el,bar);
@@ -45,9 +77,14 @@ export function createComposerTools({root}) {
         if(!enabled||!available(kind))return;
         cancelAnimationFrame(focusFrame);focusFrame=0;finishAnimations();
         if(toggle&&visible(kind)){nativeClick(kind);finishAnimations();focusLauncher();refresh();return;}
+        const previous=panes.find(visible);
+        const switching=previous&&previous!==kind;
+        const from=switching&&!reduceMotion.matches&&!doc.body.classList.contains('reduced-motion') ? tabLensGeometry(previous) : null;
+        if(switching)cancelTabSlide();
         for(const other of panes)if(other!==kind&&visible(other)){nativeClick(other);finishAnimations();}
         pane=kind;focusLauncher();if(!visible(kind))nativeClick(kind);finishAnimations();
         const el=content(kind);if(el)decorate(el);refresh();
+        if(from&&visible(kind))animateTabSlide(from,kind);
         if(focus)focusFrame=win.requestAnimationFrame(()=>{focusFrame=0;bars.get(content(kind))?.querySelector('[aria-selected="true"]')?.focus({preventScroll:true});});
     }
     function launcherClick(event){if(routing||!enabled)return;event.preventDefault();event.stopImmediatePropagation();select(available(pane)?pane:'chat',{toggle:true});}
@@ -60,21 +97,29 @@ export function createComposerTools({root}) {
         event.preventDefault();event.stopPropagation();cancelAnimationFrame(focusFrame);focusFrame=0;finishAnimations();
         for(const kind of panes)if(visible(kind))nativeClick(kind);finishAnimations();focusLauncher();refresh();
     }
+    function updateTrackScroll(event){
+        const panel=event.currentTarget;
+        bars.get(panel)?.classList.toggle('ilg-composer-tabs-scrolled',panel.scrollTop>1);
+    }
     function decorate(el){
         if(!enabled||!el.matches('#options .options-content,#extensionsMenu,#qr--bar')||author(el))return;
         let bar=bars.get(el);
         if(!bar){
             bar=doc.createElement('div');bar.className='ilg-composer-tabs';bar.setAttribute('role','tablist');bar.setAttribute('aria-label','输入工具');
+            const lens=doc.createElement('span');lens.className='ilg-composer-tab-lens';lens.setAttribute('aria-hidden','true');bar.append(lens);
             for(const kind of panes){const b=doc.createElement('button');b.type='button';b.dataset.pane=kind;b.textContent=labels[kind];b.setAttribute('role','tab');b.id='ilg-composer-tab-'+(el.id==='extensionsMenu'?'tools':el.id==='qr--bar'?'quick':'chat')+'-'+kind;b.setAttribute('aria-controls',kind==='chat'?'options':kind==='tools'?'extensionsMenu':'qr--bar');b.addEventListener('click',event=>{event.preventDefault();event.stopImmediatePropagation();select(kind,{focus:true});});bar.append(b);}
             bar.addEventListener('keydown',event=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;event.preventDefault();event.stopPropagation();const choices=panes.filter(available),active=el.id==='extensionsMenu'?'tools':el.id==='qr--bar'?'quick':'chat',i=choices.indexOf(active);select(event.key==='Home'?choices[0]:event.key==='End'?choices.at(-1):choices[(i+(event.key==='ArrowLeft'?-1:1)+choices.length)%choices.length],{focus:true});});bars.set(el,bar);
+            el.addEventListener('scroll',updateTrackScroll,{passive:true});
         }
+        bar.classList.toggle('ilg-composer-tabs-scrolled',el.scrollTop>1);
         updateBar(el,bar);if(bar.parentElement!==el)el.prepend(bar);
     }
-    function release(el){bars.get(el)?.remove();bars.delete(el);if(el===menu('tools')){toolObserver.disconnect();clearToolLayout();}}
+    function release(el){el.removeEventListener('scroll',updateTrackScroll);bars.get(el)?.remove();bars.delete(el);if(el===menu('tools')){toolObserver.disconnect();clearToolLayout();}}
     function ownAttribute(el,name,value){saved.push({el,name,before:el.getAttribute(name),value});el.setAttribute(name,value);}
     function setEnabled(value){
         if(value===enabled){if(value)refresh();return;}
         if(!value){
+            cancelTabSlide();
             observer.disconnect();toolObserver.disconnect();cancelAnimationFrame(focusFrame);cancelAnimationFrame(rowsFrame);focusFrame=rowsFrame=0;
             plus?.removeEventListener('click',launcherClick,true);wand?.removeEventListener('click',toolsClick,true);doc.removeEventListener('keydown',keydown,true);
             finishAnimations();for(const kind of panes)if(visible(kind))nativeClick(kind);finishAnimations();enabled=false;root.classList.remove('ilg-merged-tools');

@@ -16,11 +16,11 @@ export function wallpaperPlacement({width,height,imageWidth,imageHeight,size='co
     return [w,h,x,y].every(Number.isFinite)?{width:w,height:h,x,y}:null;
 }
 export function createIOSWallpaperRefraction({background,onReady=()=>{},win=window,doc=document,
-    hostClass='ilg-ios-wallpaper-host',planeClass='ilg-ios-wallpaper-plane',bleed=0,inheritSourceFilter=false}={}) {
+    hostClass='ilg-ios-wallpaper-host',planeClass='ilg-ios-wallpaper-plane',rimClass='',bleed=0,inheritSourceFilter=false}={}) {
     const entries=new Map();let enabled=false,source=null,raf=0,listening=false,reason='disabled';
     const events=[[win,'resize'],[win.visualViewport,'resize'],[win.visualViewport,'scroll'],[doc,'scroll']];
     const listen=on=>{if(on===listening)return;listening=on;for(const [target,type]of events)target?.[on?'addEventListener':'removeEventListener'](type,schedule,{capture:true,passive:true});};
-    function release(el){const item=entries.get(el);if(!item)return;item.plane.remove();entries.delete(el);el.classList.remove(hostClass);if(!entries.size){listen(false);if(raf)win.cancelAnimationFrame(raf);raf=0;}}
+    function release(el){const item=entries.get(el);if(!item)return;item.plane.remove();item.rim?.remove();entries.delete(el);el.classList.remove(hostClass);if(!entries.size){listen(false);if(raf)win.cancelAnimationFrame(raf);raf=0;}}
     function queuePaint(){if(enabled)onReady();}
     function getSource(){
         const el=background?.();if(!el){reason='no-wallpaper';return null;}
@@ -41,15 +41,26 @@ export function createIOSWallpaperRefraction({background,onReady=()=>{},win=wind
         const placement=wallpaperPlacement({width:bg.width,height:bg.height,imageWidth:src.image.naturalWidth,imageHeight:src.image.naturalHeight,size:src.css.backgroundSize,position:src.css.backgroundPosition});
         if(!placement){reason='unsupported-background-layout';release(el);return false;}
         const x=bg.left+placement.x-host.left+bleed,y=bg.top+placement.y-host.top+bleed;
-        const filter=inheritSourceFilter && src.css.filter!=='none' ? `${src.css.filter} ${item.filter}` : item.filter;
-        const key=[src.url,placement.width,placement.height,x,y,src.css.backgroundRepeat,filter].join('|');
-        if(item.key!==key){item.key=key;item.plane.style.backgroundImage=src.css.backgroundImage;item.plane.style.backgroundSize=placement.width+'px '+placement.height+'px';item.plane.style.backgroundPosition=x+'px '+y+'px';item.plane.style.backgroundRepeat=src.css.backgroundRepeat;item.plane.style.filter=filter;}
+        const sourceFilter=inheritSourceFilter && src.css.filter!=='none' ? `${src.css.filter} ` : '';
+        const key=[src.url,placement.width,placement.height,x,y,src.css.backgroundRepeat,sourceFilter,item.filter,item.rimFilter].join('|');
+        if(item.key!==key){
+            item.key=key;
+            const draw=(plane,filter,offsetX=0,offsetY=0)=>{
+                plane.style.backgroundImage=src.css.backgroundImage;
+                plane.style.backgroundSize=`${placement.width}px ${placement.height}px`;
+                plane.style.backgroundPosition=`${x+offsetX}px ${y+offsetY}px`;
+                plane.style.backgroundRepeat=src.css.backgroundRepeat;
+                plane.style.filter=sourceFilter+filter;
+            };
+            draw(item.plane,item.filter);
+            if(item.rim)draw(item.rim,item.rimFilter,4,2);
+        }
         reason='ready';return true;
     }
     function schedule(){if(!enabled||raf||!entries.size)return;raf=win.requestAnimationFrame(()=>{raf=0;const src=getSource();if(!src){for(const el of [...entries.keys()])release(el);queuePaint();return;}for(const [el,item]of [...entries])update(el,item,src);});}
     return {
         setEnabled(on){enabled=on===true;if(!enabled){for(const el of [...entries.keys()])release(el);if(source){source.image.onload=source.image.onerror=null;}source=null;reason='disabled';}},
-        paint(el,filter){if(!enabled)return false;const src=getSource();if(!src){release(el);return false;}
+        paint(el,filter,rimFilter=''){if(!enabled)return false;const src=getSource();if(!src){release(el);return false;}
             let item=entries.get(el);
             if(!item){
                 if(entries.size>=8){reason='surface-budget';return false;}
@@ -57,7 +68,13 @@ export function createIOSWallpaperRefraction({background,onReady=()=>{},win=wind
                 if(bleed)plane.style.inset=`-${bleed}px`;
                 el.prepend(plane);el.classList.add(hostClass);item={plane,key:'',filter};entries.set(el,item);
             }
-            item.filter=filter;
+            if(rimClass&&rimFilter&&!item.rim){
+                const rim=doc.createElement('div');rim.className=rimClass;rim.setAttribute('aria-hidden','true');
+                rim.style.inset=`-${bleed}px`;
+                rim.style.setProperty('--ilg-wallpaper-bleed',`${bleed}px`);
+                item.plane.after(rim);item.rim=rim;
+            }else if(!rimFilter&&item.rim){item.rim.remove();item.rim=null;}
+            item.filter=filter;item.rimFilter=rimFilter;
             const ok=update(el,item,src);if(ok)listen(true);return ok;
         },release,refresh(){if(enabled){if(entries.size)schedule();else queuePaint();}},status:()=>({enabled,mode:'wallpaper-only',reason,surfaces:entries.size,imageLoaded:source?.loaded===true,fullBackdropRefraction:false,phonePixelsConfirmed:false}),
         destroy(){this.setEnabled(false);}

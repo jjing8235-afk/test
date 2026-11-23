@@ -552,7 +552,7 @@ html.ilg body #options .options-content > a {
     padding: 10px 12px;
     text-align: start;
 }
-html.ilg body #options .options-content > :is(#option_toggle_AN, #option_toggle_CFG, #option_toggle_logprobs) {
+html.ilg:not(.ilg-merged-tools) body #options .options-content > :is(#option_toggle_AN, #option_toggle_CFG, #option_toggle_logprobs) {
     grid-column: span 2;
     flex-direction: column;
     justify-content: center;
@@ -612,10 +612,13 @@ html.ilg.ilg-icons body #options .options-content > #option_regenerate > i { --i
 html.ilg.ilg-icons body #options .options-content > #option_impersonate > i { --ilg-composer-icon: var(--ilg-ui-person); }
 html.ilg.ilg-icons body #options .options-content > #option_continue > i { --ilg-composer-icon: var(--ilg-ui-arrow); }
 html.ilg.ilg-icons body #options .options-content > #option_settings > i { --ilg-composer-icon: var(--ilg-ui-sliders); }
-html.ilg.ilg-icons body #options .options-content > a > i::before {
+html.ilg.ilg-icons body #options .options-content > #option_toggle_fullscreen > i {
+    --ilg-composer-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 4H4v5m11-5h5v5m0 6v5h-5m-6 0H4v-5'/%3E%3C/svg%3E");
+}
+html.ilg.ilg-icons body #options .options-content > :is(#option_toggle_AN, #option_toggle_CFG, #option_toggle_logprobs, #option_back_to_main, #option_new_bookmark, #option_convert_to_group, #option_start_new_chat, #option_close_chat, #option_select_chat, #option_delete_mes, #option_regenerate, #option_impersonate, #option_continue, #option_settings, #option_toggle_fullscreen) > i::before {
     content: '' !important;
     display: block;
-    width: 28px; height: 28px;
+    width: 100%; height: 100%;
     background: currentColor;
     -webkit-mask: var(--ilg-composer-icon, var(--ilg-icon)) center / contain no-repeat;
     mask: var(--ilg-composer-icon, var(--ilg-icon)) center / contain no-repeat;
@@ -1219,7 +1222,7 @@ html.ilg.ilg-qrfold body #form_sheld #qr--bar .qr--button:where(:not(#catgod-ora
 }
 html.ilg body #options .options-content { gap: 4px 8px; padding: 16px; }
 html.ilg body #options .options-content > a { min-height: 52px; padding: 10px 12px; }
-html.ilg body #options .options-content > :is(#option_toggle_AN, #option_toggle_CFG, #option_toggle_logprobs) {
+html.ilg:not(.ilg-merged-tools) body #options .options-content > :is(#option_toggle_AN, #option_toggle_CFG, #option_toggle_logprobs) {
     min-height: 72px;
     gap: 7px;
     padding: 9px 4px;
@@ -3809,9 +3812,17 @@ html.ilg body.bubblechat #chat .ilg-message-glass.ilg-message-wallpaper-host {
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
 }
-html.ilg body.bubblechat #chat .ilg-message-wallpaper-plane {
+html.ilg body.bubblechat #chat :is(.ilg-message-wallpaper-plane, .ilg-message-wallpaper-rim) {
     position: absolute;
     pointer-events: none;
+}
+/* Mask only the viewport-height crop. The actual row clips its rounded corners. */
+html.ilg body.bubblechat #chat .ilg-message-wallpaper-rim {
+    --ilg-rim-start: calc(var(--ilg-wallpaper-bleed) + 4px);
+    --ilg-rim-end: calc(var(--ilg-wallpaper-bleed) + 8px);
+    --ilg-rim-mask: linear-gradient(to right, #000 var(--ilg-rim-start), transparent var(--ilg-rim-end), transparent calc(100% - var(--ilg-rim-end)), #000 calc(100% - var(--ilg-rim-start)));
+    -webkit-mask-image: var(--ilg-rim-mask);
+    mask-image: var(--ilg-rim-mask);
 }
 html.ilg body.bubblechat #chat .ilg-message-wallpaper-host::after {
     content: "";
@@ -3820,7 +3831,7 @@ html.ilg body.bubblechat #chat .ilg-message-wallpaper-host::after {
     background-color: inherit;
     pointer-events: none;
 }
-html.ilg body:is(.no-blur, .waifuMode) #chat .ilg-message-wallpaper-host > .ilg-message-wallpaper-plane,
+html.ilg body:is(.no-blur, .waifuMode) #chat .ilg-message-wallpaper-host > :is(.ilg-message-wallpaper-plane, .ilg-message-wallpaper-rim),
 html.ilg body:is(.no-blur, .waifuMode) #chat .ilg-message-wallpaper-host::after {
     display: none;
 }
@@ -5139,6 +5150,9 @@ html.ilg.ilg-kb-open body #ilg-ball { visibility: hidden; }
 
     /* Guarded rows get real borders instead of full-row masks, and no second full-row blur. */
     html.ilg:where(.ilg-bubble-double) body.bubblechat:not(.waifuMode, .no-blur) #chat > .mes.ilg-glass:where(:not(.smallSysMes, [is_system="true"], [data-nvwa-style="author"], .ilg-card-renderer:not(.ilg-inline-card), .ilg-content-overlay)).ilg-message-viewport { --ilg-bubble-inner-filter: none; }
+    html.ilg:where(.ilg-bubble-double) body.bubblechat:not(.waifuMode, .no-blur) #chat > .mes.ilg-message-bounded-glass:has(> .ilg-message-clip > .ilg-message-glass > .ilg-message-wallpaper-rim)::after {
+        box-shadow: inset 1px 1px 0 var(--ilg-bubble-key), inset -1px -1px 0 var(--ilg-bubble-return), inset 2px 0 2px var(--ilg-bubble-cut);
+    }
     @media (min-width: 600px) {
         /* Keep the preset's content stacking level, but anchor the unfiltered inner rim to the row. */
         html.ilg:where(.ilg-bubble-double) body.bubblechat:not(.waifuMode, .no-blur) #chat > .mes.ilg-glass:where(:not(.smallSysMes, [is_system="true"], [data-nvwa-style="author"], .ilg-card-renderer:not(.ilg-inline-card), .ilg-content-overlay)).ilg-message-viewport.ilg-card-renderer > .mes_block { position: static; }
@@ -5525,7 +5539,6 @@ html.ilg.ilg-light body .ilg-pose-overlay > .ilg-pose-layer { background:radial-
 /* Gentle relief on the outline masks: a lit face and a short contact shadow. */
 html.ilg { --ilg-icon-contact: rgba(0, 9, 18, .42); --ilg-label-shadow: 0 1px 2px rgba(0, 8, 18, .24); }
 html.ilg.ilg-light { --ilg-icon-contact: rgba(28, 45, 66, .22); --ilg-label-shadow: 0 1px 0 rgba(255,255,255,.18); }
-html.ilg.ilg-icons body #options .options-content > a > i::before,
 html.ilg.ilg-qrfold body #form_sheld #qr--bar .ilg-quick-icon,
 html.ilg.ilg-icons body #nonQRFormItems #options_button::before,
 html.ilg.ilg-qrfold body #ilg-qr-toggle::before {
@@ -5565,28 +5578,141 @@ html.ilg.ilg-merged-tools body #leftSendForm > #extensionsMenuButton {
 }
 html.ilg.ilg-merged-tools body #options .options-content > .ilg-tray-heading,
 html.ilg.ilg-merged-tools body #extensionsMenu > .ilg-tray-heading,
-html.ilg.ilg-merged-tools body #qr--bar > .ilg-tray-heading { display: none; }
+html.ilg.ilg-merged-tools.ilg-qrfold body #form_sheld #qr--bar > .ilg-tray-heading { display: none; }
+html.ilg.ilg-merged-tools body :is(#options .options-content, #extensionsMenu),
+html.ilg.ilg-merged-tools.ilg-qrfold.ilg-qr-open body #form_sheld #qr--bar {
+    --ilg-panel-face: linear-gradient(154deg, rgba(36,57,59,.67), rgba(24,31,37,.80) 70%);
+    --ilg-panel-tile: rgba(216,246,237,.09);
+    --ilg-panel-rule: rgba(215,240,234,.19);
+    --ilg-panel-key: #b4ecda;
+    --ilg-panel-key-ink: #173e35;
+    --ilg-panel-rim: rgba(240,248,255,.38);
+    --ilg-panel-foot: rgba(5,12,22,.30);
+    --ilg-tab-track: rgba(10, 10, 12, .66);
+    --ilg-tab-track-scrolled: #302e31;
+    --ilg-tab-track-glint: rgba(255, 255, 255, .095);
+    --ilg-tab-track-contact: rgba(0, 0, 0, .24);
+    --ilg-tab-lens-face: rgba(255, 255, 255, .075);
+    --ilg-tab-lens-glint: rgba(255, 255, 255, .17);
+    --ilg-tab-lens-fold: rgba(255, 255, 255, .14);
+    --ilg-tab-lens-crown: rgba(255, 255, 255, .82);
+    --ilg-tab-lens-heel: rgba(255, 255, 255, .47);
+    --ilg-tab-lens-contact: rgba(0, 0, 0, .40);
+    --ilg-tray-scroll: rgba(240, 246, 255, .40);
+    --ilg-merged-tray-height: min(490px, calc(100dvh - var(--ilg-form-h, 64px) - max(64px, var(--topBarBlockSize, 40px)) - var(--ilg-kb, 0px) - env(safe-area-inset-top, 0px)));
+    box-sizing: border-box;
+    width: min(376px, calc(100vw - 24px));
+    height: var(--ilg-merged-tray-height);
+    max-height: var(--ilg-merged-tray-height);
+    scroll-padding-block: 62px 12px;
+    scrollbar-gutter: stable;
+    scrollbar-gutter: stable both-edges;
+    scrollbar-width: thin;
+    scrollbar-color: var(--ilg-tray-scroll) transparent;
+    border-radius: 26px;
+    padding: 12px;
+    padding-block-start: 7px;
+    background-image: var(--ilg-panel-face);
+    border-block-start-color: var(--ilg-panel-rim);
+}
+html.ilg.ilg-light.ilg-merged-tools body :is(#options .options-content, #extensionsMenu),
+html.ilg.ilg-light.ilg-merged-tools.ilg-qrfold.ilg-qr-open body #form_sheld #qr--bar {
+    --ilg-panel-face: linear-gradient(154deg, rgba(244,252,247,.82), rgba(232,241,235,.69) 70%);
+    --ilg-panel-tile: rgba(255,255,255,.42);
+    --ilg-panel-rule: rgba(40,77,67,.18);
+    --ilg-panel-key: #285c50;
+    --ilg-panel-key-ink: #f6fff9;
+    --ilg-panel-rim: rgba(255,255,255,.76);
+    --ilg-panel-foot: rgba(60,49,52,.14);
+    --ilg-tab-track: rgba(255, 255, 255, .52);
+    --ilg-tab-track-scrolled: #eae7e8;
+    --ilg-tab-track-glint: rgba(255, 255, 255, .28);
+    --ilg-tab-track-contact: rgba(30, 24, 29, .16);
+    --ilg-tab-lens-face: rgba(255, 255, 255, .24);
+    --ilg-tab-lens-glint: rgba(255, 255, 255, .38);
+    --ilg-tab-lens-fold: rgba(255, 255, 255, .48);
+    --ilg-tab-lens-crown: rgba(255, 255, 255, .98);
+    --ilg-tab-lens-heel: rgba(255, 255, 255, .80);
+    --ilg-tab-lens-contact: rgba(44, 37, 43, .24);
+    --ilg-tray-scroll: rgba(32, 37, 46, .42);
+}
+html.ilg.ilg-merged-tools body :is(#options .options-content, #extensionsMenu).ilg-glass,
+html.ilg.ilg-merged-tools.ilg-qrfold.ilg-qr-open body #form_sheld #qr--bar.ilg-glass {
+    --ilg-tray-shadow: inset 0 1px 0 var(--ilg-panel-rim), inset 0 -1px 0 var(--ilg-panel-foot), 0 8px 19px -9px var(--ilg-panel-foot), 0 22px 44px -19px var(--ilg-panel-foot);
+}
 html.ilg.ilg-merged-tools body #options .options-content > .ilg-composer-tabs,
 html.ilg.ilg-merged-tools body #extensionsMenu > .ilg-composer-tabs,
 html.ilg.ilg-merged-tools body #qr--bar > .ilg-composer-tabs {
+    --ilg-tab-inset: 4px;
+    --ilg-tab-width: calc((100% - 2 * var(--ilg-tab-inset)) / 3);
     display: flex;
+    flex: 0 0 auto;
     grid-column: 1 / -1;
+    grid-row: 1;
+    order: -1;
+    align-self: start;
     position: sticky;
     top: 0;
     z-index: 5;
-    gap: 4px;
-    padding: 3px;
-    margin: 0 0 8px;
-    border-radius: 999px;
-    background: rgba(0, 8, 24, .09);
-    box-shadow: inset 0 1px 3px rgba(0, 8, 24, .07);
+    gap: 0;
+    padding: var(--ilg-tab-inset);
+    margin: 0 0 9px;
+    border-radius: 15px;
+    background-color: var(--ilg-tab-track);
+    background-image: radial-gradient(85% 68% at 24% 0%, var(--ilg-tab-track-glint), transparent 76%);
+    box-shadow: inset 0 1px 3px var(--ilg-tab-track-contact), inset 0 -1px 0 var(--ilg-tab-track-glint);
+    isolation: isolate;
     opacity: 1;
 }
+/* Scrolled rows pass under the sticky rail; keep their labels out of the tab text. */
+html.ilg.ilg-merged-tools body .ilg-composer-tabs.ilg-composer-tabs-scrolled {
+    --ilg-tab-track: var(--ilg-tab-track-scrolled);
+}
+html.ilg.ilg-merged-tools body .ilg-composer-tabs:has(> [data-pane="tools"][aria-selected="true"]) { --ilg-tab-slot: 1; }
+html.ilg.ilg-merged-tools body .ilg-composer-tabs:has(> [data-pane="quick"][aria-selected="true"]) { --ilg-tab-slot: 2; }
+/* The center transmits the panel color; bright arcs suggest a curved edge without a full white outline. */
+html.ilg.ilg-merged-tools body .ilg-composer-tabs > .ilg-composer-tab-lens {
+    position: absolute;
+    z-index: 0;
+    inset-block: calc(var(--ilg-tab-inset) + 2px);
+    inset-inline-start: calc(var(--ilg-tab-inset) + var(--ilg-tab-slot, 0) * var(--ilg-tab-width));
+    inline-size: var(--ilg-tab-width);
+    box-sizing: border-box;
+    border-radius: inherit;
+    background-color: var(--ilg-tab-lens-face);
+    background-image:
+        radial-gradient(75% 60% at 24% -8%, var(--ilg-tab-lens-glint), transparent 88%),
+        radial-gradient(61% 29% at 79% 113%, var(--ilg-tab-lens-fold), transparent 95%);
+    box-shadow: inset 0 .5px 0 var(--ilg-tab-lens-glint), 0 2px 5px -1px var(--ilg-tab-lens-contact);
+    pointer-events: none;
+}
+@supports ((mask-composite: exclude) or (-webkit-mask-composite: xor)) {
+    html.ilg.ilg-merged-tools body .ilg-composer-tabs > .ilg-composer-tab-lens::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        padding: 1px;
+        border-radius: inherit;
+        background:
+            radial-gradient(76% 106% at 23% -18%, var(--ilg-tab-lens-crown), transparent 84%),
+            radial-gradient(75% 100% at 91% 123%, var(--ilg-tab-lens-heel), transparent 91%);
+        -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+        mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+    }
+}
 html.ilg.ilg-merged-tools body .ilg-composer-tabs > button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    position: relative;
+    z-index: 1;
     flex: 1 1 0;
     min-width: 0;
     min-height: 44px;
-    padding: 9px 12px;
+    padding: 7px 8px;
     margin: 0;
     border: 1px solid transparent;
     border-radius: 999px;
@@ -5595,20 +5721,115 @@ html.ilg.ilg-merged-tools body .ilg-composer-tabs > button {
     opacity: 1;
     font: inherit;
     font-size: 13px;
-    font-weight: 600;
+    font-weight: 650;
     line-height: 1.4;
     cursor: pointer;
 }
-html.ilg.ilg-merged-tools body .ilg-composer-tabs > button[aria-selected="true"] {
-    border-color: var(--ilg-lens-edge);
-    background: linear-gradient(145deg, var(--ilg-lens-top), var(--ilg-lens-bottom));
-    color: var(--ilg-tray-ink);
-    font-weight: 700;
-    box-shadow: inset 0 1px 0 var(--ilg-lens-rim), 0 2px 4px var(--ilg-lens-shadow);
+html.ilg.ilg-merged-tools body .ilg-composer-tabs [data-pane="chat"] { --ilg-tab-icon: var(--ilg-ui-chat); }
+html.ilg.ilg-merged-tools body .ilg-composer-tabs [data-pane="tools"] { --ilg-tab-icon: var(--ilg-ui-wand); }
+html.ilg.ilg-merged-tools body .ilg-composer-tabs [data-pane="quick"] { --ilg-tab-icon: var(--ilg-ui-grid); }
+html.ilg.ilg-merged-tools body .ilg-composer-tabs > button::before {
+    content: ''; width: 16px; height: 16px; background: currentColor;
+    -webkit-mask: var(--ilg-tab-icon) center / contain no-repeat;
+    mask: var(--ilg-tab-icon) center / contain no-repeat;
 }
+html.ilg.ilg-merged-tools body .ilg-composer-tabs > button[aria-selected="true"] { font-weight: 730; }
 html.ilg.ilg-merged-tools body .ilg-composer-tabs > button:focus-visible {
     outline: 2px solid var(--ilg-tray-accent);
     outline-offset: -2px;
+}
+html.ilg.ilg-merged-tools body.reduced-motion .ilg-composer-tab-lens { transform: none !important; }
+@media (prefers-reduced-motion: reduce) {
+    html.ilg.ilg-merged-tools body .ilg-composer-tab-lens { transform: none !important; }
+}
+@media (forced-colors: active) {
+    html.ilg.ilg-merged-tools body .ilg-composer-tabs > .ilg-composer-tab-lens { display: none; }
+    html.ilg.ilg-merged-tools body .ilg-composer-tabs > button[aria-selected="true"] { border-color: Highlight; color: Highlight; }
+}
+html.ilg.ilg-merged-tools body #options .options-content {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 5px;
+}
+html.ilg.ilg-merged-tools body #options .options-content > a {
+    grid-column: span 3;
+    flex-direction: row;
+    justify-content: flex-start;
+    box-sizing: border-box;
+    min-height: 44px;
+    gap: 8px;
+    padding: 7px 8px;
+    border-radius: 8px;
+    color: var(--ilg-tray-ink);
+    font-size: 13px;
+    text-align: start;
+}
+html.ilg.ilg-merged-tools body #options .options-content > :is(#option_select_chat, #option_delete_mes, #option_continue) { grid-column: 1 / -1; }
+html.ilg.ilg-merged-tools body #options .options-content > #option_delete_mes { color: var(--ilg-tray-danger); }
+html.ilg.ilg-merged-tools body #options .options-content > a > i {
+    flex-basis: 22px;
+    width: 22px;
+    min-width: 22px;
+    height: 22px;
+    line-height: 22px;
+    font-size: 17px;
+}
+html.ilg.ilg-merged-tools body #options .options-content > hr { margin: 3px 0; }
+
+/* System tools share a compact six-cell matrix. Preserve the native order and hide logic. */
+html.ilg.ilg-merged-tools body #options .options-content > :is(#option_toggle_fullscreen,#option_toggle_AN,#option_toggle_CFG,#option_toggle_logprobs,#option_new_bookmark,#option_convert_to_group,#option_back_to_main) {
+    grid-column: span 2; flex-direction: column; justify-content: center;
+    gap: 4px; min-height: 57px; padding: 5px 3px; border-radius: 12px;
+    background-color: var(--ilg-panel-tile); text-align: center; font-size: 12px;
+}
+html.ilg.ilg-merged-tools body #options .options-content > #option_start_new_chat {
+    border-radius: 10px; background: var(--ilg-panel-tile); box-shadow: none;
+}
+html.ilg.ilg-merged-tools body #options .options-content > #option_continue {
+    justify-content: center; border: 0; border-radius: 12px;
+    color: var(--ilg-panel-key-ink); background: var(--ilg-panel-key); box-shadow: none; font-weight: 700;
+}
+html.ilg.ilg-merged-tools body #options .options-content > #option_continue > i {color: inherit;}
+/* Keep native shortcut sets in place. Centering a tall flex column clips its first rows. */
+html.ilg.ilg-merged-tools.ilg-qrfold.ilg-qr-open body #form_sheld #qr--bar {
+    justify-content: flex-start;
+    gap: 4px;
+    bottom: calc(100% + 2px);
+    overscroll-behavior: contain;
+}
+html.ilg.ilg-merged-tools.ilg-qrfold body #form_sheld #qr--bar::-webkit-scrollbar { display: block; width: 5px; }
+html.ilg.ilg-merged-tools.ilg-qrfold body #form_sheld #qr--bar::-webkit-scrollbar-thumb { background: var(--ilg-tray-scroll); border-radius: 5px; }
+html.ilg.ilg-merged-tools.ilg-qrfold body #form_sheld #qr--bar > :not(.ilg-tray-heading) { flex-shrink: 0; }
+html.ilg.ilg-merged-tools.ilg-qrfold body #form_sheld #qr--bar > .ilg-composer-tabs { align-self: stretch; }
+html.ilg.ilg-merged-tools.ilg-qrfold body #form_sheld #qr--bar > #qr--popoutTrigger { position: static; align-self: flex-end; margin: 0; }
+html.ilg.ilg-merged-tools.ilg-qrfold body #form_sheld #qr--bar > .qr--buttons { box-sizing: border-box; margin-inline: 0; gap: 4px 8px; }
+html.ilg.ilg-merged-tools.ilg-qrfold body #form_sheld #qr--bar .qr--button:where(:not(#catgod-oracle-qrbar *, [data-nvwa-style="author"], [data-nvwa-style="author"] *)) {
+    box-sizing: border-box;
+    min-height: 44px;
+    padding: 7px 8px;
+    gap: 4px 8px;
+    border-radius: 0;
+    border-bottom: 1px solid var(--ilg-panel-rule);
+    background-color: transparent;
+    font-size: 13px;
+    justify-content: flex-start;
+}
+html.ilg.ilg-merged-tools.ilg-qrfold body #form_sheld #qr--bar .qr--button:where(:not(#catgod-oracle-qrbar *, [data-nvwa-style="author"], [data-nvwa-style="author"] *)) > .qr--button-label {
+    min-width: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+html.ilg.ilg-merged-tools.ilg-qrfold body #form_sheld #qr--bar .qr--button[data-ilg-entry]:where(:not([data-nvwa-style="author"], [data-nvwa-style="author"] *, #catgod-oracle-qrbar *)) {
+    min-height: 80px; grid-template-columns: minmax(0,1fr) auto; grid-template-rows: auto auto auto;
+    align-content: center; justify-items: start; row-gap: 3px; padding: 9px 12px;
+    background-color: var(--ilg-panel-tile); border: 1px solid var(--ilg-panel-rule); border-radius: 13px;
+}
+html.ilg.ilg-merged-tools.ilg-qrfold body #form_sheld #qr--bar .qr--button[data-ilg-entry] + .qr--button[data-ilg-entry] { border-start-start-radius: 13px; border-end-start-radius: 13px; }
+html.ilg.ilg-merged-tools.ilg-qrfold body #form_sheld #qr--bar .qr--button[data-ilg-entry] > .ilg-quick-icon { grid-area: 1 / 1; width: 21px; height: 21px; }
+html.ilg.ilg-merged-tools.ilg-qrfold body #form_sheld #qr--bar .qr--button[data-ilg-entry] > .qr--button-label { grid-area: 2 / 1; }
+html.ilg.ilg-merged-tools.ilg-qrfold body #form_sheld #qr--bar .qr--button[data-ilg-entry] > .ilg-quick-caption { grid-area: 3 / 1; }
+html.ilg.ilg-merged-tools.ilg-qrfold body #form_sheld #qr--bar .qr--button[data-ilg-entry] > .qr--button-expander { grid-area: 1 / 2 / span 3; }
+@media (hover: hover) {
+    html.ilg.ilg-merged-tools.ilg-qrfold body #form_sheld #qr--bar .qr--button:where(:not(#catgod-oracle-qrbar *, [data-nvwa-style="author"], [data-nvwa-style="author"] *)):hover { background-color: var(--ilg-tray-hover); }
 }
 
 /* Three layouts share native actions; split mode owns two independently filtered silhouettes. */
@@ -5669,9 +5890,8 @@ html.ilg.ilg-composer-split.ilg-light body #form_sheld #nonQRFormItems > #ilg-co
 html.ilg.ilg-composer-split body.noShadows #form_sheld #nonQRFormItems > .ilg-composer-glass { box-shadow:none; }
 html.ilg.ilg-composer-split body.no-blur #form_sheld #nonQRFormItems > :is(#ilg-composer-input-glass,#ilg-composer-plus-glass) { background:rgba(18,26,38,.86); }
 html.ilg.ilg-composer-split.ilg-light body.no-blur #form_sheld #nonQRFormItems > .ilg-composer-glass { background:rgba(250,249,246,.90); }
-html.ilg.ilg-merged-tools body .ilg-composer-tabs > button { font-size:13px; padding:9px 8px; }
 html.ilg.ilg-merged-tools body .ilg-composer-tabs > button:disabled { opacity:.38;cursor:default; }
-html.ilg.ilg-merged-tools.ilg-qr-open body #form_sheld #qr--bar { left:0;transform:none;width:min(368px,calc(100vw - 24px));max-width:calc(100vw - 24px); }
+html.ilg.ilg-merged-tools.ilg-qr-open body #form_sheld #qr--bar { left:0;transform:none;max-width:calc(100vw - 24px); }
 html.ilg body :is(#options .options-content,#extensionsMenu),
 html.ilg.ilg-qrfold body #form_sheld #qr--bar { --ilg-tray-shadow:inset 0 1px 1px rgba(255,255,255,.30),inset 0 -1px 1px rgba(255,255,255,.08),0 14px 30px -16px rgba(0,7,18,.5); }
 /* Unknown or authored plugin widgets own a full row; only plain launchers receive layout. */
@@ -5692,6 +5912,9 @@ html.ilg body #extensionsMenu .ilg-tool-row {
 html.ilg body #extensionsMenu .ilg-tool-row > :where(span,div) { min-width:0;max-width:100%;white-space:normal;overflow-wrap:anywhere; }
 html.ilg body #extensionsMenu .ilg-tool-row > :is(i,svg,img) { flex-shrink:0; }
 html.ilg body #extensionsMenu .ilg-tool-row.ilg-tool-wide { grid-column:1 / -1; }
+html.ilg.ilg-merged-tools body #extensionsMenu { grid-template-columns: minmax(0,1fr); row-gap: 2px; }
+html.ilg.ilg-merged-tools body #extensionsMenu .ilg-tool-row { min-height: 46px; padding: 9px 12px; border-radius: 8px; font-size: 14px; }
+:where(html.ilg.ilg-merged-tools body #extensionsMenu) .ilg-tool-row { background-image: linear-gradient(var(--ilg-panel-rule),var(--ilg-panel-rule)); background-repeat:no-repeat; background-size:calc(100% - 24px) 1px; background-position:center bottom; }
 @media (max-width:360px) {
     html.ilg body #extensionsMenu { grid-template-columns:minmax(0,1fr); }
 }
