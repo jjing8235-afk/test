@@ -5712,6 +5712,12 @@ html.ilg.ilg-merged-tools body .ilg-composer-lens-glass {
     position: absolute; inset: 0; border-radius: inherit; overflow: hidden; pointer-events: none;
     background-color: rgba(230,237,250,.035);
 }
+/* Feed the same displacement map actual wallpaper detail, even over a nearly uniform rail.
+   Restrict contrast in the label area; the artwork never moves or filters the text. */
+html.ilg.ilg-merged-tools body .ilg-composer-lens-glass > .ilg-lens-wallpaper {
+    position:absolute; inset:0; pointer-events:none; border-radius:inherit;
+    opacity:.63; mask-image:linear-gradient(90deg,#000,rgba(0,0,0,.55) 13%,rgba(0,0,0,.18) 31%,rgba(0,0,0,.18) 69%,rgba(0,0,0,.55) 87%,#000);
+}
 html.ilg.ilg-merged-tools body .ilg-composer-tabs [aria-selected="true"] {cursor: grab;}
 html.ilg.ilg-merged-tools body .ilg-composer-tabs.ilg-tab-drag > button {cursor: grabbing;}
 html.ilg.ilg-merged-tools body .ilg-tab-drag .ilg-composer-tab-lens {box-shadow: inset 0 1px 1px var(--ilg-tab-lens-crown),0 3px 8px var(--ilg-tab-lens-contact);}

@@ -16,7 +16,7 @@ export function wallpaperPlacement({width,height,imageWidth,imageHeight,size='co
     return [w,h,x,y].every(Number.isFinite)?{width:w,height:h,x,y}:null;
 }
 export function createIOSWallpaperRefraction({background,onReady=()=>{},win=window,doc=document,
-    hostClass='ilg-ios-wallpaper-host',planeClass='ilg-ios-wallpaper-plane',rimClass='',bleed=0,inheritSourceFilter=false}={}) {
+    hostClass='ilg-ios-wallpaper-host',planeClass='ilg-ios-wallpaper-plane',rimClass='',bleed=0,inheritSourceFilter=false,layoutPlane=null,followingMotion=null}={}) {
     const entries=new Map();let enabled=false,source=null,raf=0,listening=false,reason='disabled';
     const events=[[win,'resize'],[win.visualViewport,'resize'],[win.visualViewport,'scroll'],[doc,'scroll']];
     const listen=on=>{if(on===listening)return;listening=on;for(const [target,type]of events)target?.[on?'addEventListener':'removeEventListener'](type,schedule,{capture:true,passive:true});};
@@ -38,6 +38,7 @@ export function createIOSWallpaperRefraction({background,onReady=()=>{},win=wind
         if(!el.isConnected){release(el);return false;}
         const host=el.getBoundingClientRect(),bg=src.el.getBoundingClientRect();
         if(!(host.width>0&&host.height>0)){release(el);return false;}
+        layoutPlane?.(item.plane,el,host,bleed);
         const placement=wallpaperPlacement({width:bg.width,height:bg.height,imageWidth:src.image.naturalWidth,imageHeight:src.image.naturalHeight,size:src.css.backgroundSize,position:src.css.backgroundPosition});
         if(!placement){reason='unsupported-background-layout';release(el);return false;}
         const x=bg.left+placement.x-host.left+bleed,y=bg.top+placement.y-host.top+bleed;
@@ -57,7 +58,7 @@ export function createIOSWallpaperRefraction({background,onReady=()=>{},win=wind
         }
         reason='ready';return true;
     }
-    function schedule(){if(!enabled||raf||!entries.size)return;raf=win.requestAnimationFrame(()=>{raf=0;const src=getSource();if(!src){for(const el of [...entries.keys()])release(el);queuePaint();return;}for(const [el,item]of [...entries])update(el,item,src);});}
+    function schedule(){if(!enabled||raf||!entries.size)return;raf=win.requestAnimationFrame(()=>{raf=0;const src=getSource();if(!src){for(const el of [...entries.keys()])release(el);queuePaint();return;}for(const [el,item]of [...entries])update(el,item,src);if(followingMotion&&[...entries.keys()].some(followingMotion))schedule();});}
     return {
         setEnabled(on){enabled=on===true;if(!enabled){for(const el of [...entries.keys()])release(el);if(source){source.image.onload=source.image.onerror=null;}source=null;reason='disabled';}},
         paint(el,filter,rimFilter=''){if(!enabled)return false;const src=getSource();if(!src){release(el);return false;}
@@ -76,7 +77,7 @@ export function createIOSWallpaperRefraction({background,onReady=()=>{},win=wind
             }else if(!rimFilter&&item.rim){item.rim.remove();item.rim=null;}
             item.filter=filter;item.rimFilter=rimFilter;
             const ok=update(el,item,src);if(ok)listen(true);return ok;
-        },release,refresh(){if(enabled){if(entries.size)schedule();else queuePaint();}},status:()=>({enabled,mode:'wallpaper-only',reason,surfaces:entries.size,imageLoaded:source?.loaded===true,fullBackdropRefraction:false,phonePixelsConfirmed:false}),
+        },release,follow:schedule,refresh(){if(enabled){if(entries.size)schedule();else queuePaint();}},status:()=>({enabled,mode:'wallpaper-only',reason,surfaces:entries.size,imageLoaded:source?.loaded===true,fullBackdropRefraction:false,phonePixelsConfirmed:false}),
         destroy(){this.setEnabled(false);}
     };
 }

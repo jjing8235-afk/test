@@ -1,5 +1,5 @@
 // One launcher for native chat, extension and quick-reply menus. Host action nodes stay in place.
-export function createComposerTools({root, attachLens, detachLens}) {
+export function createComposerTools({root, attachLens, detachLens, moveLens}) {
     const doc=root.ownerDocument, win=doc.defaultView, bars=new Map(), ownedRows=new Set(), ownedGroups=new Set();
     const panes=['chat','tools','quick'], labels={chat:'聊天',tools:'扩展',quick:'快捷'};
     let enabled=false,pane='chat',routing=false,plus=null,wand=null,saved=[],focusFrame=0,rowsFrame=0;
@@ -61,7 +61,7 @@ export function createComposerTools({root, attachLens, detachLens}) {
             {transform:`translateX(${distance*.13}px) scaleX(1.035)`,offset:.66,easing:'cubic-bezier(.24,.7,.38,1)'},
             {transform:'none'},
         ],{duration:310});
-        tabSlide={animation,kind};
+        tabSlide={animation,kind};moveLens?.();
         animation.onfinish=()=>{if(tabSlide?.animation===animation)tabSlide=null;};
     }
     function setLiveLens(next) {
@@ -73,7 +73,7 @@ export function createComposerTools({root, attachLens, detachLens}) {
     function endDrag() {
         if(!gesture)return;
         const {bar,lens,id}=gesture; gesture=null;
-        lens.style.removeProperty('translate'); bar.classList.remove('ilg-tab-drag');
+        lens.style.removeProperty('translate');moveLens?.(); bar.classList.remove('ilg-tab-drag');
         if(bar.hasPointerCapture(id))bar.releasePointerCapture(id);
     }
     function wireDrag(bar,lens) {
@@ -101,7 +101,7 @@ export function createComposerTools({root, attachLens, detachLens}) {
                 bar.setPointerCapture(g.id);g.moved=true;bar.classList.add('ilg-tab-drag');
             }
             const x=Math.max(g.stops[0].x,Math.min(g.stops.at(-1).x,g.origin+dx));
-            lens.style.translate=`${x-g.home}px 0`;
+            lens.style.translate=`${x-g.home}px 0`;moveLens?.();
         });
         bar.addEventListener('pointerup',event=>{
             const g=gesture;if(!g||g.bar!==bar||g.id!==event.pointerId)return;

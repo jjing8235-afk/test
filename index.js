@@ -36,7 +36,7 @@ window.__ilgLoaded = new URL('.', import.meta.url).pathname;
 let studioUI = null;
 let flickerCapture = null, flickerReport = null;
 const MODULE = 'iosLiquidGlass';
-const BUILD_VERSION = '2.0.10-test.30';
+const BUILD_VERSION = '2.0.10-test.31';
 const MAX_INNER_GLASS_BLUR = 16;
 const ENGINE_NAMES = Object.freeze({performance:'御风性能引擎',refraction:'棱光折射引擎'});
 const NS = 'http://www.w3.org/2000/svg';
@@ -832,7 +832,7 @@ function trackable(el) {
 const MES_SEL = '.mes:not(.smallSysMes)';
 
 const root = document.documentElement;
-const composerTools = createComposerTools({root, attachLens: el => track(el, 'bar'), detachLens: untrack});
+const composerTools = createComposerTools({root, attachLens: el => track(el, 'bar'), detachLens: untrack, moveLens: () => lensWallpaper.follow()});
 const lightScope = createLightScope(root);
 const webGlass = createLiquidGlassWeb();
 const reflections = createGlassReflections();
@@ -868,16 +868,28 @@ const iosWallpaper=createIOSWallpaperRefraction({background:()=>{
     return null;
 },onReady:()=>requestAnimationFrame(()=>{repaintVisible('wallpaper');const status=document.getElementById('ilg-status');if(status)status.textContent=statusText();})});
 const iosWallpaperRequested=()=>isIOS&&S.refract&&S.compatibilityMode!=='blur'&&webStyleEnabled()&&!document.body.classList.contains('no-blur');
-const messageWallpaper = createIOSWallpaperRefraction({
-    background: () => {
-        for (const id of ['bg_custom', 'bg1']) {
-            const el = document.getElementById(id);
-            if (!el) continue;
-            const style = getComputedStyle(el);
-            if (style.display !== 'none' && style.visibility === 'visible' && +style.opacity >= .98 && /^url\(/.test(style.backgroundImage)) return el;
-        }
-        return null;
-    },
+function visibleWallpaper() {
+    for (const id of ['bg_custom', 'bg1']) {
+        const el = document.getElementById(id);
+        if (!el) continue;
+        const style = getComputedStyle(el);
+        if (style.display !== 'none' && style.visibility === 'visible' && +style.opacity >= .98 && /^url\(/.test(style.backgroundImage)) return el;
+    }
+    return null;
+}
+const lensWallpaper = createIOSWallpaperRefraction({
+    background: visibleWallpaper, hostClass: 'ilg-lens-wallpaper-host', planeClass: 'ilg-lens-wallpaper', inheritSourceFilter: true,
+    onReady: () => {const lens=document.querySelector('.ilg-composer-lens-glass.ilg-control-surface');if(lens)paint(lens);},
+    followingMotion: el => el.parentElement?.getAnimations().some(a=>a.playState==='running'),
+});
+function layoutMessageCrop(plane, surface, rect, bleed) {
+    // The texture is viewport-sized, but the reading sheet's corners belong to the row, not the viewport.
+    const clip=surface.parentElement.getBoundingClientRect();
+    const top=bleed+clip.top-rect.top, bottom=bleed+rect.bottom-clip.bottom;
+    const inset=`inset(calc(${top}px + var(--ilg-bubble-seam)) calc(${bleed}px + var(--ilg-bubble-inset)) calc(${bottom}px + var(--ilg-bubble-inset)) round max(0px, calc(var(--ilg-bubble-r) - var(--ilg-bubble-inset))))`;
+    if(plane._ilgClip!==inset){plane._ilgClip=inset;plane.style.clipPath=inset;}
+}
+const messageWallpaper = createIOSWallpaperRefraction({background: visibleWallpaper, layoutPlane:layoutMessageCrop,
     hostClass: 'ilg-message-wallpaper-host', planeClass: 'ilg-message-wallpaper-plane', rimClass: 'ilg-message-wallpaper-rim', bleed: 24, inheritSourceFilter: true,
     onReady: () => requestAnimationFrame(() => paintMany([...visibleItems].filter(el => el.classList.contains('ilg-message-bounded-glass')), 'message-wallpaper')),
 });
@@ -1192,6 +1204,9 @@ function paint(el, geo) {
         webGlass.release(it.backdrop);
         it.backdrop.style.removeProperty('--ilg-web-tint');
     }
+    const tabLens = el.classList.contains('ilg-composer-lens-glass');
+    const sampleLens = tabLens && !cssMode && S.refract && (canRefract() || iosWallpaperRequested()) && !document.body.classList.contains('no-blur');
+    if(tabLens && !sampleLens)lensWallpaper.release(el);
     if (!useWeb||!iosWallpaperRequested()) iosWallpaper.release(el);
     if (document.body.classList.contains('no-blur')) {
         it.renderPath = 'no-blur';
@@ -1267,7 +1282,7 @@ function paint(el, geo) {
         setPhys(el, it, false);
         webGlass.paint(el, it, { width: w, height: h,
             refract: S.refract && (canRefract() || iosWallpaperRequested()),
-            sourcePlane: iosWallpaperRequested()?value=>iosWallpaper.paint(el,value):null,
+            sourcePlane: sampleLens?value=>lensWallpaper.paint(el,value):iosWallpaperRequested()?value=>iosWallpaper.paint(el,value):null,
             filter: () => filterOf(it, w, h, 'webFilter'), radius: r, preset: S.webPreset, refractionScale: foldedMenuSurface(el) ? .82 : 1, controlCore: control && controlReadable(el), controlBlur: inputGlass(el) ? 3 : 5.5,
             // 输入胶囊上下两条边的折射圈加厚一点（用户 2026-11-05 要求），岛保持上游原样
             bendY: inputGlass(el) ? 1.5 : 1 });
@@ -1298,6 +1313,7 @@ function paint(el, geo) {
     if (phys) {
         it.renderPath = 'physical';
         buildPhysical(it, el, w, h, r);
+        if(sampleLens)lensWallpaper.paint(el, `url(#${it.id})`);
         surface.style.backdropFilter = `url(#${it.id})` + reading;
         if (isIOS) surface.style.webkitBackdropFilter = `url(#${it.id})` + reading;
     } else if (!guarded && refractAllowed(it)) {
@@ -1305,6 +1321,7 @@ function paint(el, geo) {
         buildFilter(it, w, h, r, el);
         const lens = `url(#${it.id})`;
         const filter = `${lens} ${tail}`;
+        if(sampleLens)lensWallpaper.paint(el,filter);
         surface.style.backdropFilter = filter;
         if (isIOS) surface.style.webkitBackdropFilter = filter;
     } else {
@@ -1437,6 +1454,7 @@ function trackMessages(elements) {
 }
 
 function untrack(el) {
+    lensWallpaper.release(el);
     composerTools.release(el);
     releaseTrayHeading(el);
     lightScope.release(el);
@@ -2822,6 +2840,7 @@ function followTone() {
 async function applyTone() {
     const request = ++toneRequest, url = wallpaperUrl(), custom = !!url && !onToneWall();
     if(iosWallpaperRequested())iosWallpaper.refresh();
+    lensWallpaper.refresh();
     messageWallpaper.refresh();
     if (currentWallpaperSample?.url !== url) currentWallpaperSample = null;
     let sampled = null;
@@ -2916,6 +2935,7 @@ function applyBubbleBlur() {
 }
 function applyBubbleStyle() {
     root.classList.toggle('ilg-bubble-double', S.enabled && S.bubbleStyle === 'double');
+    lensWallpaper.setEnabled(S.enabled && S.refract);
     messageWallpaper.setEnabled(S.enabled && androidHost && S.bubbleStyle === 'double');
     applyBubbleBlur();
 }
@@ -4365,6 +4385,12 @@ function applyCardMarkers(texts) {
         message: text.closest('.mes'), fixedOverlay: false, cardRenderer: false,
         inlineFrame: false, messageProse: false, inlineStatus: false, unboundedRenderer: false,
     }));
+    // Hosts can emit prose as text + <br> siblings of a status panel, with no <p>.
+    // Read direct text only: labels inside authored/interactive children are not story text.
+    const directProse = el => [...el.childNodes].some(node => node.nodeType === 3 && /[\p{L}\p{N}]/u.test(node.nodeValue));
+    texts.forEach((text,i) => {
+        if (!text.closest('[data-nvwa-style="author"]') && text.getClientRects().length && directProse(text)) messages[i].messageProse = true;
+    });
     let level = texts.map((parent, i) => ({ parent, base: light ? 0.95 : 0.08, state: messages[i], inFlow: true, anchor: null, insideCard: false }));
     while (level.length) {
         const updates = [], next = [];
@@ -4401,7 +4427,9 @@ function applyCardMarkers(texts) {
             // a self-rendered panel counts; do not change its typography marker.
             if (!state.messageProse && !insideCard && staysInFlow && visible && !surface && !c
                 && cs.backgroundImage === 'none' && (k.classList.contains('ilg-type-prose')
-                    || (k.matches('p, ul, ol, blockquote') && !k.querySelector(CARD_RENDERER_CANDIDATES)))
+                    || (k.matches('p, ul, ol, blockquote') && !k.querySelector(CARD_RENDERER_CANDIDATES))
+                    || (k.matches('div,section,article,span') && !k.closest('[data-nvwa-style="author"]')
+                        && directProse(k) && !k.querySelector(CARD_RENDERER_CANDIDATES)))
                 && k.textContent.trim() && k.getClientRects().length) state.messageProse = true;
             if (renderer && visible && k.getClientRects().length) {
                 state.cardRenderer = true;
@@ -4716,6 +4744,6 @@ onViewportChange(v => { if (v.widthChanged) repaintAll(); });
     if (!el) return;
     new MutationObserver(() => S.enabled && applyTone()).observe(el, { attributes: true, attributeFilter: ['style'] });
     if (androidHost) el.addEventListener('transitionend', event => {
-        if (event.propertyName === 'opacity' || event.propertyName === 'background-image') messageWallpaper.refresh();
+        if (event.propertyName === 'opacity' || event.propertyName === 'background-image') { messageWallpaper.refresh(); lensWallpaper.refresh(); }
     });
 });

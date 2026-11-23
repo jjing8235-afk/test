@@ -13,6 +13,8 @@ function node(tag, { color = 'rgba(0, 0, 0, 0)', image = 'none', pseudo = false,
     const values = new Map(previous ? [['--ilg-card-solid', previous]] : []);
     const el = {
         tag, color, image, pseudo, position, textContent: text, children: [],
+        get childNodes(){return [...(text?[{nodeType:3,nodeValue:text}]:[]),...el.children];},
+        closest: () => null,
         style: { backgroundColor: color, backgroundImage: image, background: '',
             getPropertyValue: name => values.get(name) || '',
             setProperty: (name, value) => values.set(name, value),
@@ -40,7 +42,7 @@ const api = vm.runInNewContext(parse + '\n' + block + '\n' + card + '\n({applyCa
     S, root: { classList: { contains: () => false } }, getComputedStyle: computed, paint() {}, flickerCapture: null,
     MutationObserver: class { observe() {} disconnect() {} }, chatEl: { querySelectorAll: () => [] },
 });
-const test = children => api.applyCardMarkers([{ children, closest: () => message }]);
+const test = (children, text='') => api.applyCardMarkers([{children,childNodes:[{nodeType:3,nodeValue:text},...children],getClientRects:()=>[{}],closest: selector => selector==='.mes'?message:null}]);
 const frame = node('iframe');
 const oldFrame = node('iframe', { previous: 'var(--ilg-card-fallback)' });
 const image = node('div', { image: 'url("opaque-resource")' });
@@ -73,6 +75,10 @@ positionedFrame.offsetParent = bounded;
 const spilledFrame = node('iframe', { position: 'absolute', top: 49, height: 65 });
 spilledFrame.offsetParent = bounded;
 const isInline = () => message.classList.contains('ilg-inline-card');
+test([node('br'),status], 'Direct unwrapped dialogue');
+assert.equal(isInline(),true,'Text and line breaks beside a status widget remain message prose');
+test([node('div',{text:'Wrapped bare dialogue'}),status]);
+assert.equal(isInline(),true,'Bare prose in a clear wrapper remains message prose');
 test([paragraph, status]);
 assert.equal(isInline(), true, 'Native prose with an in-flow status panel uses the inline shell');
 status.position = 'fixed';
