@@ -12,8 +12,8 @@ export { sampleWebDisplacement, sampleWebMap } from './web-map-raster.js';
 const NS = 'http://www.w3.org/2000/svg';
 export const FILTER_TAIL = 'contrast(1.2) brightness(1.05) saturate(1.1)';
 const CONTROL_TAIL = 'contrast(1.04) brightness(1.02) saturate(1.12)';
-export function webCompatibleFilter(recipe, control = false) {
-    const blur = control ? Math.max(3.5, recipe.blur) : recipe.blur;
+export function webCompatibleFilter(recipe, control = false, blurFloor = 0) {
+    const blur = Math.max(blurFloor, control ? Math.max(3.5, recipe.blur) : recipe.blur);
     return `blur(${blur}px) ${control ? CONTROL_TAIL : FILTER_TAIL}`;
 }
 const PRESS_STRENGTH = 1.3;
@@ -71,6 +71,7 @@ export function createLiquidGlassWeb({ workerFactory } = {}) {
         const preset = normalizeWebPreset(options.preset), recipe = webPresetOf(preset);
         const strength = item.webStrength || 1, bendY = options.bendY || 1, refractionScale = options.refractionScale ?? 1;
         const control = options.controlCore === true;
+        const blurFloor = options.backdropBlurFloor ?? 0;
         const tone = control ? CONTROL_TAIL : FILTER_TAIL;
         if (refract && !failed) {
             try {
@@ -87,7 +88,7 @@ export function createLiquidGlassWeb({ workerFactory } = {}) {
                         // Retain the complete displayed material while its replacement is prepared.
                         el.style.setProperty('--ilg-web-tint', item.web.tint);
                         if (!present(el, options, item.web.value)) {
-                            const fallback = webCompatibleFilter(recipe, control);
+                            const fallback = webCompatibleFilter(recipe, control, blurFloor);
                             el.style.backdropFilter = fallback; el.style.webkitBackdropFilter = fallback;
                             options.onBackdropRefraction?.(false);
                         }
@@ -110,7 +111,7 @@ export function createLiquidGlassWeb({ workerFactory } = {}) {
                     if (control) filter.insertAdjacentHTML('beforeend', controlCoreFilter('ilg-control-refracted', width, height, options.radius, options.controlBlur));
                     item.web = { key, filter, tint: recipe.tint };
                 } else preparation.cancel(el);
-                const blur = Math.min(control ? Math.max(1.1, recipe.blur) : recipe.blur, options.backdropBlurLimit ?? Infinity);
+                const blur = Math.max(blurFloor, Math.min(control ? Math.max(1.1, recipe.blur) : recipe.blur, options.backdropBlurLimit ?? Infinity));
                 const value = `url(#${item.web.filter.id}) blur(${blur}px) ${tone}`;
                 item.web.value = value;
                 el.style.setProperty('--ilg-web-tint', recipe.tint);
@@ -121,7 +122,7 @@ export function createLiquidGlassWeb({ workerFactory } = {}) {
             }
         } else { preparation.cancel(el); item.webWanted = null; }
         el.style.setProperty('--ilg-web-tint', recipe.tint);
-        const value = webCompatibleFilter(recipe, control);
+        const value = webCompatibleFilter(recipe, control, blurFloor);
         el.style.backdropFilter = value; el.style.webkitBackdropFilter = value;
         options.onBackdropRefraction?.(false);
     }

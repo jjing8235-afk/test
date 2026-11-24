@@ -2290,7 +2290,7 @@ html.ilg body .ilg-follow-material {
     --ilg-follow-alpha: var(--ilg-web-tint, var(--ilg-css-glaze, var(--ilg-control-a, .06)));
 }
 html.ilg.ilg-light body .ilg-follow-material { --ilg-follow-rgb: 248, 251, 253; }
-html.ilg body dialog.popup.ilg-adapted.ilg-preset-glass {
+html.ilg body dialog.popup.ilg-adapted {
     --ilg-preset-glint: rgba(235, 247, 255, .23);
     --ilg-preset-edge: rgba(230, 243, 255, .15);
     --ilg-preset-shadow: rgba(4, 10, 20, .28);
@@ -2298,24 +2298,24 @@ html.ilg body dialog.popup.ilg-adapted.ilg-preset-glass {
     border-color: var(--ilg-preset-edge);
     border-block-start-color: var(--ilg-preset-glint);
 }
-html.ilg.ilg-light body dialog.popup.ilg-adapted.ilg-preset-glass {
+html.ilg.ilg-light body dialog.popup.ilg-adapted {
     --ilg-preset-glint: rgba(255, 255, 255, .86);
     --ilg-preset-edge: rgba(48, 72, 93, .16);
     --ilg-preset-shadow: rgba(47, 72, 91, .13);
     --ilg-preset-tab-face: rgba(255, 255, 255, .40);
 }
-html.ilg body:not(.no-blur) dialog.popup.ilg-adapted.ilg-preset-glass::after {
+html.ilg body:not(.no-blur) dialog.popup.ilg-adapted::after {
     content: '';
     --ilg-reflection-sheen: radial-gradient(65% 100px at 21% -34px, var(--ilg-preset-glint), transparent 94%);
     --ilg-directional-rim: radial-gradient(80% 60% at 12% 0%, var(--ilg-preset-glint), transparent 93%),
         radial-gradient(95% 74% at 88% 100%, var(--ilg-preset-edge), transparent 93%);
 }
-html.ilg body:not(.no-blur) dialog.popup.ilg-adapted.ilg-preset-glass {
+html.ilg body:not(.no-blur) dialog.popup.ilg-adapted {
     background-color: rgba(var(--ilg-follow-rgb), calc(.20 + var(--ilg-follow-alpha)));
     background-image: none;
 }
-html.ilg body dialog.popup.ilg-preset-glass.ilg-lens-wallpaper-host { isolation: isolate; }
-html.ilg body dialog.popup.ilg-preset-glass > .ilg-lens-wallpaper {
+html.ilg body dialog.popup.ilg-adapted.ilg-lens-wallpaper-host { isolation: isolate; }
+html.ilg body dialog.popup.ilg-adapted > .ilg-lens-wallpaper {
     position: absolute;
     inset: 0;
     z-index: -1;
@@ -2326,7 +2326,7 @@ html.ilg body dialog.popup.ilg-preset-glass > .ilg-lens-wallpaper {
     background-blend-mode: multiply;
     pointer-events: none;
 }
-html.ilg.ilg-light body dialog.popup.ilg-preset-glass > .ilg-lens-wallpaper {
+html.ilg.ilg-light body dialog.popup.ilg-adapted > .ilg-lens-wallpaper {
     background-color: rgba(248, 251, 253, calc(.26 + var(--ilg-follow-alpha)));
     background-blend-mode: screen;
 }
@@ -2353,27 +2353,18 @@ html.ilg.ilg-light body dialog.popup.ilg-adapted > .popup-body > .popup-content 
 html.ilg body dialog.popup.ilg-adapted > .popup-body > .popup-content > :is(#nvwa-panel, #nvwa-memory) > :is(.nvp-tabbar, .m-tabbar) {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
-    background: linear-gradient(180deg, rgba(239, 248, 255, .10), transparent 72%), rgba(19, 25, 35, .32);
-    border: 1px solid var(--nvp-line);
-    box-shadow: inset 0 1px 1px rgba(243, 249, 255, .20);
+    background: radial-gradient(76% 140% at 24% -105%, var(--ilg-preset-glint), transparent 96%), var(--nvp-surface);
+    border: 1px solid var(--ilg-preset-edge);
+    box-shadow: inset 0 1px 2px var(--ilg-preset-shadow);
     border-radius: 18px;
     padding: 4px;
     margin-bottom: 8px;
 }
-html.ilg.ilg-light body dialog.popup.ilg-adapted > .popup-body > .popup-content > :is(#nvwa-panel, #nvwa-memory) > :is(.nvp-tabbar, .m-tabbar) {
-    background: linear-gradient(180deg, rgba(255, 255, 255, .62), transparent 76%), rgba(248, 251, 253, .46);
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, .84);
-}
-html.ilg body dialog.popup.ilg-adapted.ilg-preset-glass > .popup-body > .popup-content > #nvwa-panel > .nvp-tabbar {
-    background: radial-gradient(76% 140% at 24% -105%, var(--ilg-preset-glint), transparent 96%), var(--nvp-surface);
-    box-shadow: inset 0 1px 2px var(--ilg-preset-shadow);
-    border-color: var(--ilg-preset-edge);
-}
-html.ilg body dialog.popup.ilg-adapted.ilg-preset-glass > .popup-body > .popup-content > #nvwa-panel .nvp-tabs {
+html.ilg body dialog.popup.ilg-adapted > .popup-body > .popup-content > :is(#nvwa-panel, #nvwa-memory) :is(.nvp-tabs, .m-tabs) {
     background: none;
     box-shadow: none;
 }
-html.ilg body dialog.popup.ilg-adapted.ilg-preset-glass > .popup-body > .popup-content > #nvwa-panel .nvp-thumb {
+html.ilg body dialog.popup.ilg-adapted > .popup-body > .popup-content > :is(#nvwa-panel, #nvwa-memory) :is(.nvp-thumb, .m-thumb) {
     box-sizing: border-box;
     border-radius: 10px;
     border: 1px solid var(--ilg-preset-edge);
@@ -2404,7 +2395,7 @@ html.ilg body dialog.popup.ilg-adapted.ilg-preset-glass > .popup-body > .popup-c
     background-image: radial-gradient(70% 140% at 20% -118%, var(--ilg-preset-glint), transparent);
     box-shadow: inset 0 1px 0 var(--ilg-preset-edge), 0 3px 9px -5px var(--ilg-preset-shadow);
 }
-html.ilg body:not(.no-blur) dialog.popup.ilg-adapted.ilg-preset-glass > .popup-body > .popup-content > #nvwa-panel {
+html.ilg body:not(.no-blur) dialog.popup.ilg-adapted.ilg-follow-material > .popup-body > .popup-content > :is(#nvwa-panel, #nvwa-memory) {
     --nvp-surface: rgba(var(--ilg-follow-rgb), calc(.37 + var(--ilg-follow-alpha)));
     --nvp-bg: rgba(var(--ilg-follow-rgb), calc(.26 + var(--ilg-follow-alpha)));
 }
@@ -2423,7 +2414,33 @@ html.ilg body dialog.popup.ilg-adapted > .popup-body > .popup-content > :is(#nvw
     border-radius: 14px;
     background-color: var(--nvp-bg);
 }
-html.ilg body dialog.popup.ilg-adapted > .popup-body > .popup-content > #nvwa-memory :is(.m-num, .m-ta, .m-select) {
+@media (max-width: 390px) {
+    html.ilg body dialog.popup.ilg-adapted > .popup-body > .popup-content > #nvwa-memory .m-tab {
+        flex: 1 1 0;
+        flex-direction: column;
+        gap: 2px;
+        font-size: clamp(10px, 3vw, .9em);
+    }
+}
+html.ilg body dialog.popup.ilg-adapted > .popup-body > .popup-content > #nvwa-memory {
+    --m-text: #f1f6fc;
+    --m-muted: #d9e2ee;
+    --m-reading-bg: rgba(var(--ilg-follow-rgb), calc(.55 + var(--ilg-follow-alpha)));
+}
+html.ilg.ilg-light body dialog.popup.ilg-adapted > .popup-body > .popup-content > #nvwa-memory {
+    --m-text: #222e3d;
+    --m-muted: #39485a;
+}
+html.ilg body dialog.popup.ilg-adapted > .popup-body > .popup-content > #nvwa-memory .m-tab:not(.on, :hover) {
+    color: var(--m-muted);
+}
+html.ilg body dialog.popup.ilg-adapted > .popup-body > .popup-content > #nvwa-memory :is(.m-box, .m-card, .m-note, .m-empty) {
+    background-color: var(--m-reading-bg);
+}
+html.ilg body dialog.popup.ilg-adapted > .popup-body > .popup-content > #nvwa-memory :is(.m-note, .m-empty) {
+    border-radius: 12px;
+}
+html.ilg body dialog.popup.ilg-adapted > .popup-body > .popup-content > #nvwa-memory :is(.m-f, .m-num, .m-sel, .m-ta) {
     border-color: var(--m-line);
     background-color: var(--m-bg);
     color: var(--m-text);
@@ -5723,7 +5740,6 @@ html.ilg.ilg-merged-tools.ilg-qrfold.ilg-qr-open body #form_sheld #qr--bar {
     --ilg-panel-rim: rgba(240,248,255,.38);
     --ilg-panel-foot: rgba(5,12,22,.30);
     --ilg-tab-track: rgba(var(--ilg-follow-rgb, 18, 26, 38), calc(.08 + var(--ilg-follow-alpha, .06)));
-    --ilg-tab-track-scrolled: #273340;
     --ilg-tab-track-glint: rgba(215, 235, 255, .19);
     --ilg-tab-track-contact: rgba(4, 10, 20, .48);
     --ilg-tab-lens-glint: rgba(220, 244, 255, .30);
@@ -5731,22 +5747,21 @@ html.ilg.ilg-merged-tools.ilg-qrfold.ilg-qr-open body #form_sheld #qr--bar {
     --ilg-tab-lens-crown: rgba(235, 250, 255, .92);
     --ilg-tab-lens-heel: rgba(179, 215, 239, .54);
     --ilg-tab-lens-contact: rgba(3, 10, 20, .48);
-    --ilg-tray-scroll: rgba(240, 246, 255, .40);
     --ilg-merged-tray-height: min(430px, calc(100dvh - var(--ilg-form-h, 64px) - max(64px, var(--topBarBlockSize, 40px)) - var(--ilg-kb, 0px) - env(safe-area-inset-top, 0px)));
     box-sizing: border-box;
     width: min(376px, calc(100vw - 24px));
     height: var(--ilg-merged-tray-height);
     max-height: var(--ilg-merged-tray-height);
     scroll-padding-block: 62px 12px;
-    scrollbar-gutter: stable;
-    scrollbar-gutter: stable both-edges;
-    scrollbar-width: thin;
-    scrollbar-color: var(--ilg-tray-scroll) transparent;
+    scrollbar-gutter: auto;
+    scrollbar-width: none;
     border-radius: 28px;
     padding: 10px;
     background-image: var(--ilg-panel-face);
     border-block-start-color: var(--ilg-panel-rim);
 }
+html.ilg.ilg-merged-tools body :is(#options .options-content, #extensionsMenu)::-webkit-scrollbar,
+html.ilg.ilg-merged-tools.ilg-qrfold body #form_sheld #qr--bar::-webkit-scrollbar { display: none; }
 html.ilg.ilg-light.ilg-merged-tools body :is(#options .options-content, #extensionsMenu),
 html.ilg.ilg-light.ilg-merged-tools.ilg-qrfold.ilg-qr-open body #form_sheld #qr--bar {
     --ilg-panel-face: linear-gradient(154deg, rgba(251,254,255,.88), rgba(224,237,245,.78) 70%);
@@ -5757,7 +5772,6 @@ html.ilg.ilg-light.ilg-merged-tools.ilg-qrfold.ilg-qr-open body #form_sheld #qr-
     --ilg-panel-key-ink: #f7fbff;
     --ilg-panel-rim: rgba(255,255,255,.76);
     --ilg-panel-foot: rgba(60,49,52,.14);
-    --ilg-tab-track-scrolled: #d7e2e5;
     --ilg-tab-track-glint: rgba(242, 252, 255, .47);
     --ilg-tab-track-contact: rgba(53, 79, 91, .17);
     --ilg-tab-lens-glint: rgba(255, 252, 240, .60);
@@ -5765,7 +5779,6 @@ html.ilg.ilg-light.ilg-merged-tools.ilg-qrfold.ilg-qr-open body #form_sheld #qr-
     --ilg-tab-lens-crown: rgba(255, 254, 244, .99);
     --ilg-tab-lens-heel: rgba(115, 150, 163, .57);
     --ilg-tab-lens-contact: rgba(53, 82, 95, .23);
-    --ilg-tray-scroll: rgba(32, 37, 46, .42);
 }
 html.ilg.ilg-merged-tools body :is(#options .options-content, #extensionsMenu).ilg-glass,
 html.ilg.ilg-merged-tools.ilg-qrfold.ilg-qr-open body #form_sheld #qr--bar.ilg-glass {
@@ -5805,10 +5818,16 @@ html.ilg.ilg-merged-tools body #qr--bar > .ilg-composer-tabs {
     isolation: isolate;
     opacity: 1;
 }
-/* Scrolled rows pass under the sticky rail; keep their labels out of the tab text. */
-html.ilg.ilg-merged-tools body .ilg-composer-tabs.ilg-composer-tabs-scrolled,
-html.ilg.ilg-merged-tools body.no-blur .ilg-composer-tabs {
-    --ilg-tab-track: var(--ilg-tab-track-scrolled);
+/* Filter the rows under the rail on a sibling layer so the lens can still sample the tab labels. */
+html.ilg.ilg-merged-tools body:not(.no-blur) .ilg-composer-tabs-scrolled::before {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    -webkit-backdrop-filter: blur(5px);
+    backdrop-filter: blur(5px);
 }
 html.ilg.ilg-merged-tools body .ilg-composer-tabs:has(> [data-pane="tools"][aria-selected="true"]) { --ilg-tab-slot: 1; }
 html.ilg.ilg-merged-tools body .ilg-composer-tabs:has(> [data-pane="quick"][aria-selected="true"]) { --ilg-tab-slot: 2; }
@@ -5994,8 +6013,6 @@ html.ilg.ilg-merged-tools.ilg-qrfold.ilg-qr-open body #form_sheld #qr--bar {
     bottom: calc(100% + 2px);
     overscroll-behavior: contain;
 }
-html.ilg.ilg-merged-tools.ilg-qrfold body #form_sheld #qr--bar::-webkit-scrollbar { display: block; width: 5px; }
-html.ilg.ilg-merged-tools.ilg-qrfold body #form_sheld #qr--bar::-webkit-scrollbar-thumb { background: var(--ilg-tray-scroll); border-radius: 5px; }
 html.ilg.ilg-merged-tools.ilg-qrfold body #form_sheld #qr--bar > :not(.ilg-tray-heading) { flex-shrink: 0; }
 html.ilg.ilg-merged-tools.ilg-qrfold body #form_sheld #qr--bar > .ilg-composer-tabs { align-self: stretch; }
 html.ilg.ilg-merged-tools.ilg-qrfold body #form_sheld #qr--bar > #qr--popoutTrigger { position: static; align-self: flex-end; margin: 0; }

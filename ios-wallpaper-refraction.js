@@ -35,32 +35,61 @@ export function createIOSWallpaperRefraction({background,onReady=()=>{},win=wind
         if(!source.loaded){reason=source.failed?'image-unavailable':'loading-wallpaper';return null;}
         return {el,css,...source};
     }
-    function update(el,item,src){
-        if(!el.isConnected){release(el);return false;}
-        const host=el.getBoundingClientRect(),bg=src.el.getBoundingClientRect();
-        if(!(host.width>0&&host.height>0)){release(el);return false;}
-        const placement=wallpaperPlacement({width:bg.width,height:bg.height,imageWidth:src.image.naturalWidth,imageHeight:src.image.naturalHeight,size:src.css.backgroundSize,position:src.css.backgroundPosition});
-        if(!placement){reason='unsupported-background-layout';release(el);return false;}
-        const rimFilter=layoutPlane?.(item.plane,el,host,bleed,item.rim,item.rimGeometry) || '';
-        const x=bg.left+placement.x-host.left+bleed,y=bg.top+placement.y-host.top+bleed;
-        const sourceFilter=inheritSourceFilter && src.css.filter!=='none' ? `${src.css.filter} ` : '';
-        const key=[src.url,placement.width,placement.height,x,y,src.css.backgroundRepeat,sourceFilter,item.filter,rimFilter].join('|');
-        if(item.key!==key){
-            item.key=key;
-            const draw=(plane,filter)=>{
-                plane.style.backgroundImage=src.css.backgroundImage;
-                plane.style.backgroundSize=`${placement.width}px ${placement.height}px`;
-                plane.style.backgroundPosition=`${x}px ${y}px`;
-                plane.style.backgroundRepeat=src.css.backgroundRepeat;
-                plane.style.filter=sourceFilter+filter;
-            };
-            draw(item.plane,item.filter);
-            if(item.rim)draw(item.rim,rimFilter);
-        }
-        if(item.rim&&item.rim.hidden!==!rimFilter)item.rim.hidden=!rimFilter;
-        reason='ready';return true;
+    function measureWallpaper(src) {
+        const rect = src.el.getBoundingClientRect();
+        const { backgroundImage, backgroundSize, backgroundPosition, backgroundRepeat, filter } = src.css;
+        const placement = wallpaperPlacement({width: rect.width, height: rect.height,
+            imageWidth: src.image.naturalWidth, imageHeight: src.image.naturalHeight, size: backgroundSize, position: backgroundPosition});
+        if (!placement) return null;
+        return {
+            x: rect.left + placement.x, y: rect.top + placement.y,
+            image: backgroundImage, size: `${placement.width}px ${placement.height}px`, repeat: backgroundRepeat,
+            filter: inheritSourceFilter && filter !== 'none' ? `${filter} ` : '',
+        };
     }
-    function schedule(){if(!enabled||raf||!entries.size)return;raf=win.requestAnimationFrame(()=>{raf=0;const src=getSource();if(!src){for(const el of [...entries.keys()])release(el);queuePaint();return;}for(const [el,item]of [...entries])update(el,item,src);if(followingMotion&&[...entries.keys()].some(followingMotion))schedule();});}
+    function update(el, item, wallpaper, host) {
+        if (!(host?.width > 0 && host.height > 0)) { release(el); return false; }
+        if (!wallpaper) { reason = 'unsupported-background-layout'; release(el); return false; }
+        const rimFilter = layoutPlane?.(item.plane, el, host, bleed, item.rim, item.rimGeometry) || '';
+        const position = `${wallpaper.x - host.left + bleed}px ${wallpaper.y - host.top + bleed}px`;
+        const key = [wallpaper.image, wallpaper.size, wallpaper.repeat, wallpaper.filter, item.filter, rimFilter].join('|');
+        if (item.key !== key) {
+            item.key = key;
+            const draw = (plane, filter) => {
+                plane.style.backgroundImage = wallpaper.image;
+                plane.style.backgroundSize = wallpaper.size;
+                plane.style.backgroundRepeat = wallpaper.repeat;
+                plane.style.filter = wallpaper.filter + filter;
+            };
+            draw(item.plane, item.filter);
+            if (item.rim) draw(item.rim, rimFilter);
+        }
+        if (item.position !== position) {
+            item.position = position;
+            item.plane.style.backgroundPosition = position;
+            if (item.rim) item.rim.style.backgroundPosition = position;
+        }
+        if (item.rim && item.rim.hidden !== !rimFilter) item.rim.hidden = !rimFilter;
+        reason = 'ready';
+        return true;
+    }
+    function schedule() {
+        if (!enabled || raf || !entries.size) return;
+        raf = win.requestAnimationFrame(() => {
+            raf = 0;
+            const src = getSource();
+            if (!src) {
+                for (const el of entries.keys()) release(el);
+                queuePaint();
+                return;
+            }
+            // One wallpaper layout per frame. Measure crops before updating their styles.
+            const wallpaper = measureWallpaper(src);
+            const surfaces = Array.from(entries, ([el, item]) => ({el, item, host: el.isConnected ? el.getBoundingClientRect() : null}));
+            for (const {el, item, host} of surfaces) update(el, item, wallpaper, host);
+            if (followingMotion && [...entries.keys()].some(followingMotion)) schedule();
+        });
+    }
     return {
         setEnabled(on){enabled=on===true;if(!enabled){for(const el of [...entries.keys()])release(el);if(source){source.image.onload=source.image.onerror=null;}source=null;reason='disabled';}},
         paint(el,filter,rimGeometry=null){if(!enabled)return false;const src=getSource();if(!src){release(el);return false;}
@@ -69,16 +98,18 @@ export function createIOSWallpaperRefraction({background,onReady=()=>{},win=wind
                 if(entries.size>=8){reason='surface-budget';return false;}
                 const plane=doc.createElement('div');plane.className=planeClass;plane.setAttribute('aria-hidden','true');
                 if(bleed)plane.style.inset=`-${bleed}px`;
-                el.prepend(plane);el.classList.add(hostClass);item={plane,key:'',filter};entries.set(el,item);
+                el.prepend(plane);el.classList.add(hostClass);item={plane,filter};entries.set(el,item);
             }
             if(rimClass&&rimGeometry&&!item.rim){
                 const rim=doc.createElement('div');rim.className=rimClass;rim.setAttribute('aria-hidden','true');
                 rim.style.inset=`-${bleed}px`;
                 rim.style.setProperty('--ilg-wallpaper-bleed',`${bleed}px`);
-                item.plane.after(rim);item.rim=rim;
+                item.plane.after(rim);item.rim=rim;item.key=null;item.position=null;
             }else if(!rimGeometry)releaseRim(item);
             item.filter=filter;item.rimGeometry=rimGeometry;
-            const ok=update(el,item,src);if(ok)listen(true);return ok;
+            const host = el.isConnected ? el.getBoundingClientRect() : null;
+            const ok = update(el, item, measureWallpaper(src), host);
+            if(ok)listen(true);return ok;
         },release,follow:schedule,refresh(){if(enabled){if(entries.size)schedule();else queuePaint();}},status:()=>({enabled,mode:'wallpaper-only',reason,surfaces:entries.size,imageLoaded:source?.loaded===true,fullBackdropRefraction:false,phonePixelsConfirmed:false}),
         destroy(){this.setEnabled(false);}
     };

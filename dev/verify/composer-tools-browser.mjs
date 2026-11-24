@@ -103,6 +103,14 @@ await quick.hover({position:{x:70,y:120}});
 await page.mouse.wheel(0,2400);
 await page.waitForFunction(()=>{const el=document.getElementById('qr--bar');return el.scrollHeight-el.clientHeight-el.scrollTop<=2;});
 check('Quick tabs stay pinned when scrolling to the last group',Math.abs((await tabs.boundingBox()).y-tabsTop)<2);
+check('The scrolled tray hides its scrollbar and frosts rows under the tabs',await tabs.evaluate(el=>{
+    const tray=el.parentElement, rail=getComputedStyle(el);
+    return getComputedStyle(tray).scrollbarWidth==='none'&&getComputedStyle(tray,'::-webkit-scrollbar').display==='none'
+        &&rail.backgroundColor.startsWith('rgba(')&&getComputedStyle(el,'::before').backdropFilter==='blur(5px)';
+}));
+await page.evaluate(()=>document.body.classList.add('no-blur'));
+check('The rail respects the host no-blur preference',await tabs.evaluate(el=>getComputedStyle(el,'::before').backdropFilter==='none'));
+await page.evaluate(()=>document.body.classList.remove('no-blur'));
 const lastShortcut=page.locator('#shortcut-last');
 await lastShortcut.focus();await page.keyboard.press('Enter');
 check('Last shortcut is fully visible and keeps its keyboard action',await lastShortcut.evaluate(el=>{

@@ -36,7 +36,7 @@ window.__ilgLoaded = new URL('.', import.meta.url).pathname;
 let studioUI = null;
 let flickerCapture = null, flickerReport = null;
 const MODULE = 'iosLiquidGlass';
-const BUILD_VERSION = '2.0.10-test.38';
+const BUILD_VERSION = '2.0.10-test.39';
 const MAX_INNER_GLASS_BLUR = 16;
 const ENGINE_NAMES = Object.freeze({performance:'御风性能引擎',refraction:'棱光折射引擎'});
 const NS = 'http://www.w3.org/2000/svg';
@@ -885,8 +885,8 @@ function visibleWallpaper() {
 }
 const lensWallpaper = createIOSWallpaperRefraction({
     background: visibleWallpaper, hostClass: 'ilg-lens-wallpaper-host', planeClass: 'ilg-lens-wallpaper', inheritSourceFilter: true,
-    onReady: () => paintMany(document.querySelectorAll('.ilg-composer-lens-glass.ilg-control-surface, dialog.ilg-preset-glass[open]'), 'wallpaper-lens'),
-    followingMotion: el => (el.classList.contains('ilg-preset-glass') ? el : el.parentElement)?.getAnimations().some(a => a.playState === 'running'),
+    onReady: () => paintMany(document.querySelectorAll('.ilg-composer-lens-glass.ilg-control-surface, dialog.ilg-adapted[open]'), 'wallpaper-lens'),
+    followingMotion: el => (el.classList.contains('ilg-adapted') ? el : el.parentElement)?.getAnimations().some(a => a.playState === 'running'),
 });
 const messageRimFilters = new WeakMap();
 function disposeMessageRim(rim) {
@@ -1050,7 +1050,7 @@ for (const type of ['compositionstart', 'compositionupdate', 'compositionend']) 
 }, true);
 document.addEventListener('focusin', e => { if (e.target.id === 'send_textarea') syncInputMaterial(); });
 function surfaceBlur(it, el) {
-    if (it.followMaterial) return S.barBlur;
+    if (it.followMaterial) return it.kind === 'panel' ? Math.max(8, S.barBlur) : S.barBlur;
     if (el.matches(HOST_MENU_SEL)) return 10;
     if (composerGlassSurface(el)) return 6;
     // Guarded bubbles use one viewport-sized outer blur, not a full-message SVG or inner pass.
@@ -1245,10 +1245,11 @@ function paint(el, geo) {
     it.renderPath = 'pending'; it.fallbackReason = '';
     const composer = it.kind === 'panel' && composerGlassSurface(el);
     el.classList.toggle('ilg-composer-liquid', composer);
-    const preset = it.kind === 'clearPanel' && el.classList.contains('ilg-preset-glass');
+    const adapted = it.kind === 'clearPanel';
     const tabLens = el.classList.contains('ilg-composer-lens-glass');
     const wasFollowing = it.followMaterial;
-    it.followMaterial = preset || tabLens || (composer && root.classList.contains('ilg-merged-tools'));
+    const mergedTools = composer && root.classList.contains('ilg-merged-tools');
+    it.followMaterial = adapted || tabLens || mergedTools;
     el.classList.toggle('ilg-follow-material', it.followMaterial);
     const cssMode = cssGlassActive();
     el.classList.toggle('ilg-css-surface', cssMode);
@@ -1269,10 +1270,10 @@ function paint(el, geo) {
     const sampleLens = tabLens && !nativeLens && !cssMode && S.refract && iosWallpaperRequested() && !noBlur;
     if (!useWeb || !nativeLens) el.classList.toggle('ilg-lens-refracts-labels', nativeLens);
     // The dialog contents keep their native scrolling. On mobile only its static wallpaper can be displaced.
-    const samplePreset = preset && (stablePanel || iosWallpaperRequested()) && !cssMode && !noBlur && S.refract
+    const samplePopup = adapted && (stablePanel || iosWallpaperRequested()) && !cssMode && !noBlur && S.refract
         && (canRefract() || iosWallpaperRequested()) && Math.max(w, h) <= 1024
         && !largeWebViewMessage({webView: true, kind: 'mes', width: w, height: h, dpr: devicePixelRatio});
-    if ((it.followMaterial || wasFollowing) && !sampleLens && !samplePreset) lensWallpaper.release(el);
+    if ((it.followMaterial || wasFollowing) && !sampleLens && !samplePopup) lensWallpaper.release(el);
     if (it.followMaterial && (cssMode || noBlur || useWeb || !S.refract)) {
         it.filter?.remove(); it.filter = null; it.physical = null;
     }
@@ -1288,7 +1289,6 @@ function paint(el, geo) {
     }
     const blur = surfaceBlur(it, el);
     const lensBlur = nativeLens ? Math.min(blur, .4) : blur;
-    const fallbackBlur = it.kind === 'clearPanel' && !preset ? Math.max(12, blur) : blur;
     const reading = it.kind === 'mes' && !it.bubbleReading ? ' var(--ilg-reading-filter, blur(0px))' : '';
     const tail = `blur(${blur}px) saturate(${S.saturate}) brightness(${S.brightness})` + reading;
     if (it.backdrop) {
@@ -1317,9 +1317,8 @@ function paint(el, geo) {
         // CSS material owns its rim; skip displacement maps and canvas reflections.
         setPhys(el, it, false);
         let lightBlur;
-        if (boundedGlass) lightBlur = blur;
+        if (boundedGlass || mergedTools) lightBlur = blur;
         else if (it.followMaterial) lightBlur = Math.max(.75, Math.min(1.5, blur));
-        else if (it.kind === 'clearPanel') lightBlur = fallbackBlur;
         else if (it.bubbleReading) lightBlur = Math.max(1, Math.min(3, blur));
         else if (it.kind === 'mes') lightBlur = S.chatBackground === 'transparent' ? 0 : Math.max(1.5, Math.min(6, blur));
         else if (control) lightBlur = controlReadable(el) ? (inputGlass(el) ? 3.5 : 4) : Math.max(.75, Math.min(1.5, blur));
@@ -1361,17 +1360,18 @@ function paint(el, geo) {
     if (useWeb) {
         it.renderPath = 'web-compatible';
         setPhys(el, it, false);
-        const refract = S.refract && (canRefract() || iosWallpaperRequested()) && (!stablePanel || samplePreset);
+        const refract = S.refract && (canRefract() || iosWallpaperRequested()) && (!stablePanel || samplePopup);
         if (!refract && it.followMaterial && it.web) webGlass.release(el);
         webGlass.paint(el, it, { width: w, height: h,
             refract,
             backdropBlurLimit: nativeLens ? .4 : undefined,
+            backdropBlurFloor: mergedTools ? blur : undefined,
             onBackdropRefraction: nativeLens ? active => el.classList.toggle('ilg-lens-refracts-labels', active) : null,
-            sourcePlane: sampleLens || samplePreset ? value => {
+            sourcePlane: sampleLens || samplePopup ? value => {
                 const painted = lensWallpaper.paint(el, value);
                 if (painted) {
                     it.renderPath = 'web-wallpaper';
-                    if (samplePreset) lensWallpaper.follow();
+                    if (samplePopup) lensWallpaper.follow();
                 }
                 return painted;
             } : !stablePanel && iosWallpaperRequested() ? value => iosWallpaper.paint(el, value) : null,
@@ -1381,7 +1381,7 @@ function paint(el, geo) {
         if(iosWallpaperRequested()&&el.querySelector(':scope > .ilg-ios-wallpaper-plane'))it.renderPath='web-wallpaper';
         return;
     }
-    if (samplePreset) {
+    if (samplePopup) {
         const physical = S.engine === 'physical';
         const url = `url(#${it.id})`;
         if (lensWallpaper.paint(el, physical ? url : `${url} ${tail}`)) {
@@ -1434,7 +1434,7 @@ function paint(el, geo) {
         if (isIOS) surface.style.webkitBackdropFilter = filter;
     } else {
         it.renderPath = iosMaterialActive() ? 'ios-compatible' : 'blur';
-        const visibleBlur = control && controlReadable(el) ? Math.max(3.5, blur) : fallbackBlur;
+        const visibleBlur = control && controlReadable(el) ? Math.max(3.5, blur) : blur;
         const fallback = visibleBlur !== blur ? `blur(${visibleBlur}px) saturate(${S.saturate}) brightness(${S.brightness})${reading}` : tail;
         surface.style.backdropFilter = fallback;
         if (isIOS || !canRefract()) surface.style.webkitBackdropFilter = fallback;
