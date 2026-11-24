@@ -7,9 +7,7 @@
 
 ### 性能实验室 0.3.0
 
-[下载 Windows 隔离预览与基准数据](
-https://github.com/jjing8235-afk/test/releases/tag/nvwa-performance-lab-v0.3.0
-)。使用 SillyTavern 1.18.0、NVWA 2.0.10-test.40 和 Edge。解压后按包内 README 启动，使用合成聊天体验三个优化开关。
+[下载 Windows 隔离预览与基准数据](https://github.com/jjing8235-afk/test/releases/tag/nvwa-performance-lab-v0.3.0)。使用 SillyTavern 1.18.0、NVWA 2.0.10-test.40 和 Edge。解压后按包内 README 启动，使用合成聊天体验三个优化开关。
 
 ### 延续 2.0.10-test.39 的面板轻磨砂、记忆玻璃与滚动优化
 
