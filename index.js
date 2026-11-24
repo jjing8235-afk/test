@@ -19,6 +19,8 @@ import { WEB_PRESETS, normalizeWebPreset, webPresetOf } from './web-presets.js';
 import { createBallGlass } from './ball-glass.js';
 import { installMessageIcons } from './mes-icons.js';
 import { createSettingsPanel, downloadDiagnostic } from './settings-panel.js';
+import { getHostPerformanceCapabilities, syncHostPerformance, disableHostPerformance } from './host-performance.js';
+export { disableHostPerformance };
 import { createLiquidGlassWeb, webCompatibleFilter } from './liquid-glass-web.js';
 import { createCardTextClarity } from './card-clarity.js';
 import { createGlassReflections } from './glass-reflections.js';
@@ -36,7 +38,7 @@ window.__ilgLoaded = new URL('.', import.meta.url).pathname;
 let studioUI = null;
 let flickerCapture = null, flickerReport = null;
 const MODULE = 'iosLiquidGlass';
-const BUILD_VERSION = '2.0.10-test.40';
+const BUILD_VERSION = '2.0.10-test.41';
 const MAX_INNER_GLASS_BLUR = 16;
 const ENGINE_NAMES = Object.freeze({performance:'御风性能引擎',refraction:'棱光折射引擎'});
 const NS = 'http://www.w3.org/2000/svg';
@@ -618,6 +620,7 @@ const DEFAULTS = {
     bubbleStyle: 'classic', bubbleBlur: 3.5, chatBackground: 'glass', chatVeil: 45, chatFontSize: 0, firstLineIndent: false, justifyText: false, compatibilityMode: 'auto', androidWebViewRefract: false, iosSvgTrial: false, iosMaterial: true,
     enabled: true, float: true, islands: true, fold: true, topShortcut1: '', topShortcut2: '', qrFold: true, composerLayout: 'split', home: true, toneBtn: true, homeName: 'NVWA 用户', icons: true, refract: true, refractMes: true, font: true, tone: 'time', dayStart: 7, dayEnd: 19, avatar: 'line', orb: true, panelRead: true, dock: false, floatBall: true, ballSnap: true, ballFuse: true, ballSide: 'right', ballY: 0.62, ballFx: 0.92, ballFy: 0.6, ballDock: false,
     webPreset: 'clear', mobileTilt: false, glassStyle: 'original', engine: 'physical', follow: true, pLight: 135, customTextTone: 'auto', customWallpaper: '', readingStyle: 'warm', proseLeading: 0, proseInset: 0, typography: null,
+    labDepthScan: false, labPostMount: false, labCardLayout: false,
     // 自然弧度没写的参数（厚度、折射率等，只给物理折射截面用）沿用清透立体的
     ...PRESETS.depth[1], ...PRESETS.natural[1],
     scale: 95, bevel: 30, curve: 2.2, aberration: 8,
@@ -653,7 +656,11 @@ const SLIDERS = [
     ['tint', '顶栏/输入框底色', 0, 0.6, 0.01, ''],
     ['radius', '消息卡片圆角', 0, 40, 1, 'px'],
 ];
+const PERFORMANCE_TOGGLES = new Set(['labDepthScan', 'labPostMount', 'labCardLayout']);
 const TOGGLES = [
+    ['labDepthScan', '减少楼层扫描'],
+    ['labPostMount', '分批处理玻璃卡片'],
+    ['labCardLayout', '减少聊天卡片布局'],
     ['enabled', '启用液态玻璃美化'],
     ['float', '顶栏和输入框悬浮在聊天内容上方'],
     ['icons', 'iOS 风格图标'],
@@ -1479,17 +1486,23 @@ const ro = new ResizeObserver(entries => {
 new MutationObserver(() => { if (document.body.dataset.generating !== 'true' && mesLate.size) { clearTimeout(mesLateTimer); flushMesLate(); } })
     .observe(document.body, { attributes: true, attributeFilter: ['data-generating'] });
 const io = new IntersectionObserver(entries => {
-    const changed = [];
+    const changed = [], enteringCards = [];
+    const prioritizeCards = useNvwaMountExperiment() && hasBulkCardWork();
     for (const e of entries) {
         const it = items.get(e.target);
         messageRendering.visibility(e.target, e.isIntersecting);
+        if (prioritizeCards && e.isIntersecting) {
+            const text = e.target.querySelector(':scope > .mes_block > .mes_text');
+            if (text && cardDirty.delete(text)) enteringCards.push(text);
+        }
         if (!it || it.visible === e.isIntersecting) continue;
         it.visible = e.isIntersecting;
         if (it.visible) visibleItems.add(e.target);
         else visibleItems.delete(e.target);
         changed.push(e.target);
     }
-    if (changed.length) paintMany(changed, 'intersection');
+    if (enteringCards.length) classifyQueuedCards(enteringCards, 'intersection', changed);
+    else if (changed.length) paintMany(changed, 'intersection');
     flickerCapture?.intersections(entries);
 }, { root: document.getElementById('chat'), rootMargin: '200px 0px' });
 
@@ -1503,9 +1516,12 @@ function registerSurface(el, kind, visible) {
     const it = { id: `ilg-f${++uid}`, kind, visible };
     items.set(el, it);
     if (visible) visibleItems.add(el);
-    el.classList.add('ilg-glass');
-    // 表面光泽只给不会内部滚动的表面，抽屉这类会滚的容器里光泽会跟着内容跑
-    if (kind === 'bar' || kind === 'mes' || kind === 'toast') el.classList.add('ilg-sheen');
+    if (kind === 'mes' && useChatLayoutOptimization()) {
+        el.classList.add('ilg-glass', 'ilg-sheen');
+    } else {
+        el.classList.add('ilg-glass');
+        if (kind === 'bar' || kind === 'mes' || kind === 'toast') el.classList.add('ilg-sheen');
+    }
     return it;
 }
 function positionSurface(el, it) {
@@ -1540,6 +1556,17 @@ function track(el, kind) {
     observeSurface(el, it);
     paint(el);
 }
+function desktopPerformanceAvailable() { return S.enabled && !androidHost && !isIOS; }
+function glassBatchAvailable() {
+    return desktopPerformanceAvailable() && S.engine === 'physical' && S.refract && S.refractMes && canRefract()
+        && S.glassStyle !== 'liquid-web';
+}
+function useNvwaMountExperiment() { return S.labPostMount === true && glassBatchAvailable(); }
+function useChatLayoutOptimization() { return S.labCardLayout === true && desktopPerformanceAvailable(); }
+function syncChatHostPerformance() {
+    syncHostPerformance(S.enabled && S.labDepthScan === true, useChatLayoutOptimization());
+}
+
 function trackMessages(elements) {
     // Chat history can arrive in one DOM mutation. Install material classes and
     // positioning as groups, then measure and paint without a forced layout per row.
@@ -1552,15 +1579,21 @@ function trackMessages(elements) {
     const staticRows = list.map(el => getComputedStyle(el).position === 'static');
     list.forEach((el, i) => { if (staticRows[i]) positionSurface(el, states[i]); });
     const viewport = document.getElementById('chat').getBoundingClientRect();
+    const coalesceMount = useNvwaMountExperiment() && list.length >= 64;
     const geometries = list.map((el, i) => {
         const it = states[i];
         it.visible = nearMessageViewport(el.getBoundingClientRect(), viewport);
         if (it.visible) visibleItems.add(el);
+        if (coalesceMount && !it.visible) {
+            // The first ResizeObserver delivery already has this border box.
+            // Visible rows still get their material synchronously on mount.
+            return null;
+        }
         return measure(el);
     });
     list.forEach((el, i) => {
         observeSurface(el, states[i]);
-        paint(el, geometries[i]);
+        if (geometries[i]) paint(el, geometries[i]);
     });
 }
 
@@ -3054,6 +3087,7 @@ function applyBubbleStyle() {
     applyBubbleBlur();
 }
 function applyRoot() {
+    syncChatHostPerformance();
     applyBubbleStyle();
     if (!S.enabled) hideRangeValue();
     if (!S.enabled) {
@@ -3459,6 +3493,7 @@ function buildPanel() {
   <div class="inline-drawer-content">
     <div class="ilg-status" id="ilg-status" role="status"></div>
     <p class="ilg-status" id="ilg-opt-themeStatus" role="status"></p>
+    <p id="ilg-performance-status" role="status"></p>
     <p class="ilg-hint" id="ilg-compat-hint"></p>
     <div id="ilg-opt-iosReportWrap" hidden>
       <button type="button" class="menu_button" id="ilg-opt-iosReportCopy">复制 iOS 测试记录</button>
@@ -3734,6 +3769,21 @@ function buildPanel() {
         document.getElementById('ilg-opt-compatibilityMode').value = S.compatibilityMode === 'blur' ? 'blur' : 'auto';
         document.getElementById('ilg-compat-hint').textContent = compatibilityHint();
         document.getElementById('ilg-status').textContent = statusText();
+        const hostPerformance = getHostPerformanceCapabilities();
+        const availability = {
+            labDepthScan: S.enabled && hostPerformance.depthScan,
+            labPostMount: glassBatchAvailable(),
+            labCardLayout: desktopPerformanceAvailable(),
+        };
+        for (const [key, available] of Object.entries(availability)) {
+            const control = document.getElementById(`ilg-opt-${key}`);
+            control.disabled = !available;
+            control.closest('label').classList.toggle('ilg-row-off', !available);
+            control.setAttribute('aria-describedby', 'ilg-performance-status');
+        }
+        document.getElementById('ilg-performance-status').textContent = hostPerformance.depthScan && hostPerformance.keyboard
+            ? '已接入宿主，可优化楼层、角色标签和键盘控件。选项在下次渲染聊天时生效。'
+            : '玻璃开关适用于桌面环境。楼层、标签和键盘扫描需接入酒馆 1.18.0 宿主。选项在下次渲染聊天时生效。';
         refreshCompanionTheme();
         studioUI?.sync();
         syncSavedAppearance();
@@ -3834,7 +3884,13 @@ function buildPanel() {
     });
     TOGGLES.forEach(([k]) => document.getElementById(`ilg-opt-${k}`).addEventListener('change', e => {
         if (k === 'iosSvgTrial' && !iosSvgEligible) { e.target.checked = !!S[k]; return; }
+        if (PERFORMANCE_TOGGLES.has(k) && e.target.disabled) { e.target.checked = S[k] === true; return; }
         S[k] = e.target.checked;
+        if (PERFORMANCE_TOGGLES.has(k)) {
+            syncChatHostPerformance();
+            ctx.saveSettingsDebounced();
+            return;
+        }
         if (k === 'mobileTilt') {
             if (S.mobileTilt) requestMobileTilt();
             else { syncMobileTilt(); ctx.saveSettingsDebounced(); }
@@ -4493,18 +4549,25 @@ const CARD_PANELS = 'div, section, article, aside, details, summary, dialog, but
 const CARD_CHOICES = 'button, select, option, input[type="button"], input[type="submit"], [role="button"], [role="option"]';
 const CARD_RENDERER_CANDIDATES = 'iframe, ' + CARD_PANELS + ', ' + CARD_CHOICES;
 function applyCardMarkers(texts) {
+    const optimizeLayout = useChatLayoutOptimization();
     // Read one whole level, then write its markers. Children still see their
     // parent's resolved colors, without forcing style/layout once per card.
     const light = root.classList.contains('ilg-light');
     const messages = texts.map(text => ({
         message: text.closest('.mes'), fixedOverlay: false, cardRenderer: false,
         inlineFrame: false, messageProse: false, inlineStatus: false, unboundedRenderer: false,
+        // messageProse only contributes to inlineCard when inlineStatus is true.
+        // Layout/style reads for fixed overlays and authored colors still run below.
+        canHaveInlineStatus: !optimizeLayout || !!text.querySelector(CARD_RENDERER_CANDIDATES),
     }));
     // Hosts can emit prose as text + <br> siblings of a status panel, with no <p>.
     // Read direct text only: labels inside authored/interactive children are not story text.
     const directProse = el => [...el.childNodes].some(node => node.nodeType === 3 && /[\p{L}\p{N}]/u.test(node.nodeValue));
     texts.forEach((text,i) => {
-        if (!text.closest('[data-nvwa-style="author"]') && text.getClientRects().length && directProse(text)) messages[i].messageProse = true;
+        const state = messages[i];
+        if (!state.canHaveInlineStatus) return;
+        if (!text.closest('[data-nvwa-style="author"]')
+            && (optimizeLayout ? directProse(text) && text.getClientRects().length : text.getClientRects().length && directProse(text))) state.messageProse = true;
     });
     let level = texts.map((parent, i) => ({ parent, base: light ? 0.95 : 0.08, state: messages[i], inFlow: true, anchor: null, insideCard: false }));
     while (level.length) {
@@ -4540,7 +4603,7 @@ function applyCardMarkers(texts) {
             const surface = frame || renderer || (panel && !!cardColors(k, cs).best);
             // Presets can wrap or color the story paragraphs. Only prose outside
             // a self-rendered panel counts; do not change its typography marker.
-            if (!state.messageProse && !insideCard && staysInFlow && visible && !surface && !c
+            if (state.canHaveInlineStatus && !state.messageProse && !insideCard && staysInFlow && visible && !surface && !c
                 && cs.backgroundImage === 'none' && (k.classList.contains('ilg-type-prose')
                     || (k.matches('p, ul, ol, blockquote') && !k.querySelector(CARD_RENDERER_CANDIDATES))
                     || (k.matches('div,section,article,span') && !k.closest('[data-nvwa-style="author"]')
@@ -4687,7 +4750,7 @@ new MutationObserver(muts => {
 chatEl.querySelectorAll('.mes_text').forEach(markProse);
 const CARD_MARK_CLASSES = new Set(['ilg-lit', 'ilg-dim', 'ilg-card-surface', ...PROSE_MARKS]);
 const ROW_HIT_CLASSES = new Set(['ilg-bounded-hit', 'ilg-phys', 'ilg-reflection']);
-function queueCards(all) {
+function queueCardsNative(all) {
     if (!S.enabled) { clearTimeout(cardTimer); cardDirty.clear(); return; }
     if (all) {
         chatEl.querySelectorAll('.ilg-bounded-hit').forEach(row => row.classList.remove('ilg-bounded-hit'));
@@ -4695,6 +4758,7 @@ function queueCards(all) {
     }
     clearTimeout(cardTimer);
     cardTimer = setTimeout(() => {
+        cardTimer = 0;
         const texts = [...cardDirty].filter(t => t.isConnected);
         cardDirty.clear();
         if (!S.enabled) return;
@@ -4709,6 +4773,59 @@ function queueCards(all) {
             rows.forEach((row, i) => row?.classList.toggle('ilg-bounded-hit', !!bounded[i]));
         }
     }, 200);
+}
+
+const CARD_BATCH = 12;
+let cardFrame = 0, bulkCards = false;
+
+function hasBulkCardWork() { return bulkCards || cardDirty.size >= 64; }
+
+function classifyQueuedCards(texts, reason = 'card', additionalPaints = []) {
+    const repaint = applyCardMarkers(texts);
+    if (repaint.length || additionalPaints.length) paintMany(new Set([...additionalPaints, ...repaint]), reason);
+    if (!isIOS && !androidHost && S.refract && S.refractMes && S.engine === 'physical' && canRefract() && chatEl.childElementCount >= MIN_HIT_ROWS) {
+        const rows = texts.map(text => text.closest('.mes'));
+        const bounded = rows.map((row, i) => row && boundedCardHit(row, texts[i]));
+        rows.forEach((row, i) => row?.classList.toggle('ilg-bounded-hit', !!bounded[i]));
+    }
+}
+
+function flushCardWork() {
+    cardTimer = 0;
+    cardFrame = 0;
+    if (!S.enabled) { cardDirty.clear(); bulkCards = false; return; }
+    bulkCards = useNvwaMountExperiment() && hasBulkCardWork();
+    const near = [], away = [];
+    for (const text of cardDirty) {
+        if (!chatEl.contains(text)) { cardDirty.delete(text); continue; }
+        if (!bulkCards || items.get(text.closest('.mes'))?.visible) near.push(text);
+        else if (away.length < CARD_BATCH) away.push(text);
+    }
+    const batch = bulkCards ? near.slice(0, CARD_BATCH).concat(away.slice(0, Math.max(0, CARD_BATCH - near.length))) : near;
+    for (const text of batch) cardDirty.delete(text);
+    if (batch.length) classifyQueuedCards(batch);
+    if (!cardDirty.size) { bulkCards = false; return; }
+    if (document.hidden) cardTimer = setTimeout(flushCardWork, 32);
+    else cardFrame = requestAnimationFrame(flushCardWork);
+}
+
+function queueCards(all) {
+    if (!useNvwaMountExperiment() && !cardFrame && !bulkCards) return queueCardsNative(all);
+    if (!S.enabled) {
+        clearTimeout(cardTimer);
+        cancelAnimationFrame(cardFrame);
+        cardTimer = cardFrame = 0;
+        bulkCards = false;
+        cardDirty.clear();
+        return;
+    }
+    if (all) {
+        chatEl.querySelectorAll('.ilg-bounded-hit').forEach(row => row.classList.remove('ilg-bounded-hit'));
+        chatEl.querySelectorAll('.mes_text').forEach(t => cardDirty.add(t));
+    }
+    if (cardFrame || (cardTimer && useNvwaMountExperiment() && hasBulkCardWork())) return;
+    clearTimeout(cardTimer);
+    cardTimer = setTimeout(flushCardWork, 200);
 }
 new MutationObserver(muts => {
     if (!S.enabled) return;

@@ -4,6 +4,10 @@
     "js": "index.js",
     "css": "style.css",
     "author": "zytteell8698",
-    "version": "2.0.10-test.40",
-    "homePage": "https://github.com/jjing8235-afk/test"
+    "version": "2.0.10-test.41",
+    "homePage": "https://github.com/jjing8235-afk/test",
+    "hooks": {
+        "disable": "disableHostPerformance",
+        "delete": "disableHostPerformance"
+    }
 }
