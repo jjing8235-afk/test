@@ -143,13 +143,13 @@ assert.equal(lookup(), null, 'Empty chat must hide the floor indicator');
 passed.push('300 long-chat positions match the linear oracle; at most 12 geometry reads; mutation invalidation and hidden-row fallback');
 
 // Rasterize into deterministic canvas buffers to check map precision and lighting cache changes.
-let canvases = 0, encodes = 0;
+let canvases = 0, encodes = 0, images = 0;
 const browser = { devicePixelRatio: 2 };
 const document = { createElement(type) {
     assert.equal(type, 'canvas'); canvases++;
     let image;
     const canvas = { width: 0, height: 0,
-        getContext() { return { createImageData(w, h) { return { data: new Uint8ClampedArray(w * h * 4) }; },
+        getContext() { return { createImageData(w, h) { images++; return { width: w, height: h, data: new Uint8ClampedArray(w * h * 4) }; },
             putImageData(value) { image = value; } }; },
         toDataURL() { encodes++; return createHash('sha256').update(Buffer.from(image.data)).digest('hex'); },
     };
@@ -161,16 +161,20 @@ const plain = { profile: 'lens', ior: 1.5, magnify: 3, bezel: 24, thickness: 40,
     specular: 0, sharp: 4, edgeShade: 0, fresnel: 0, caustic: 0 };
 const mapCases = [];
 for (const [w, h, r] of [[390, 1200, 22], [100, 36, 18]]) {
-    api.clearMaps(); canvases = 0; encodes = 0;
+    api.clearMaps(); canvases = 0; encodes = 0; images = 0;
     const unlit = api.getMaps(w, h, r, plain);
     const savedEncodes = encodes, parts = unlit.full ? [unlit.full] : Object.values(unlit.tiles);
     assert(parts.every(p => p.d && !p.n));
-    assert.equal(canvases, parts.length); assert.equal(encodes, parts.length);
+    assert.equal(canvases, 1, 'Reuse the displacement canvas across tiles');
+    assert.equal(images, unlit.full ? 1 : 3, 'Reuse equally sized tile buffers');
+    assert.equal(encodes, parts.length);
     const unlitHtml = api.physicalFilter(unlit, plain, w, h, 135);
     assert(!unlitHtml.includes('nmap') && !unlitHtml.includes('undefined'));
     assert.equal((unlitHtml.match(/<feDisplacementMap/g) || []).length, 3, 'Existing color dispersion must remain');
     for (const field of ['specular', 'edgeShade', 'fresnel', 'caustic']) {
+        const before = canvases;
         const lit = { ...plain, [field]: 0.5 }, m = api.getMaps(w, h, r, lit);
+        assert(canvases - before <= 2, 'Lighting shares one canvas for each kind of map');
         const litParts = m.full ? [m.full] : Object.values(m.tiles);
         assert(litParts.every(p => p.n));
         assert.deepEqual(litParts.map(p => p.d), parts.map(p => p.d), 'Lighting gate must not change displacement pixels');

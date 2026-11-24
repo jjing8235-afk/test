@@ -51,7 +51,7 @@ export function lut(profile, bezel, thick, ior, mag) {
 // 圆角矩形的有向距离（内部为负）
 function rrDist(ax, ay, hw, hh, r) {
     const qx = ax - hw + r, qy = ay - hh + r;
-    return Math.min(Math.max(qx, qy), 0) + Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) - r;
+    return (qx > 0 && qy > 0 ? Math.hypot(qx, qy) : Math.max(qx, qy)) - r;
 }
 
 // 一个像素的取样偏移和法线：写进 out = [偏移x, 偏移y, 法线x×倾斜度, 法线y×倾斜度, 倾斜度]，返回偏移量大小
@@ -60,8 +60,7 @@ function sampler(w, h, r, bez, L) {
     return (x, y, out) => {
         const px = x - hw, py = y - hh, ax = Math.abs(px), ay = Math.abs(py);
         const depth = -rrDist(ax, ay, hw, hh, r);
-        out[0] = out[1] = out[2] = out[3] = out[4] = 0;
-        if (!(depth > 0 && depth < bez)) return 0;
+        if (!(depth > 0 && depth < bez)) return -1;
         // 法线按“半径不小于边缘宽度”的参考圆角来算，边缘比圆角宽时也不会在对角线上出现折痕
         const cx = ax - (hw - Rn), cy = ay - (hh - Rn);
         let nx, ny;
@@ -82,6 +81,7 @@ function raster(sample, x0, y0, cw, ch, sx, sy) {
     for (let j = 0; j < ch; j++) {
         for (let i = 0; i < cw; i++) {
             const m = sample(x0 + (i + 0.5) * sx, y0 + (j + 0.5) * sy, out);
+            if (m < 0) continue;
             if (m > max) max = m;
             buf.set(out, (j * cw + i) * 5);
         }
@@ -89,20 +89,34 @@ function raster(sample, x0, y0, cw, ch, sx, sy) {
     return { buf, cw, ch, max };
 }
 // 两张贴图：位移贴图（R/G=取样偏移）和法线贴图（R/G=朝外法线×倾斜度，B=倾斜度）
-function encode({ buf, cw, ch }, maxO, normals) {
-    const dc = document.createElement('canvas'), nc = normals ? document.createElement('canvas') : null;
-    dc.width = cw; dc.height = ch;
-    if (nc) { nc.width = cw; nc.height = ch; }
-    const dctx = dc.getContext('2d'), nctx = nc?.getContext('2d');
-    const di = dctx.createImageData(cw, ch), ni = nctx?.createImageData(cw, ch), D = di.data, N = ni?.data;
+function mapBitmap() {
+    const canvas = document.createElement('canvas');
+    // Every tile is written from CPU pixels and immediately exported as PNG.
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    let image;
+    return {
+        pixels(width, height) {
+            if (!image || image.width !== width || image.height !== height) {
+                if (canvas.width !== width) canvas.width = width;
+                if (canvas.height !== height) canvas.height = height;
+                image = context.createImageData(width, height);
+            }
+            return image.data;
+        },
+        png() {
+            context.putImageData(image, 0, 0);
+            return canvas.toDataURL('image/png');
+        },
+    };
+}
+function encode({ buf, cw, ch }, maxO, displacement, normal) {
+    const D = displacement.pixels(cw, ch), N = normal?.pixels(cw, ch);
     for (let p = 0, n = cw * ch; p < n; p++) {
         const b4 = p * 4, b5 = p * 5;
         D[b4] = 128 + buf[b5] / maxO * 127; D[b4 + 1] = 128 + buf[b5 + 1] / maxO * 127; D[b4 + 2] = 128; D[b4 + 3] = 255;
         if (N) { N[b4] = 128 + buf[b5 + 2] * 127; N[b4 + 1] = 128 + buf[b5 + 3] * 127; N[b4 + 2] = buf[b5 + 4] * 255; N[b4 + 3] = 255; }
     }
-    dctx.putImageData(di, 0, 0);
-    if (nctx) nctx.putImageData(ni, 0, 0);
-    return { d: dc.toDataURL('image/png'), ...(nc ? { n: nc.toDataURL('image/png') } : {}) };
+    return { d: displacement.png(), ...(normal ? { n: normal.png() } : {}) };
 }
 // feDisplacementMap 的偏移 = scale × (通道值 − 0.5)，所以 scale 取最大偏移 × 255/127
 const scaleOf = maxO => maxO * 255 / 127;
@@ -112,7 +126,7 @@ function buildFull(w, h, r, bez, L, dpr, normals) {
     const k = Math.min(dpr, Math.sqrt(200000 / (w * h)));
     const cw = Math.max(2, Math.round(w * k)), ch = Math.max(2, Math.round(h * k));
     const t = raster(sampler(w, h, r, bez, L), 0, 0, cw, ch, w / cw, h / ch), maxO = Math.max(t.max, 0.001);
-    return { full: encode(t, maxO, normals), scale: scaleOf(maxO), max: maxO };
+    return { full: encode(t, maxO, mapBitmap(), normals ? mapBitmap() : null), scale: scaleOf(maxO), max: maxO };
 }
 /* 大玻璃：九宫格。中间是平的不用画；直边上的贴图沿着边方向不变，取 1 像素宽的条拉伸；只有四个角要整块算。
    所以贴图大小和玻璃尺寸无关：长消息卡片也是按屏幕分辨率画的，边缘高光不糊，流式输出变高时也不用重画 */
@@ -127,7 +141,8 @@ function buildTiles(r, bez, L, dpr, normals) {
     };
     const maxO = Math.max(0.001, ...Object.values(parts).map(p => p.max));
     const tiles = {};
-    for (const [k, p] of Object.entries(parts)) tiles[k] = encode(p, maxO, normals);
+    const displacement = mapBitmap(), normal = normals ? mapBitmap() : null;
+    for (const [k, p] of Object.entries(parts)) tiles[k] = encode(p, maxO, displacement, normal);
     return { tiles, C, scale: scaleOf(maxO), max: maxO };
 }
 
