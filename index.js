@@ -36,7 +36,7 @@ window.__ilgLoaded = new URL('.', import.meta.url).pathname;
 let studioUI = null;
 let flickerCapture = null, flickerReport = null;
 const MODULE = 'iosLiquidGlass';
-const BUILD_VERSION = '2.0.10-test.36';
+const BUILD_VERSION = '2.0.10-test.37';
 const MAX_INNER_GLASS_BLUR = 16;
 const ENGINE_NAMES = Object.freeze({performance:'御风性能引擎',refraction:'棱光折射引擎'});
 const NS = 'http://www.w3.org/2000/svg';
@@ -1024,7 +1024,8 @@ const inputGlass = el => el.matches('#nonQRFormItems, #ilg-composer-input-glass,
 const controlSurface = el => el.matches('.ilg-island, #nonQRFormItems, #ilg-floor, .ilg-composer-glass, .ilg-composer-lens-glass');
 let inputMaterialReadable = false, inputCompositionText = '';
 const foldedMenuSurface = el => S.fold && el.classList.contains('ilg-island') && el.icons?.some(icon => icon.id === 'ilg-fold-button');
-const controlReadable = el => controlSurface(el) && (inputGlass(el) ? inputMaterialReadable : el.id === 'ilg-composer-plus-glass' ? false : S.islands && S.dock);
+const controlReadable = el => controlSurface(el) && !el.classList.contains('ilg-composer-lens-glass')
+    && (inputGlass(el) ? inputMaterialReadable : el.id === 'ilg-composer-plus-glass' ? false : S.islands && S.dock);
 function syncInputMaterial(repaint = true) {
     const value = document.getElementById('send_textarea')?.value || '';
     const next = value.trim().length > 0 || inputCompositionText.trim().length > 0;
@@ -1245,16 +1246,16 @@ function paint(el, geo) {
     const composer = it.kind === 'panel' && composerGlassSurface(el);
     el.classList.toggle('ilg-composer-liquid', composer);
     const preset = it.kind === 'clearPanel' && el.classList.contains('ilg-preset-glass');
+    const tabLens = el.classList.contains('ilg-composer-lens-glass');
     const wasFollowing = it.followMaterial;
-    it.followMaterial = preset || (composer && root.classList.contains('ilg-merged-tools'));
+    it.followMaterial = preset || tabLens || (composer && root.classList.contains('ilg-merged-tools'));
     el.classList.toggle('ilg-follow-material', it.followMaterial);
     const cssMode = cssGlassActive();
     el.classList.toggle('ilg-css-surface', cssMode);
     // Scrollable Android panels share the compositor with chat; avoid retaining an SVG backdrop across popup transitions.
     const stablePanel = androidHost && (it.kind === 'panel' || it.kind === 'clearPanel');
     const noBlur = document.body.classList.contains('no-blur');
-    const tabLens = el.classList.contains('ilg-composer-lens-glass');
-    const useWeb = !(noBlur && (it.followMaterial || tabLens))
+    const useWeb = !(noBlur && it.followMaterial)
         && ((!stablePanel && (it.kind === 'bar' || composer)) || it.followMaterial) && webStyleEnabled();
     const webBubble = it.bubbleReading && webStyleEnabled();
     if (!useWeb) webGlass.release(el);
@@ -1268,8 +1269,8 @@ function paint(el, geo) {
     const samplePreset = preset && (stablePanel || iosWallpaperRequested()) && !cssMode && !noBlur && S.refract
         && (canRefract() || iosWallpaperRequested()) && Math.max(w, h) <= 1024
         && !largeWebViewMessage({webView: true, kind: 'mes', width: w, height: h, dpr: devicePixelRatio});
-    if ((tabLens || wasFollowing || preset) && !sampleLens && !samplePreset) lensWallpaper.release(el);
-    if ((it.followMaterial || tabLens) && (cssMode || noBlur || useWeb || !S.refract)) {
+    if ((it.followMaterial || wasFollowing) && !sampleLens && !samplePreset) lensWallpaper.release(el);
+    if (it.followMaterial && (cssMode || noBlur || useWeb || !S.refract)) {
         it.filter?.remove(); it.filter = null; it.physical = null;
     }
     if (!useWeb||!iosWallpaperRequested()) iosWallpaper.release(el);
@@ -1357,7 +1358,7 @@ function paint(el, geo) {
         it.renderPath = 'web-compatible';
         setPhys(el, it, false);
         const refract = S.refract && (canRefract() || iosWallpaperRequested()) && (!stablePanel || samplePreset);
-        if (!refract && (it.followMaterial || tabLens) && it.web) webGlass.release(el);
+        if (!refract && it.followMaterial && it.web) webGlass.release(el);
         webGlass.paint(el, it, { width: w, height: h,
             refract,
             sourcePlane: sampleLens || samplePreset ? value => {
@@ -2962,7 +2963,6 @@ async function applyTone() {
     lightBg = nextLight;
     root.classList.toggle('ilg-light', S.enabled && lightBg);
     syncToneBtn();
-    root.style.setProperty('--ilg-control-a', Math.min(.22, .035 + S.tint * .45));
     root.style.setProperty('--ilg-tint', `rgba(255, 255, 255, ${lightBg ? Math.min(.7, S.tint + .08) : S.tint})`);
     const st = document.getElementById('ilg-status');
     if (st) st.textContent = statusText();
@@ -3000,6 +3000,7 @@ function applyChatFontSize() {
 
 let glassSettingsRaf = 0;
 function applySurfaceSettings() {
+    root.style.setProperty('--ilg-control-a', Math.min(.22, .035 + S.tint * .45));
     // Keep the first Android glyphs: downloading CJK subsets must not replace visible text.
     root.style.setProperty('--ilg-unified-font', androidHost ? 'system-ui, sans-serif' : '-apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans SC Variable", "Microsoft YaHei", sans-serif');
     root.style.setProperty('--ilg-panel-filter', `blur(${KIND.panel.blur()}px) saturate(${S.saturate}) brightness(${S.brightness})`);

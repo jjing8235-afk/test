@@ -24,7 +24,9 @@ const box=await activeTab.boundingBox();
 const x=box.x+box.width/2,y=box.y+box.height/2;
 await page.mouse.move(x,y);await page.mouse.down();await page.mouse.move(x+box.width*.63,y,{steps:8});
 check('Held lens follows a horizontal drag before selection changes',await activeTab.evaluate(el=>el.dataset.pane==='chat'&&el.parentElement.querySelector('.ilg-composer-tab-lens').getBoundingClientRect().left>el.getBoundingClientRect().left+20));
+check('Drag previews the nearest tab while the active pane stays open',await activeTab.evaluate(el=>el.parentElement.querySelector('.ilg-tab-preview')?.dataset.pane==='tools'));
 await page.mouse.up();check('Release selects the nearest available pane',await page.locator('#extensionsMenu [data-pane="tools"][aria-selected="true"]').isVisible());
+check('Release clears drag feedback',await page.locator('.ilg-tab-drag,.ilg-tab-preview').count()===0);
 await page.locator('#extensionsMenu [data-pane="chat"]').click();await page.waitForTimeout(320);
 const tabTravel=await page.evaluate(()=>{
     const track=()=>[...document.querySelectorAll('.ilg-composer-tabs')].find(el=>el.offsetWidth>0);

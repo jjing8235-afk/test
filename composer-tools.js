@@ -35,6 +35,7 @@ export function createComposerTools({root, attachLens, detachLens, moveLens}) {
     function nativeClick(kind){const button=trigger(kind);if(!button)return;routing=true;try{button.click();}finally{routing=false;}}
     function focusLauncher(){plus?.focus({preventScroll:true});}
     function updateBar(el,bar){const active=el.id==='extensionsMenu'?'tools':el.id==='qr--bar'?'quick':'chat';for(const b of bar.querySelectorAll('[role="tab"]')){const selected=b.dataset.pane===active;b.setAttribute('aria-selected',String(selected));b.tabIndex=selected?0:-1;b.disabled=!available(b.dataset.pane);b.title=b.disabled?'当前没有可用的'+labels[b.dataset.pane]+'入口':'';}}
+    const motionAllowed = () => !reduceMotion.matches && !doc.body.classList.contains('reduced-motion');
     function cancelTabSlide(){
         tabSlide?.animation.cancel();
         tabSlide=null;
@@ -55,12 +56,11 @@ export function createComposerTools({root, attachLens, detachLens, moveLens}) {
         const center=target.track.left+(from.rect.left+from.rect.width/2-from.track.left)*ratio;
         const distance=center-(target.rect.left+target.rect.width/2);
         const scale=from.rect.width*ratio/target.rect.width;
-        if(Math.abs(distance)<.5)return;
+        if(Math.abs(distance)<.5 && Math.abs(scale-1)<.005)return;
         const animation=target.lens.animate([
-            {transform:`translateX(${distance}px) scaleX(${scale})`,easing:'cubic-bezier(.21,.65,.29,1)'},
-            {transform:`translateX(${distance*.13}px) scaleX(1.035)`,offset:.66,easing:'cubic-bezier(.24,.7,.38,1)'},
+            {transform:`translateX(${distance}px) scaleX(${scale})`},
             {transform:'none'},
-        ],{duration:310});
+        ],{duration:Math.min(330,190+Math.abs(distance)*.48),easing:'cubic-bezier(.18,.78,.22,1)'});
         tabSlide={animation,kind};moveLens?.();
         animation.onfinish=()=>{if(tabSlide?.animation===animation)tabSlide=null;};
     }
@@ -72,52 +72,100 @@ export function createComposerTools({root, attachLens, detachLens, moveLens}) {
     }
     function endDrag() {
         if(!gesture)return;
-        const {bar,lens,id}=gesture; gesture=null;
-        lens.style.removeProperty('translate');moveLens?.(); bar.classList.remove('ilg-tab-drag');
-        if(bar.hasPointerCapture(id))bar.releasePointerCapture(id);
+        const g=gesture;
+        gesture=null;
+        win.cancelAnimationFrame(g.frame);
+        g.lens.style.removeProperty('translate');
+        g.bar.classList.remove('ilg-tab-drag');
+        g.preview?.classList.remove('ilg-tab-preview');
+        if(g.capture.hasPointerCapture(g.id))g.capture.releasePointerCapture(g.id);
+        if(g.moved)moveLens?.();
+    }
+    function paintDrag(g) {
+        g.frame=0;
+        const x=Math.max(g.stops[0].x,Math.min(g.stops.at(-1).x,g.origin+g.dx));
+        const preview=g.stops.reduce((a,b)=>Math.abs(a.x-x)<=Math.abs(b.x-x)?a:b).button;
+        if(preview!==g.preview){
+            g.preview?.classList.remove('ilg-tab-preview');
+            preview.classList.add('ilg-tab-preview');
+            g.preview=preview;
+        }
+        g.lens.style.translate=`${x-g.home}px 0`;
+        moveLens?.();
     }
     function wireDrag(bar,lens) {
         let suppressClick=false;
         bar.addEventListener('pointerdown',event=>{
             if(!event.isPrimary||event.button!==0||gesture)return;
             suppressClick=false;
+            const capture=event.target.closest('[role="tab"]');
             const active=bar.querySelector('[aria-selected="true"]');
-            if(!active.contains(event.target))return; // Other tabs keep their native tap.
-            gesture={bar,lens,id:event.pointerId,x:event.clientX,y:event.clientY,moved:false};
+            if(!capture||capture.disabled||!active)return;
+            // The moving lens can be over another tab during a rapid reversal.
+            if(capture!==active){
+                if(!tabSlide)return;
+                const r=lens.getBoundingClientRect();
+                if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)return;
+            }
+            capture.setPointerCapture(event.pointerId);
+            gesture={bar,lens,capture,id:event.pointerId,x:event.clientX,y:event.clientY,frame:0,moved:false};
         });
         bar.addEventListener('pointermove',event=>{
-            const g=gesture;if(!g||g.bar!==bar||g.id!==event.pointerId)return;
-            if(!event.buttons){endDrag();return;}
-            const dx=event.clientX-g.x,dy=event.clientY-g.y;
+            const g=gesture;
+            if(!g||g.bar!==bar||g.id!==event.pointerId)return;
+            if(event.pointerType==='mouse'&&!event.buttons){endDrag();return;}
+            g.dx=event.clientX-g.x;
             if(!g.moved){
-                if(Math.abs(dy)>6&&Math.abs(dy)>Math.abs(dx)){endDrag();return;}
-                if(Math.abs(dx)<5)return;
-                const painted=lens.getBoundingClientRect(); cancelTabSlide();
-                g.origin=painted.left+painted.width/2;
-                g.stops=[...bar.querySelectorAll('[role="tab"]:not(:disabled)')].map(button=>{
-                    const r=button.getBoundingClientRect();return {button,x:r.left+r.width/2};
+                const dy=event.clientY-g.y;
+                if(Math.abs(dy)>6&&Math.abs(dy)>Math.abs(g.dx)){endDrag();return;}
+                if(Math.abs(g.dx)<4)return;
+                const stops=[...bar.querySelectorAll('[role="tab"]:not(:disabled)')].map(button=>{
+                    const r=button.getBoundingClientRect();
+                    return {button,x:r.left+r.width/2};
                 }).sort((a,b)=>a.x-b.x);
-                g.home=g.stops.find(stop=>stop.button.getAttribute('aria-selected')==='true').x;
-                bar.setPointerCapture(g.id);g.moved=true;bar.classList.add('ilg-tab-drag');
+                const home=stops.find(stop=>stop.button.getAttribute('aria-selected')==='true');
+                if(!home||stops.length<2){endDrag();return;}
+                const painted=lens.getBoundingClientRect();
+                cancelTabSlide();
+                g.origin=painted.width ? painted.left+painted.width/2 : home.x;
+                g.stops=stops;
+                g.home=home.x;
+                g.moved=true;
+                bar.classList.add('ilg-tab-drag');
+                paintDrag(g);
+            }else if(!g.frame){
+                g.frame=win.requestAnimationFrame(()=>paintDrag(g));
             }
-            const x=Math.max(g.stops[0].x,Math.min(g.stops.at(-1).x,g.origin+dx));
-            lens.style.translate=`${x-g.home}px 0`;moveLens?.();
         });
         bar.addEventListener('pointerup',event=>{
-            const g=gesture;if(!g||g.bar!==bar||g.id!==event.pointerId)return;
+            const g=gesture;
+            if(!g||g.bar!==bar||g.id!==event.pointerId)return;
             if(!g.moved){endDrag();return;}
-            const x=g.origin+event.clientX-g.x;
-            const target=g.stops.reduce((a,b)=>Math.abs(a.x-x)<=Math.abs(b.x-x)?a:b);
+            win.cancelAnimationFrame(g.frame);
+            g.dx=event.clientX-g.x;
+            paintDrag(g);
             const active=bar.querySelector('[aria-selected="true"]').dataset.pane;
-            const from=tabLensGeometry(active);endDrag();suppressClick=true;
-            win.setTimeout(()=>{suppressClick=false;},0);
-            select(target.button.dataset.pane,{focus:true,dragFrom:from});
+            const from=tabLensGeometry(active);
+            const next=g.preview.dataset.pane;
+            endDrag();
+            suppressClick=true;
+            select(next,{focus:true,dragFrom:from});
         });
-        for(const type of ['pointercancel','lostpointercapture','pointerleave'])bar.addEventListener(type,event=>{
-            if(type==='lostpointercapture'&&event.target!==bar)return;
-            if(gesture?.id===event.pointerId&&gesture.bar===bar&&(type!=='pointerleave'||!gesture.moved))endDrag();
+        for(const type of ['pointercancel','lostpointercapture'])bar.addEventListener(type,event=>{
+            const g=gesture;
+            if(!g||g.bar!==bar||g.id!==event.pointerId)return;
+            if(type==='lostpointercapture'&&event.target!==g.capture)return;
+            const active=bar.querySelector('[aria-selected="true"]').dataset.pane;
+            const from=g.moved && motionAllowed() ? tabLensGeometry(active) : null;
+            endDrag();
+            if(from)animateTabSlide(from,active);
         });
-        bar.addEventListener('click',event=>{if(suppressClick&&event.detail){event.preventDefault();event.stopImmediatePropagation();}},true);
+        bar.addEventListener('click',event=>{
+            if(!suppressClick||!event.detail)return;
+            suppressClick=false;
+            event.preventDefault();
+            event.stopImmediatePropagation();
+        },true);
     }
     function refresh(){
         if(!enabled||!plus)return;
@@ -137,7 +185,7 @@ export function createComposerTools({root, attachLens, detachLens, moveLens}) {
         if(toggle&&visible(kind)){nativeClick(kind);finishAnimations();focusLauncher();refresh();return;}
         const previous=panes.find(visible);
         const switching=previous&&previous!==kind;
-        const from=!reduceMotion.matches&&!doc.body.classList.contains('reduced-motion') ? dragFrom||(switching?tabLensGeometry(previous):null) : null;
+        const from=motionAllowed() ? dragFrom||(switching?tabLensGeometry(previous):null) : null;
         if(switching)cancelTabSlide();
         for(const other of panes)if(other!==kind&&visible(other)){nativeClick(other);finishAnimations();}
         pane=kind;focusLauncher();if(!visible(kind))nativeClick(kind);finishAnimations();
