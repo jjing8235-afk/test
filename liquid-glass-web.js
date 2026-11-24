@@ -61,6 +61,7 @@ export function createLiquidGlassWeb({ workerFactory } = {}) {
             if (!options.sourcePlane(value)) return false;
             el.style.backdropFilter = 'none'; el.style.webkitBackdropFilter = 'none';
         } else { el.style.backdropFilter = value; el.style.webkitBackdropFilter = value; }
+        options.onBackdropRefraction?.(!options.sourcePlane);
         return true;
     }
     function paint(el, item, options) {
@@ -88,6 +89,7 @@ export function createLiquidGlassWeb({ workerFactory } = {}) {
                         if (!present(el, options, item.web.value)) {
                             const fallback = webCompatibleFilter(recipe, control);
                             el.style.backdropFilter = fallback; el.style.webkitBackdropFilter = fallback;
+                            options.onBackdropRefraction?.(false);
                         }
                         return;
                     }
@@ -108,7 +110,8 @@ export function createLiquidGlassWeb({ workerFactory } = {}) {
                     if (control) filter.insertAdjacentHTML('beforeend', controlCoreFilter('ilg-control-refracted', width, height, options.radius, options.controlBlur));
                     item.web = { key, filter, tint: recipe.tint };
                 } else preparation.cancel(el);
-                const value = 'url(#' + item.web.filter.id + ') blur(' + (control ? Math.max(1.1, recipe.blur) : recipe.blur) + 'px) ' + tone;
+                const blur = Math.min(control ? Math.max(1.1, recipe.blur) : recipe.blur, options.backdropBlurLimit ?? Infinity);
+                const value = `url(#${item.web.filter.id}) blur(${blur}px) ${tone}`;
                 item.web.value = value;
                 el.style.setProperty('--ilg-web-tint', recipe.tint);
                 if (present(el, options, value)) return;
@@ -120,6 +123,7 @@ export function createLiquidGlassWeb({ workerFactory } = {}) {
         el.style.setProperty('--ilg-web-tint', recipe.tint);
         const value = webCompatibleFilter(recipe, control);
         el.style.backdropFilter = value; el.style.webkitBackdropFilter = value;
+        options.onBackdropRefraction?.(false);
     }
     function resolve(target) {
         if (!(target instanceof Element) || target.closest('[disabled], [aria-disabled="true"]')) return null;

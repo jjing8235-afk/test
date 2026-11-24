@@ -36,7 +36,7 @@ window.__ilgLoaded = new URL('.', import.meta.url).pathname;
 let studioUI = null;
 let flickerCapture = null, flickerReport = null;
 const MODULE = 'iosLiquidGlass';
-const BUILD_VERSION = '2.0.10-test.37';
+const BUILD_VERSION = '2.0.10-test.38';
 const MAX_INNER_GLASS_BLUR = 16;
 const ENGINE_NAMES = Object.freeze({performance:'御风性能引擎',refraction:'棱光折射引擎'});
 const NS = 'http://www.w3.org/2000/svg';
@@ -1063,7 +1063,7 @@ function surfaceBlur(it, el) {
     return controlReadable(el) ? Math.max(1.1, blur) : blur;
 }
 // 新版：模糊、调色、折射全在一个 SVG 滤镜里，所以 backdrop-filter 只写 url()
-function buildPhysical(it, el, w, h, r) {
+function buildPhysical(it, el, w, h, r, blur = surfaceBlur(it, el)) {
     const kind = KIND[it.followMaterial ? 'bar' : it.kind], control = controlReadable(el);
     const baseBezel = Math.max(2, S.pBezel * kind.bezelK);
     const bezel = control ? Math.max(2, Math.min(baseBezel, Math.min(w, h) * .2)) : baseBezel;
@@ -1073,7 +1073,7 @@ function buildPhysical(it, el, w, h, r) {
         controlCore: control, controlRadius: r, controlBlur: inputGlass(el) ? 3 : 5.5,
         // 中心遮罩随尺寸变化，不能只复用九宫格边缘的尺寸更新。
         controlGeometry: control ? [w, h, r].join(':') : '',
-        strength: S.pStrength * kind.k * (foldedMenuSurface(el) ? .82 : 1), aberration: S.pAberration, blur: surfaceBlur(it, el),
+        strength: S.pStrength * kind.k * (foldedMenuSurface(el) ? .82 : 1), aberration: S.pAberration, blur,
         saturate: S.pSaturate, brightness: S.pBrightness, contrast: S.pContrast,
         // 只留弧度：滤镜里不画高光、边缘反光、厚度阴影和聚光。法线贴图和光照节点因此不再生成，GPU 也少算几层。
         ...ARC_ONLY,
@@ -1264,7 +1264,10 @@ function paint(el, geo) {
         it.backdrop.style.removeProperty('--ilg-web-tint');
     }
     const { w, h, r } = geo;
-    const sampleLens = tabLens && !cssMode && S.refract && (canRefract() || iosWallpaperRequested()) && !noBlur;
+    // A native backdrop can sample the real tab labels along with the scene.
+    const nativeLens = tabLens && refractAllowed(it);
+    const sampleLens = tabLens && !nativeLens && !cssMode && S.refract && iosWallpaperRequested() && !noBlur;
+    if (!useWeb || !nativeLens) el.classList.toggle('ilg-lens-refracts-labels', nativeLens);
     // The dialog contents keep their native scrolling. On mobile only its static wallpaper can be displaced.
     const samplePreset = preset && (stablePanel || iosWallpaperRequested()) && !cssMode && !noBlur && S.refract
         && (canRefract() || iosWallpaperRequested()) && Math.max(w, h) <= 1024
@@ -1284,6 +1287,7 @@ function paint(el, geo) {
         return;
     }
     const blur = surfaceBlur(it, el);
+    const lensBlur = nativeLens ? Math.min(blur, .4) : blur;
     const fallbackBlur = it.kind === 'clearPanel' && !preset ? Math.max(12, blur) : blur;
     const reading = it.kind === 'mes' && !it.bubbleReading ? ' var(--ilg-reading-filter, blur(0px))' : '';
     const tail = `blur(${blur}px) saturate(${S.saturate}) brightness(${S.brightness})` + reading;
@@ -1361,6 +1365,8 @@ function paint(el, geo) {
         if (!refract && it.followMaterial && it.web) webGlass.release(el);
         webGlass.paint(el, it, { width: w, height: h,
             refract,
+            backdropBlurLimit: nativeLens ? .4 : undefined,
+            onBackdropRefraction: nativeLens ? active => el.classList.toggle('ilg-lens-refracts-labels', active) : null,
             sourcePlane: sampleLens || samplePreset ? value => {
                 const painted = lensWallpaper.paint(el, value);
                 if (painted) {
@@ -1412,7 +1418,7 @@ function paint(el, geo) {
     if (canRefract() && !isIOS) surface.style.webkitBackdropFilter = '';
     if (phys) {
         it.renderPath = 'physical';
-        buildPhysical(it, el, w, h, r);
+        buildPhysical(it, el, w, h, r, lensBlur);
         if(sampleLens)lensWallpaper.paint(el, `url(#${it.id})`);
         surface.style.backdropFilter = `url(#${it.id})` + reading;
         if (isIOS) surface.style.webkitBackdropFilter = `url(#${it.id})` + reading;
@@ -1420,7 +1426,9 @@ function paint(el, geo) {
         it.renderPath = 'legacy';
         buildFilter(it, w, h, r, el);
         const lens = `url(#${it.id})`;
-        const filter = `${lens} ${tail}`;
+        const filter = nativeLens
+            ? `${lens} blur(${lensBlur}px) saturate(${S.saturate}) brightness(${S.brightness})`
+            : `${lens} ${tail}`;
         if(sampleLens)lensWallpaper.paint(el,filter);
         surface.style.backdropFilter = filter;
         if (isIOS) surface.style.webkitBackdropFilter = filter;
@@ -1578,7 +1586,7 @@ function untrack(el) {
     ro.unobserve(el);
     io.unobserve(el);
     el.classList.remove('ilg-glass', 'ilg-sheen', 'ilg-clear', 'ilg-phys', 'ilg-adapted', 'ilg-message-backdrop', 'ilg-message-viewport', 'ilg-message-bounded-glass', 'ilg-bounded-hit', 'ilg-control-surface', 'ilg-control-readable', 'ilg-css-surface', 'ilg-composer-liquid', 'ilg-stable-composer');
-    el.classList.remove('ilg-preset-glass', 'ilg-follow-material');
+    el.classList.remove('ilg-preset-glass', 'ilg-follow-material', 'ilg-lens-refracts-labels');
     if (el.id === 'nonQRFormItems') el.querySelectorAll('[data-ilg-input-tone]').forEach(action => delete action.dataset.ilgInputTone);
     el.style.backdropFilter = '';
     el.style.webkitBackdropFilter = '';
