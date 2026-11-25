@@ -5,7 +5,7 @@ import vm from 'node:vm';
 const source = fs.readFileSync(new URL('../../index.js', import.meta.url), 'utf8').replace(/\r\n/g, '\n');
 const parse = source.slice(source.indexOf('const parseRgba ='), source.indexOf('// Computed display metadata only:'));
 const block = source.match(/function blockBg\(el, cs = getComputedStyle\(el\)\) \{[\s\S]*?\n\}/)[0];
-const card = source.slice(source.indexOf('const cardColors ='), source.indexOf('function queueCards('));
+const card = source.slice(source.indexOf('const cardColors ='), source.indexOf('const BOUNDED_PANEL_TAGS ='));
 function node(tag, { color = 'rgba(0, 0, 0, 0)', image = 'none', pseudo = false, previous = '',
     position = 'static', top = 0, height = 590, text = '', prose = false } = {}) {
     const classes = new Set(previous ? ['ilg-solid'] : []);
@@ -36,13 +36,18 @@ function computed(el, pseudo) {
     return { backgroundColor: backing ? (stored === 'var(--ilg-card-fallback)' ? 'rgb(18, 20, 30)' : stored) : el.color,
         backgroundImage: el.image, position: el.position, display: 'block', visibility: 'visible' };
 }
-const S = { cardSolid: true };
+const layout = source.match(/^function useChatLayoutOptimization\(\).*$/m)[0];
+const S = { enabled: true, labCardLayout: true, cardSolid: true };
 const message = node('div');
-const api = vm.runInNewContext(parse + '\n' + block + '\n' + card + '\n({applyCardMarkers})', {
-    S, root: { classList: { contains: () => false } }, getComputedStyle: computed, paint() {}, flickerCapture: null,
-    MutationObserver: class { observe() {} disconnect() {} }, chatEl: { querySelectorAll: () => [] },
+const api = vm.runInNewContext([parse, block, layout, card, '({applyCardMarkers})'].join('\n'), {
+    S, root: { classList: { contains: () => false } }, getComputedStyle: computed,
 });
-const test = (children, text='') => api.applyCardMarkers([{children,childNodes:[{nodeType:3,nodeValue:text},...children],getClientRects:()=>[{}],closest: selector => selector==='.mes'?message:null}]);
+function test(children, text = '') {
+    const content = node('div', { text });
+    content.children.push(...children);
+    content.closest = selector => selector === '.mes' ? message : null;
+    api.applyCardMarkers([content]);
+}
 const frame = node('iframe');
 const oldFrame = node('iframe', { previous: 'var(--ilg-card-fallback)' });
 const image = node('div', { image: 'url("opaque-resource")' });

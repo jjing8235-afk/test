@@ -38,7 +38,7 @@ window.__ilgLoaded = new URL('.', import.meta.url).pathname;
 let studioUI = null;
 let flickerCapture = null, flickerReport = null;
 const MODULE = 'iosLiquidGlass';
-const BUILD_VERSION = '2.0.10-test.41';
+const BUILD_VERSION = '2.0.10-test.42';
 const MAX_INNER_GLASS_BLUR = 16;
 const ENGINE_NAMES = Object.freeze({performance:'御风性能引擎',refraction:'棱光折射引擎'});
 const NS = 'http://www.w3.org/2000/svg';
@@ -765,6 +765,7 @@ const isIOS = window.__TAURITAVERN_HOST__?.platform === 'ios'
 const supportsFilter = value => { try { return CSS.supports('backdrop-filter', value); } catch { return false; } };
 const canFull = !isIOS && !!window.chrome && !/Firefox\//.test(ua) && supportsFilter('blur(1px)');
 const androidHost = !isIOS && /Android/i.test(ua);
+const mobilePerformance = androidHost || isIOS;
 const fontActivity = { loadingCycles: 0, loadedFaces: 0, failedFaces: 0 };
 for (const type of ['loading', 'loadingdone', 'loadingerror']) document.fonts?.addEventListener(type, event => {
     if (type === 'loading') fontActivity.loadingCycles++;
@@ -1556,13 +1557,12 @@ function track(el, kind) {
     observeSurface(el, it);
     paint(el);
 }
-function desktopPerformanceAvailable() { return S.enabled && !androidHost && !isIOS; }
 function glassBatchAvailable() {
-    return desktopPerformanceAvailable() && S.engine === 'physical' && S.refract && S.refractMes && canRefract()
-        && S.glassStyle !== 'liquid-web';
+    return S.enabled && (mobilePerformance || (S.engine === 'physical' && S.refract && S.refractMes && canRefract()
+        && S.glassStyle !== 'liquid-web'));
 }
 function useNvwaMountExperiment() { return S.labPostMount === true && glassBatchAvailable(); }
-function useChatLayoutOptimization() { return S.labCardLayout === true && desktopPerformanceAvailable(); }
+function useChatLayoutOptimization() { return S.enabled && S.labCardLayout === true; }
 function syncChatHostPerformance() {
     syncHostPerformance(S.enabled && S.labDepthScan === true, useChatLayoutOptimization());
 }
@@ -1579,7 +1579,9 @@ function trackMessages(elements) {
     const staticRows = list.map(el => getComputedStyle(el).position === 'static');
     list.forEach((el, i) => { if (staticRows[i]) positionSurface(el, states[i]); });
     const viewport = document.getElementById('chat').getBoundingClientRect();
-    const coalesceMount = useNvwaMountExperiment() && list.length >= 64;
+    // Keep the first glass paint on mobile's existing material path. Only the
+    // card classification after mount is split across frames on these hosts.
+    const coalesceMount = !mobilePerformance && useNvwaMountExperiment() && list.length >= 64;
     const geometries = list.map((el, i) => {
         const it = states[i];
         it.visible = nearMessageViewport(el.getBoundingClientRect(), viewport);
@@ -3773,7 +3775,7 @@ function buildPanel() {
         const availability = {
             labDepthScan: S.enabled && hostPerformance.depthScan,
             labPostMount: glassBatchAvailable(),
-            labCardLayout: desktopPerformanceAvailable(),
+            labCardLayout: S.enabled,
         };
         for (const [key, available] of Object.entries(availability)) {
             const control = document.getElementById(`ilg-opt-${key}`);
@@ -3783,7 +3785,7 @@ function buildPanel() {
         }
         document.getElementById('ilg-performance-status').textContent = hostPerformance.depthScan && hostPerformance.keyboard
             ? '已接入宿主，可优化楼层、角色标签和键盘控件。选项在下次渲染聊天时生效。'
-            : '玻璃开关适用于桌面环境。楼层、标签和键盘扫描需接入酒馆 1.18.0 宿主。选项在下次渲染聊天时生效。';
+            : '玻璃优化可直接开启。楼层、标签和键盘扫描需要在酒馆服务器上接入 1.18.0 宿主。选项在下次渲染聊天时生效。';
         refreshCompanionTheme();
         studioUI?.sync();
         syncSavedAppearance();
@@ -4751,7 +4753,7 @@ chatEl.querySelectorAll('.mes_text').forEach(markProse);
 const CARD_MARK_CLASSES = new Set(['ilg-lit', 'ilg-dim', 'ilg-card-surface', ...PROSE_MARKS]);
 const ROW_HIT_CLASSES = new Set(['ilg-bounded-hit', 'ilg-phys', 'ilg-reflection']);
 function queueCardsNative(all) {
-    if (!S.enabled) { clearTimeout(cardTimer); cardDirty.clear(); return; }
+    if (!S.enabled) { clearTimeout(cardTimer); cardTimer = 0; cardDirty.clear(); return; }
     if (all) {
         chatEl.querySelectorAll('.ilg-bounded-hit').forEach(row => row.classList.remove('ilg-bounded-hit'));
         chatEl.querySelectorAll('.mes_text').forEach(t => cardDirty.add(t));
@@ -4775,10 +4777,11 @@ function queueCardsNative(all) {
     }, 200);
 }
 
-const CARD_BATCH = 12;
+const CARD_BATCH = mobilePerformance ? 6 : 12;
+const BULK_CARD_THRESHOLD = mobilePerformance ? 32 : 64;
 let cardFrame = 0, bulkCards = false;
 
-function hasBulkCardWork() { return bulkCards || cardDirty.size >= 64; }
+function hasBulkCardWork() { return bulkCards || cardDirty.size >= BULK_CARD_THRESHOLD; }
 
 function classifyQueuedCards(texts, reason = 'card', additionalPaints = []) {
     const repaint = applyCardMarkers(texts);
