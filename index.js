@@ -30,6 +30,7 @@ import { wallpaperLayout, wallpaperPoint, topTone } from './wallpaper-sampling.j
 import { createAppearanceBookmark } from './appearance-bookmark.js';
 import { createTypographyStudio, migrateProseSpacing } from './typography.js';
 import { onViewportChange, createKeyboard, createReadingAnchor } from './viewport.js';
+import { createMessageActions } from './message-actions.js';
 
 // 同一个酒馆里装了两份（比如手动拷的一份 + 从 GitHub 装的一份）时只跑先加载的那份，不然顶栏、面板会出两套
 if (window.__ilgLoaded) throw new Error('[NVWA 液态玻璃] 已经有一份在运行，这份跳过');
@@ -38,7 +39,7 @@ window.__ilgLoaded = new URL('.', import.meta.url).pathname;
 let studioUI = null;
 let flickerCapture = null, flickerReport = null;
 const MODULE = 'iosLiquidGlass';
-const BUILD_VERSION = '2.0.10-test.42';
+const BUILD_VERSION = '2.0.10-test.43';
 const MAX_INNER_GLASS_BLUR = 16;
 const ENGINE_NAMES = Object.freeze({performance:'御风性能引擎',refraction:'棱光折射引擎'});
 const NS = 'http://www.w3.org/2000/svg';
@@ -3126,6 +3127,7 @@ function applyRoot() {
     root.classList.toggle('ilg-islands', S.enabled && S.islands);
     root.classList.toggle('ilg-dock', dockOn());
     root.classList.toggle('ilg-avline', S.enabled && S.avatar === 'line');
+    messageActions.sync();
     root.classList.toggle('ilg-orb-on', S.enabled && S.orb);
     root.classList.toggle('ilg-panel-read', S.enabled && S.panelRead);
     installMessageIcons();
@@ -3158,6 +3160,7 @@ function applyRoot() {
 // 输入框高度变化时同步底部留白；仅在扩展启用且宿主允许自动滚动时保持贴底
 const form = document.getElementById('form_sheld');
 const chatEl = document.getElementById('chat');
+const messageActions = createMessageActions(chatEl);
 const messageRendering = createMessageRendering(chatEl, {
     onReset(el) { if (items.has(el)) { ro.unobserve(el); ro.observe(el); } },
     onWidthFeedback(reason) { flickerCapture?.widthFeedback(reason); },
@@ -3773,7 +3776,7 @@ function buildPanel() {
         document.getElementById('ilg-status').textContent = statusText();
         const hostPerformance = getHostPerformanceCapabilities();
         const availability = {
-            labDepthScan: S.enabled && hostPerformance.depthScan,
+            labDepthScan: S.enabled,
             labPostMount: glassBatchAvailable(),
             labCardLayout: S.enabled,
         };
@@ -3783,9 +3786,11 @@ function buildPanel() {
             control.closest('label').classList.toggle('ilg-row-off', !available);
             control.setAttribute('aria-describedby', 'ilg-performance-status');
         }
-        document.getElementById('ilg-performance-status').textContent = hostPerformance.depthScan && hostPerformance.keyboard
-            ? '已接入宿主，可优化楼层、角色标签和键盘控件。选项在下次渲染聊天时生效。'
-            : '玻璃优化可直接开启。楼层、标签和键盘扫描需要在酒馆服务器上接入 1.18.0 宿主。选项在下次渲染聊天时生效。';
+        const availableScans = [hostPerformance.depthScan && '楼层', hostPerformance.messageTags && '角色标签',
+            hostPerformance.keyboard && '键盘控件'].filter(Boolean);
+        document.getElementById('ilg-performance-status').textContent = availableScans.length
+            ? `宿主已接入 ${availableScans.join('、')}。选项在下次渲染聊天时生效。`
+            : '玻璃优化可直接使用。楼层、标签和键盘扫描由酒馆原生处理，接入对应能力后自动应用已保存的选项。';
         refreshCompanionTheme();
         studioUI?.sync();
         syncSavedAppearance();
@@ -4551,6 +4556,8 @@ const CARD_PANELS = 'div, section, article, aside, details, summary, dialog, but
 const CARD_CHOICES = 'button, select, option, input[type="button"], input[type="submit"], [role="button"], [role="option"]';
 const CARD_RENDERER_CANDIDATES = 'iframe, ' + CARD_PANELS + ', ' + CARD_CHOICES;
 function applyCardMarkers(texts) {
+    // A temporary editor should keep the message layout chosen for its rendered content.
+    texts = texts.filter(text => !text.firstElementChild?.classList.contains('edit_textarea'));
     const optimizeLayout = useChatLayoutOptimization();
     // Read one whole level, then write its markers. Children still see their
     // parent's resolved colors, without forcing style/layout once per card.
@@ -4942,7 +4949,10 @@ if (takeFlickerArm(window) && S.enabled) startFlickerCapture();
 applyRoot();
 paintRanges();
 ctx.eventSource.on(ctx.eventTypes.APP_READY, applyRoot);
-ctx.eventSource.on(ctx.eventTypes.CHAT_CHANGED, () => flickerCapture?.chatChanged());
+ctx.eventSource.on(ctx.eventTypes.CHAT_CHANGED, () => {
+    messageActions.close();
+    flickerCapture?.chatChanged();
+});
 
 // Check the real library on startup and when an explicit appearance selection needs repair.
 // The old wallsReady flag survives reinstalling the extension, so it is not proof of file presence.

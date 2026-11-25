@@ -131,11 +131,14 @@ export function createReadingAnchor({ chat, enabled }) {
         if (!state || performance.now() > state.until || !editor.matches('#curEditTextarea.edit_textarea') || editor.closest('.mes') !== state.row) return;
         // SillyTavern selects the end immediately after focus; let short edits keep that behavior.
         queueMicrotask(() => {
-            if (editing !== state || !active() || document.activeElement !== editor || editor.scrollHeight <= editor.clientHeight + 4) return;
+            if (editing !== state || !active() || document.activeElement !== editor) return;
+            const overflowing = editor.scrollHeight > editor.clientHeight + 4;
             Object.assign(state, { editor, until: performance.now() + 1000 });
             anchor = null;
-            editor.setSelectionRange(0, 0);
-            editor.scrollTop = 0;
+            if (overflowing) {
+                editor.setSelectionRange(0, 0);
+                editor.scrollTop = 0;
+            }
             restoreEditor();
             queueRestore();
         });

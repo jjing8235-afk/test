@@ -5468,6 +5468,69 @@ html.ilg.ilg-kb-open body #ilg-ball { visibility: hidden; }
     }
 }
 
+/* Overlay the existing controls so opening the menu never resizes a message. */
+@media not (forced-colors: active) {
+    @supports (display: contents) {
+        html.ilg:where(.ilg-bubble-double).ilg-avline body.bubblechat:not(.waifuMode, .no-blur, .expandMessageActions) #chat > .mes.ilg-glass:where(:not(.smallSysMes, [is_system="true"], [data-nvwa-style="author"], .ilg-card-renderer:not(.ilg-inline-card), .ilg-content-overlay)) > .mes_block:has(> .ch_name > .mes_buttons > .ilg-action-open) { overflow: visible; }
+        html.ilg:where(.ilg-bubble-double).ilg-avline body.bubblechat:not(.waifuMode, .no-blur, .expandMessageActions) #chat > .mes.ilg-glass:where(:not(.smallSysMes, [is_system="true"], [data-nvwa-style="author"], .ilg-card-renderer:not(.ilg-inline-card), .ilg-content-overlay)) > .mes_block > .ch_name > .mes_buttons > .extraMesButtons.ilg-action-menu {
+            position: absolute;
+            inset-block-start: calc(100% + 5px);
+            inset-inline-end: 0;
+            z-index: 8;
+            display: flex;
+            box-sizing: border-box;
+            inline-size: max-content;
+            max-inline-size: 100%;
+            max-block-size: 42vh;
+            justify-content: flex-end;
+            gap: 3px;
+            padding: 5px;
+            overflow: auto;
+            border: 1px solid var(--ilg-bubble-action-edge);
+            border-block-start-color: var(--ilg-bubble-action-rim);
+            border-radius: 17px;
+            color: var(--ilg-bubble-action-ink);
+            background: rgba(var(--ilg-bubble-material-rgb), .82);
+            -webkit-backdrop-filter: blur(10px) saturate(1.15);
+            backdrop-filter: blur(10px) saturate(1.15);
+            box-shadow: 0 4px 14px var(--ilg-bubble-action-depth);
+            opacity: 0;
+            transform: translateY(-4px) scale(.985);
+            transform-origin: top right;
+            visibility: hidden;
+            pointer-events: none;
+            transition: opacity 150ms ease, transform 180ms cubic-bezier(.2,.8,.2,1), visibility 180ms;
+        }
+        html.ilg:where(.ilg-bubble-double).ilg-avline body.bubblechat:not(.waifuMode, .no-blur, .expandMessageActions) #chat > .mes.ilg-glass:where(:not(.smallSysMes, [is_system="true"], [data-nvwa-style="author"], .ilg-card-renderer:not(.ilg-inline-card), .ilg-content-overlay)) > .mes_block > .ch_name > .mes_buttons > .extraMesButtons.ilg-action-menu > .mes_button { color: inherit; opacity: .85; }
+        html.ilg:where(.ilg-bubble-double).ilg-avline body.bubblechat:not(.waifuMode, .no-blur, .expandMessageActions) #chat > .mes.ilg-glass:where(:not(.smallSysMes, [is_system="true"], [data-nvwa-style="author"], .ilg-card-renderer:not(.ilg-inline-card), .ilg-content-overlay)) > .mes_block > .ch_name > .mes_buttons > .extraMesButtons.ilg-action-menu > .mes_button:is(:hover, :focus-visible) { opacity: 1; }
+        html.ilg:where(.ilg-bubble-double).ilg-avline body.bubblechat:not(.waifuMode, .no-blur, .expandMessageActions) #chat > .mes.ilg-glass:where(:not(.smallSysMes, [is_system="true"], [data-nvwa-style="author"], .ilg-card-renderer:not(.ilg-inline-card), .ilg-content-overlay)) > .mes_block > .ch_name > .mes_buttons > .extraMesButtons.ilg-action-menu.ilg-action-open {
+            opacity: 1;
+            transform: none;
+            visibility: visible;
+            pointer-events: auto;
+        }
+        @starting-style {
+            html.ilg:where(.ilg-bubble-double).ilg-avline body.bubblechat:not(.waifuMode, .no-blur, .expandMessageActions) #chat > .mes.ilg-glass:where(:not(.smallSysMes, [is_system="true"], [data-nvwa-style="author"], .ilg-card-renderer:not(.ilg-inline-card), .ilg-content-overlay)) > .mes_block > .ch_name > .mes_buttons > .extraMesButtons.ilg-action-menu.ilg-action-open { opacity: 0; transform: translateY(-4px) scale(.985); }
+        }
+        html.ilg:where(.ilg-bubble-double).ilg-avline body.bubblechat.reduced-motion:not(.waifuMode, .no-blur, .expandMessageActions) #chat > .mes.ilg-glass:where(:not(.smallSysMes, [is_system="true"], [data-nvwa-style="author"], .ilg-card-renderer:not(.ilg-inline-card), .ilg-content-overlay)) > .mes_block > .ch_name > .mes_buttons > .extraMesButtons.ilg-action-menu { transition: none; }
+        @media (prefers-reduced-motion: reduce) {
+            html.ilg:where(.ilg-bubble-double).ilg-avline body.bubblechat:not(.waifuMode, .no-blur, .expandMessageActions) #chat > .mes.ilg-glass:where(:not(.smallSysMes, [is_system="true"], [data-nvwa-style="author"], .ilg-card-renderer:not(.ilg-inline-card), .ilg-content-overlay)) > .mes_block > .ch_name > .mes_buttons > .extraMesButtons.ilg-action-menu { transition: none; }
+        }
+    }
+}
+
+/* The host still owns editing and focus. Only the controls entering the layout animate. */
+@media (prefers-reduced-motion: no-preference) and (not (forced-colors: active)) {
+    html.ilg body:not(.reduced-motion) #chat > .mes:where(:not(.smallSysMes, [is_system="true"], [data-nvwa-style="author"])) > .mes_block:has(> .mes_text > textarea.edit_textarea) > .ch_name > .mes_edit_buttons,
+    html.ilg body:not(.reduced-motion) #chat > .mes:where(:not(.smallSysMes, [is_system="true"], [data-nvwa-style="author"])) > .mes_block > .mes_text > textarea.edit_textarea {
+        animation: ilg-message-editor-in 150ms cubic-bezier(.2,.8,.2,1);
+    }
+    @keyframes ilg-message-editor-in {
+        from { opacity: .45; transform: translateY(3px); }
+        to { opacity: 1; transform: none; }
+    }
+}
+
 /* Editing needs stable ink contrast independently of the wallpaper and glass recipe. */
 @media not (forced-colors: active) {
     html.ilg {

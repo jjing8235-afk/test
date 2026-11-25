@@ -1,4 +1,5 @@
 const bridgeKey = Symbol.for('nvwa.liquidGlass.chatPerformance');
+const extensionBridge = { version: 2 };
 
 function getBridge() {
     const bridge = globalThis[bridgeKey];
@@ -7,9 +8,11 @@ function getBridge() {
 
 export function getHostPerformanceCapabilities() {
     const bridge = getBridge();
+    const compatible = globalThis[bridgeKey] == null || !!bridge;
     return {
-        depthScan: !!bridge && globalThis[Symbol.for('nvwa.liquidGlass.messageTags')] === 2,
-        keyboard: !!bridge && globalThis[Symbol.for('nvwa.liquidGlass.keyboard')] === 2,
+        depthScan: !!bridge && bridge !== extensionBridge,
+        messageTags: compatible && globalThis[Symbol.for('nvwa.liquidGlass.messageTags')] === 2,
+        keyboard: compatible && globalThis[Symbol.for('nvwa.liquidGlass.keyboard')] === 2,
     };
 }
 
@@ -43,14 +46,16 @@ export function filterBulkMessageRows(container, messageIds) {
 }
 
 export function syncHostPerformance(depthScan, keyboard) {
-    const bridge = getBridge();
-    if (!bridge) return;
-
     const capabilities = getHostPerformanceCapabilities();
-    const useDepth = depthScan && capabilities.depthScan;
-    bridge.getMessageDepth = useDepth ? getMessageDepth : undefined;
-    bridge.filterBulkMessageRows = useDepth ? filterBulkMessageRows : undefined;
-    bridge.cardLayout = keyboard && capabilities.keyboard;
+    const useTags = depthScan && capabilities.messageTags;
+    const useKeyboard = keyboard && capabilities.keyboard;
+    let bridge = getBridge();
+    // These two host modules can use the extension's bridge when the depth hook is absent.
+    if (!bridge && (useTags || useKeyboard)) bridge = globalThis[bridgeKey] ??= extensionBridge;
+    if (!bridge) return;
+    bridge.getMessageDepth = depthScan && capabilities.depthScan ? getMessageDepth : undefined;
+    bridge.filterBulkMessageRows = useTags ? filterBulkMessageRows : undefined;
+    bridge.cardLayout = useKeyboard;
 }
 
 export function disableHostPerformance() {

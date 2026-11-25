@@ -1,11 +1,21 @@
 import assert from 'node:assert/strict';
-import { createHash } from 'node:crypto';
-
-const supportedHash = 'bf641135033099f3b98efdc22bc6f3b4995500400fd52f9dd630bf2906a1ec7c';
 
 export function patchKeyboardScan(source) {
     source = source.replaceAll('\r\n', '\n');
-    assert.equal(createHash('sha256').update(source).digest('hex'), supportedHash, 'Unsupported SillyTavern keyboard.js');
+    const nativeMatchers = [
+        'const interactableSelectors = [',
+        `export function isKeyboardInteractable(control) {
+    // Check if this control matches any of the selectors
+    return interactableSelectors.some(selector => control.matches(selector));
+}`,
+        `function getAllInteractables(element) {
+    // Query each selector individually and combine all to a big array to return
+    return [].concat(...interactableSelectors.map(selector => Array.from(element.querySelectorAll(\`\${selector}\`))));
+}`,
+        "export const NOT_FOCUSABLE_CONTROL_CLASS = 'not_focusable';",
+        "export const DISABLED_CONTROL_CLASS = 'disabled';",
+    ];
+    assert(nativeMatchers.every(anchor => source.split(anchor).length === 2), 'Keyboard selector scan has a different source shape');
     function replace(before, after) {
         assert.equal(source.split(before).length, 2, 'Unexpected keyboard.js source');
         source = source.replace(before, () => after);
